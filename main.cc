@@ -3,6 +3,7 @@
 #include "src/model/user_preference.h"
 #include "src/repository/orm.h"
 #include "src/services/database_helper.h"
+#include "src/services/language_manager.h"
 #include "src/utilities/logger.h"
 #include "src/views/main_window.h"
 #include <QApplication>
@@ -88,6 +89,9 @@ int main(int argc, char* argv[]) {
         "数据库就绪: {}",
         db_path.toStdString()
     );
+
+    auto &lang_mgr = NezhaIDE::Services::LanguageManager::instance();
+    lang_mgr.initialize(app, NezhaIDE::Configuration::instance().language());
 
     NezhaIDE::Views::MainWindow window;
     window.show();

@@ -21,10 +21,10 @@ GitPanel::GitPanel(QWidget *parent)
     toolbar_->setStyleSheet(
         "QToolBar { border: none; border-bottom: 1px solid #E0E0E0; padding: 4px 8px; spacing: 4px; }"
     );
-    toolbar_->addAction(QStringLiteral("↻ 刷新"), this, &GitPanel::onRefresh);
+    toolbar_->addAction(tr("↻ 刷新"), this, &GitPanel::onRefresh);
     toolbar_->addSeparator();
-    toolbar_->addAction(QStringLiteral("＋ 暂存"), this, &GitPanel::onStageFile);
-    toolbar_->addAction(QStringLiteral("－ 取消暂存"), this, &GitPanel::onUnstageFile);
+    toolbar_->addAction(tr("＋ 暂存"), this, &GitPanel::onStageFile);
+    toolbar_->addAction(tr("－ 取消暂存"), this, &GitPanel::onUnstageFile);
     layout->addWidget(toolbar_);
 
     branch_label_ = new QLabel(this);
@@ -53,7 +53,7 @@ GitPanel::GitPanel(QWidget *parent)
     commit_layout->setSpacing(6);
 
     commit_message_ = new QTextEdit(this);
-    commit_message_->setPlaceholderText(QStringLiteral("Commit 信息…"));
+    commit_message_->setPlaceholderText(tr("Commit 信息…"));
     commit_message_->setMaximumHeight(80);
     commit_message_->setStyleSheet(
         "QTextEdit { border: 1px solid #E0E0E0; border-radius: 6px; padding: 6px;"
@@ -62,7 +62,7 @@ GitPanel::GitPanel(QWidget *parent)
     );
     commit_layout->addWidget(commit_message_);
 
-    commit_button_ = new QPushButton(QStringLiteral("✓ 提交"), this);
+    commit_button_ = new QPushButton(tr("✓ 提交"), this);
     commit_button_->setStyleSheet(
         "QPushButton { background: #3370FF; color: white; border: none; border-radius: 6px;"
         "padding: 6px 16px; font-size: 12px; font-weight: bold; }"
@@ -99,7 +99,7 @@ GitPanel::~GitPanel()
 
 void GitPanel::refresh()
 {
-    status_label_->setText(QStringLiteral("正在刷新…"));
+    status_label_->setText(tr("正在刷新…"));
     git_process_->terminate();
     git_process_->waitForFinished(500);
 
@@ -141,8 +141,8 @@ void GitPanel::onCommit()
 {
     const auto msg = commit_message_->toPlainText().trimmed();
     if (msg.isEmpty()) {
-        QMessageBox::warning(this, QStringLiteral("错误"),
-            QStringLiteral("请输入 Commit 信息"));
+        QMessageBox::warning(this, tr("错误"),
+            tr("请输入 Commit 信息"));
         return;
     }
 
@@ -151,7 +151,7 @@ void GitPanel::onCommit()
     proc.waitForFinished(5000);
 
     if (proc.exitCode() != 0) {
-        QMessageBox::warning(this, QStringLiteral("提交失败"),
+        QMessageBox::warning(this, tr("提交失败"),
             QString::fromUtf8(proc.readAllStandardError()));
         return;
     }
@@ -168,12 +168,12 @@ void GitPanel::onStatusFinished(int exit_code, QProcess::ExitStatus status)
         parseStatusOutput(output);
         status_label_->setText(
             entries_.isEmpty()
-                ? QStringLiteral("✓ 工作目录干净")
-                : QStringLiteral("%1 个文件变更").arg(entries_.size())
+                ? tr("✓ 工作目录干净")
+                : tr("%1 个文件变更").arg(entries_.size())
         );
     } else {
         const auto err = QString::fromUtf8(git_process_->readAllStandardError());
-        status_label_->setText(QStringLiteral("⚠ Git 错误: %1").arg(err.trimmed()));
+        status_label_->setText(tr("⚠ Git 错误: %1").arg(err.trimmed()));
     }
 }
 
@@ -181,7 +181,7 @@ void GitPanel::onBranchFinished(int exit_code, QProcess::ExitStatus status)
 {
     if (status == QProcess::NormalExit && exit_code == 0) {
         const auto branch = QString::fromUtf8(git_process_->readAllStandardOutput()).trimmed();
-        branch_label_->setText(QStringLiteral("⎇ %1").arg(branch));
+        branch_label_->setText(tr("⏇ %1").arg(branch));
         emit branchChanged(branch);
     }
 }
@@ -249,14 +249,14 @@ void GitPanel::updateBranchDisplay()
 
 QString GitPanel::statusCharToText(QChar x, QChar y) const
 {
-    if (x == '?' && y == '?') return QStringLiteral("未跟踪");
-    if (x == 'M') return QStringLiteral("已暂存 (修改)");
-    if (x == 'A') return QStringLiteral("已暂存 (新增)");
-    if (x == 'D') return QStringLiteral("已暂存 (删除)");
-    if (x == 'R') return QStringLiteral("已暂存 (重命名)");
-    if (y == 'M') return QStringLiteral("未暂存 (修改)");
-    if (y == 'D') return QStringLiteral("未暂存 (删除)");
-    return QStringLiteral("变更");
+    if (x == '?' && y == '?') return tr("未跟踪");
+    if (x == 'M') return tr("已暂存 (修改)");
+    if (x == 'A') return tr("已暂存 (新增)");
+    if (x == 'D') return tr("已暂存 (删除)");
+    if (x == 'R') return tr("已暂存 (重命名)");
+    if (y == 'M') return tr("未暂存 (修改)");
+    if (y == 'D') return tr("未暂存 (删除)");
+    return tr("变更");
 }
 
 } // namespace NezhaIDE::Views

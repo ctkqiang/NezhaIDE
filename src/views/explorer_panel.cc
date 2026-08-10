@@ -67,11 +67,11 @@ ExplorerPanel::~ExplorerPanel() = default;
 
 void ExplorerPanel::setupActions()
 {
-    new_file_action_ = toolbar_->addAction(QStringLiteral("➕ 文件"));
-    new_folder_action_ = toolbar_->addAction(QStringLiteral("\U0001F4C1 文件夹"));
+    new_file_action_ = toolbar_->addAction(tr("➕ 文件"));
+    new_folder_action_ = toolbar_->addAction(tr("\U0001F4C1 文件夹"));
     toolbar_->addSeparator();
-    refresh_action_ = toolbar_->addAction(QStringLiteral("↻ 刷新"));
-    collapse_all_action_ = toolbar_->addAction(QStringLiteral("▲ 折叠"));
+    refresh_action_ = toolbar_->addAction(tr("↻ 刷新"));
+    collapse_all_action_ = toolbar_->addAction(tr("▲ 折叠"));
 
     connect(new_file_action_, &QAction::triggered, this, &ExplorerPanel::onNewFile);
     connect(new_folder_action_, &QAction::triggered, this, &ExplorerPanel::onNewFolder);
@@ -107,8 +107,8 @@ void ExplorerPanel::onNewFile()
 {
     bool ok;
     const auto name = QInputDialog::getText(this,
-        QStringLiteral("新建文件"),
-        QStringLiteral("文件名:"),
+        tr("新建文件"),
+        tr("文件名:"),
         QLineEdit::Normal, QString(), &ok);
     if (!ok || name.isEmpty()) return;
 
@@ -121,20 +121,22 @@ void ExplorerPanel::onNewFile()
 
     QFile file(current_dir + "/" + name);
     if (file.exists()) {
-        QMessageBox::warning(this, QStringLiteral("错误"),
-            QStringLiteral("文件已存在"));
+        QMessageBox::warning(this, tr("错误"),
+            tr("文件已存在"));
         return;
     }
-    file.open(QIODevice::WriteOnly);
-    file.close();
+    if (!file.open(QIODevice::WriteOnly)) {
+        QMessageBox::warning(this, tr("错误"),
+            tr("无法创建文件"));
+    }
 }
 
 void ExplorerPanel::onNewFolder()
 {
     bool ok;
     const auto name = QInputDialog::getText(this,
-        QStringLiteral("新建文件夹"),
-        QStringLiteral("文件夹名:"),
+        tr("新建文件夹"),
+        tr("文件夹名:"),
         QLineEdit::Normal, QString(), &ok);
     if (!ok || name.isEmpty()) return;
 
@@ -147,8 +149,8 @@ void ExplorerPanel::onNewFolder()
 
     QDir dir(current_dir);
     if (!dir.mkdir(name)) {
-        QMessageBox::warning(this, QStringLiteral("错误"),
-            QStringLiteral("无法创建文件夹"));
+        QMessageBox::warning(this, tr("错误"),
+            tr("无法创建文件夹"));
     }
 }
 
@@ -177,15 +179,15 @@ void ExplorerPanel::onRenameFile()
     const QFileInfo info(old_path);
     bool ok;
     const auto new_name = QInputDialog::getText(this,
-        QStringLiteral("重命名"),
-        QStringLiteral("新名称:"),
+        tr("重命名"),
+        tr("新名称:"),
         QLineEdit::Normal, info.fileName(), &ok);
     if (!ok || new_name.isEmpty() || new_name == info.fileName()) return;
 
     const auto new_path = info.absolutePath() + "/" + new_name;
     if (!QFile::rename(old_path, new_path)) {
-        QMessageBox::warning(this, QStringLiteral("错误"),
-            QStringLiteral("重命名失败"));
+        QMessageBox::warning(this, tr("错误"),
+            tr("重命名失败"));
     }
 }
 
@@ -213,13 +215,13 @@ void ExplorerPanel::onCustomContextMenu(const QPoint &pos)
         "QMenu::item:hover { background: rgba(0,0,0,0.04); }"
     );
 
-    menu.addAction(QStringLiteral("☁️ 新建文件"), this, &ExplorerPanel::onNewFile);
-    menu.addAction(QStringLiteral("\U0001F4C1 新建文件夹"), this, &ExplorerPanel::onNewFolder);
+    menu.addAction(tr("☁️ 新建文件"), this, &ExplorerPanel::onNewFile);
+    menu.addAction(tr("\U0001F4C1 新建文件夹"), this, &ExplorerPanel::onNewFolder);
     menu.addSeparator();
-    menu.addAction(QStringLiteral("✏️ 重命名"), this, &ExplorerPanel::onRenameFile);
-    menu.addAction(QStringLiteral("\U0001F5D1️ 删除"), this, &ExplorerPanel::onDeleteFile);
+    menu.addAction(tr("✏️ 重命名"), this, &ExplorerPanel::onRenameFile);
+    menu.addAction(tr("\U0001F5D1️ 删除"), this, &ExplorerPanel::onDeleteFile);
     menu.addSeparator();
-    menu.addAction(QStringLiteral("\U0001F4C2 在 Finder 中打开"), this, &ExplorerPanel::onOpenInFinder);
+    menu.addAction(tr("\U0001F4C2 在 Finder 中打开"), this, &ExplorerPanel::onOpenInFinder);
 
     menu.exec(tree_view_->viewport()->mapToGlobal(pos));
 }
@@ -228,9 +230,9 @@ bool ExplorerPanel::confirmDelete(const QString &path)
 {
     const QFileInfo info(path);
     const auto msg = info.isDir()
-        ? QStringLiteral("确定删除文件夹「%1」及其所有内容？").arg(info.fileName())
-        : QStringLiteral("确定删除文件「%1」？").arg(info.fileName());
-    return QMessageBox::question(this, QStringLiteral("确认删除"), msg)
+        ? tr("确定删除文件夹「%1」及其所有内容？").arg(info.fileName())
+        : tr("确定删除文件「%1」？").arg(info.fileName());
+    return QMessageBox::question(this, tr("确认删除"), msg)
            == QMessageBox::Yes;
 }
 

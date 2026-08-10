@@ -54,7 +54,7 @@ void SidebarContainer::setupHeader()
     header_layout->setContentsMargins(8, 0, 8, 0);
     header_layout->setSpacing(0);
 
-    explorer_tab_ = new QPushButton(QStringLiteral("资源管理器"), header_);
+    explorer_tab_ = new QPushButton(tr("资源管理器"), header_);
     git_tab_ = new QPushButton(QStringLiteral("Git"), header_);
     git_tab_->setFixedWidth(60);
 

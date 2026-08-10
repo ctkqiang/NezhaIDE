@@ -1,9 +1,4 @@
-//
-// Created by 钟智强 on 2026/8/10.
-//
-
-#ifndef NEZHAIDE_MAIN_WINDOW_H
-#define NEZHAIDE_MAIN_WINDOW_H
+#pragma once
 
 #if __has_include(<QMainWindow>)
     #include <QMainWindow>
@@ -13,23 +8,31 @@
     #error "缺少QT，请先安装 QT。"
 #endif
 
+class QSplitter;
+class QTabWidget;
+
 namespace Ui {
     class MainWindow;
 }
 
 namespace NezhaIDE::Views {
 
-    class MainWindow : public QMainWindow {
-        Q_OBJECT
+class SidebarContainer;
 
-    public:
-        explicit MainWindow(QWidget *parent = nullptr);
+class MainWindow : public QMainWindow {
+    Q_OBJECT
 
-        ~MainWindow() override;
+public:
+    explicit MainWindow(QWidget *parent = nullptr);
+    ~MainWindow() override;
 
-    private:
-        Ui::MainWindow *ui{};
-    };
-}
+private:
+    void setupLayout();
 
-#endif //NEZHAIDE_MAIN_WINDOW_H
+    Ui::MainWindow *ui{};
+    SidebarContainer *sidebar_{};
+    QSplitter *splitter_{};
+    QTabWidget *editor_host_{};
+};
+
+} // namespace NezhaIDE::Views

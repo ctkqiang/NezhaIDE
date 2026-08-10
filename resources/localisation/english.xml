@@ -1,15 +1,51 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <localization language="en_US">
     <string key="app.name">Nezha Network Security IDE</string>
-
     <string key="menu.file">File</string>
     <string key="menu.edit">Edit</string>
     <string key="menu.view">View</string>
-
     <string key="tool.run">Run</string>
     <string key="tool.stop">Stop</string>
-
-    <string key="error.database.connection">
-        Database connection failed
-    </string>
+    <string key="error.database_connection">Database connection failed</string>
+    <string key="explorer.new_file">New File</string>
+    <string key="explorer.new_folder">New Folder</string>
+    <string key="explorer.refresh">Refresh</string>
+    <string key="explorer.collapse_all">Collapse All</string>
+    <string key="explorer.file_name">File name:</string>
+    <string key="explorer.folder_name">Folder name:</string>
+    <string key="explorer.rename">Rename</string>
+    <string key="explorer.new_name">New name:</string>
+    <string key="explorer.delete">Delete</string>
+    <string key="explorer.open_in_finder">Open in Finder</string>
+    <string key="error.title">Error</string>
+    <string key="error.file_exists">File already exists</string>
+    <string key="error.cannot_create_file">Cannot create file</string>
+    <string key="error.cannot_create_folder">Cannot create folder</string>
+    <string key="error.rename_failed">Rename failed</string>
+    <string key="confirm.delete_title">Confirm Delete</string>
+    <string key="confirm.delete_folder">Delete folder "%1" and all its contents?</string>
+    <string key="confirm.delete_file">Delete file "%1"?</string>
+    <string key="sidebar.explorer">Explorer</string>
+    <string key="sidebar.git">Git</string>
+    <string key="editor.welcome">Welcome</string>
+    <string key="editor.open_to_edit">Open a file to start editing</string>
+    <string key="git.refresh">Refresh</string>
+    <string key="git.stage">Stage</string>
+    <string key="git.unstage">Unstage</string>
+    <string key="git.commit_placeholder">Commit message...</string>
+    <string key="git.commit_button">Commit</string>
+    <string key="git.status_refreshing">Refreshing...</string>
+    <string key="git.working_clean">Working directory clean</string>
+    <string key="git.files_changed">%1 file(s) changed</string>
+    <string key="git.error_prefix">Git error: %1</string>
+    <string key="git.error_commit_message">Please enter a commit message</string>
+    <string key="git.error_commit_failed">Commit failed</string>
+    <string key="git.status.untracked">Untracked</string>
+    <string key="git.status.staged_modified">Staged (modified)</string>
+    <string key="git.status.staged_added">Staged (added)</string>
+    <string key="git.status.staged_deleted">Staged (deleted)</string>
+    <string key="git.status.staged_renamed">Staged (renamed)</string>
+    <string key="git.status.unstaged_modified">Unstaged (modified)</string>
+    <string key="git.status.unstaged_deleted">Unstaged (deleted)</string>
+    <string key="git.status.changed">Changed</string>
 </localization>
