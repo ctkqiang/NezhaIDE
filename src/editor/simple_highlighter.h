@@ -62,5 +62,14 @@ LanguageDefinition languageCpp();
 LanguageDefinition languageCmake();
 LanguageDefinition languageMarkdown();
 LanguageDefinition languageYaml();
+LanguageDefinition languageJavascript();
+LanguageDefinition languageTypescript();
+LanguageDefinition languageCss();
+LanguageDefinition languageHtml();
+LanguageDefinition languageShell();
+LanguageDefinition languageSql();
+LanguageDefinition languageLua();
+LanguageDefinition languageKotlin();
+LanguageDefinition languageSwift();
 
 } // namespace NezhaIDE::Editor

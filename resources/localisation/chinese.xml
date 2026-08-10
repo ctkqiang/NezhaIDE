@@ -53,4 +53,18 @@
     <string key="menu.quit">退出</string>
     <string key="dialog.open_project_title">打开项目</string>
     <string key="error.project_not_found">项目目录不存在: %1</string>
+    <string key="menu.preferences">偏好设置...</string>
+    <string key="prefs.theme">主题</string>
+    <string key="prefs.language">语言</string>
+    <string key="prefs.llm">LLM 大模型</string>
+    <string key="prefs.theme_auto">跟随系统</string>
+    <string key="prefs.theme_light">亮色 (Default)</string>
+    <string key="prefs.theme_dark">暗色 (Nezha Cyber)</string>
+    <string key="prefs.theme_github">GitHub Light</string>
+    <string key="prefs.theme_xcode">Xcode</string>
+    <string key="prefs.lang_chinese">中文</string>
+    <string key="prefs.lang_english">English</string>
+    <string key="prefs.llm_provider">服务商</string>
+    <string key="prefs.llm_token">API Token</string>
+    <string key="prefs.restart_hint">语言更改将在重启后生效。</string>
 </localization>

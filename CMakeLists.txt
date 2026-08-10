@@ -21,6 +21,8 @@ add_executable(NezhaIDE main.cc
         src/editor/code_editor.h
         src/editor/cpp_highlighter.cc
         src/editor/cpp_highlighter.h
+        src/editor/simple_highlighter.cc
+        src/editor/simple_highlighter.h
         src/editor/language_registry.cc
         src/editor/language_registry.h
         src/editor/editor_tab_host.cc
@@ -36,6 +38,8 @@ add_executable(NezhaIDE main.cc
         src/views/explorer_panel.cc
         src/views/explorer_panel.h
         src/views/explorer_panel.ui
+        src/views/preferences_dialog.cc
+        src/views/preferences_dialog.h
         src/views/git_panel.cc
         src/views/git_panel.h
         src/views/git_panel.ui

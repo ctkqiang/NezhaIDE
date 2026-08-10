@@ -1,4 +1,5 @@
 #include "main_window.h"
+#include "preferences_dialog.h"
 #include "sidebar_container.h"
 #include "explorer_panel.h"
 #include "git_panel.h"
@@ -44,6 +45,16 @@ void MainWindow::setupMenuBar()
     open_project_action_->setShortcut(QKeySequence::Open);
     open_project_action_->setMenuRole(QAction::NoRole);
     connect(open_project_action_, &QAction::triggered, this, &MainWindow::onOpenProject);
+
+    file_menu->addSeparator();
+
+    auto *prefs_action = file_menu->addAction(LOC("menu.preferences"));
+    prefs_action->setShortcut(QKeySequence::Preferences);
+    prefs_action->setMenuRole(QAction::PreferencesRole);
+    connect(prefs_action, &QAction::triggered, this, [this] {
+        PreferencesDialog dlg(this);
+        dlg.exec();
+    });
 
     file_menu->addSeparator();
 

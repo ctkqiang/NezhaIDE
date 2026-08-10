@@ -53,4 +53,18 @@
     <string key="menu.quit">Quit</string>
     <string key="dialog.open_project_title">Open Project</string>
     <string key="error.project_not_found">Project directory not found: %1</string>
+    <string key="menu.preferences">Preferences...</string>
+    <string key="prefs.theme">Theme</string>
+    <string key="prefs.language">Language</string>
+    <string key="prefs.llm">LLM Model</string>
+    <string key="prefs.theme_auto">Follow System</string>
+    <string key="prefs.theme_light">Light (Default)</string>
+    <string key="prefs.theme_dark">Dark (Nezha Cyber)</string>
+    <string key="prefs.theme_github">GitHub Light</string>
+    <string key="prefs.theme_xcode">Xcode</string>
+    <string key="prefs.lang_chinese">Chinese</string>
+    <string key="prefs.lang_english">English</string>
+    <string key="prefs.llm_provider">Provider</string>
+    <string key="prefs.llm_token">API Token</string>
+    <string key="prefs.restart_hint">Language change will take effect after restart.</string>
 </localization>

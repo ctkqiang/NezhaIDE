@@ -374,10 +374,179 @@ LanguageDefinition languageYaml() {
     LanguageDefinition def;
     def.name = "YAML";
     def.keywords = {"true", "false", "yes", "no", "on", "off", "null", "~"};
-    def.types = {};
     def.lineCommentPrefix = "#";
     def.hasNumberHighlight = true;
     return def;
 }
 
+LanguageDefinition languageJavascript() {
+    LanguageDefinition def;
+    def.name = "JavaScript";
+    def.keywords = {
+        "async", "await", "break", "case", "catch", "class", "const",
+        "continue", "debugger", "default", "delete", "do", "else", "export",
+        "extends", "finally", "for", "function", "if", "import", "in",
+        "instanceof", "let", "new", "of", "return", "super", "switch",
+        "this", "throw", "try", "typeof", "var", "void", "while", "with",
+        "yield", "true", "false", "null", "undefined", "NaN", "Infinity"
+    };
+    def.types = {
+        "Number", "String", "Boolean", "Array", "Object", "Function",
+        "Map", "Set", "Promise", "RegExp", "Error", "Symbol", "BigInt",
+        "console", "document", "window", "JSON", "Math", "Date"
+    };
+    def.lineCommentPrefix = "//";
+    def.blockCommentStart = "/*";
+    def.blockCommentEnd = "*/";
+    def.hasNumberHighlight = true;
+    return def;
+}
+
+LanguageDefinition languageTypescript() {
+    LanguageDefinition def = languageJavascript();
+    def.name = "TypeScript";
+    def.keywords.append({
+        "type", "interface", "enum", "implements", "abstract", "as",
+        "declare", "keyof", "module", "namespace", "readonly", "static",
+        "private", "protected", "public", "any", "unknown", "never"
+    });
+    def.types.append({
+        "string", "number", "boolean", "void", "any", "unknown", "never",
+        "Promise", "ReadonlyArray", "Partial", "Required", "Record"
+    });
+    return def;
+}
+
+LanguageDefinition languageCss() {
+    LanguageDefinition def;
+    def.name = "CSS";
+    def.keywords = {
+        "!important", "inherit", "initial", "unset", "revert"
+    };
+    def.blockCommentStart = "/*";
+    def.blockCommentEnd = "*/";
+    def.hasNumberHighlight = true;
+    return def;
+}
+
+LanguageDefinition languageHtml() {
+    LanguageDefinition def;
+    def.name = "HTML";
+    def.blockCommentStart = "<!--";
+    def.blockCommentEnd = "-->";
+    def.hasNumberHighlight = false;
+    return def;
+}
+
+LanguageDefinition languageShell() {
+    LanguageDefinition def;
+    def.name = "Shell";
+    def.keywords = {
+        "if", "then", "else", "elif", "fi", "case", "esac", "for",
+        "while", "until", "do", "done", "in", "function", "return",
+        "exit", "break", "continue", "export", "local", "readonly",
+        "unset", "source", "alias", "eval", "exec", "trap", "test"
+    };
+    def.lineCommentPrefix = "#";
+    def.hasNumberHighlight = true;
+    return def;
+}
+
+LanguageDefinition languageSql() {
+    LanguageDefinition def;
+    def.name = "SQL";
+    def.keywords = {
+        "SELECT", "FROM", "WHERE", "INSERT", "UPDATE", "DELETE", "CREATE",
+        "DROP", "ALTER", "TABLE", "INDEX", "VIEW", "INTO", "VALUES",
+        "SET", "JOIN", "INNER", "LEFT", "RIGHT", "OUTER", "ON", "AND",
+        "OR", "NOT", "IN", "EXISTS", "BETWEEN", "LIKE", "IS", "NULL",
+        "ORDER", "BY", "ASC", "DESC", "GROUP", "HAVING", "LIMIT",
+        "OFFSET", "UNION", "ALL", "DISTINCT", "AS", "CASE", "WHEN",
+        "THEN", "ELSE", "END", "BEGIN", "COMMIT", "ROLLBACK", "PRIMARY",
+        "KEY", "FOREIGN", "REFERENCES", "CONSTRAINT", "DEFAULT", "CHECK",
+        "UNIQUE", "CASCADE", "TRIGGER", "PROCEDURE", "FUNCTION", "INT",
+        "VARCHAR", "TEXT", "BOOLEAN", "INTEGER", "FLOAT", "DOUBLE",
+        "BIGINT", "SMALLINT", "TIMESTAMP", "DATE", "BLOB", "DECIMAL"
+    };
+    def.lineCommentPrefix = "--";
+    def.blockCommentStart = "/*";
+    def.blockCommentEnd = "*/";
+    def.hasNumberHighlight = true;
+    return def;
+}
+
+LanguageDefinition languageLua() {
+    LanguageDefinition def;
+    def.name = "Lua";
+    def.keywords = {
+        "and", "break", "do", "else", "elseif", "end", "false", "for",
+        "function", "goto", "if", "in", "local", "nil", "not", "or",
+        "repeat", "return", "then", "true", "until", "while"
+    };
+    def.types = {
+        "string", "number", "boolean", "table", "function", "thread",
+        "nil", "userdata"
+    };
+    def.lineCommentPrefix = "--";
+    def.blockCommentStart = "--[[";
+    def.blockCommentEnd = "]]";
+    def.hasNumberHighlight = true;
+    return def;
+}
+
+LanguageDefinition languageKotlin() {
+    LanguageDefinition def;
+    def.name = "Kotlin";
+    def.keywords = {
+        "abstract", "actual", "annotation", "as", "break", "case", "catch",
+        "class", "companion", "const", "constructor", "continue", "data",
+        "do", "else", "enum", "expect", "external", "false", "final",
+        "finally", "for", "fun", "if", "import", "in", "infix", "init",
+        "inline", "inner", "interface", "internal", "is", "lateinit", "null",
+        "object", "open", "operator", "out", "override", "package",
+        "private", "protected", "public", "reified", "return", "sealed",
+        "super", "suspend", "switch", "this", "throw", "true", "try",
+        "typealias", "val", "var", "vararg", "when", "while", "by"
+    };
+    def.types = {
+        "Int", "Long", "Float", "Double", "Boolean", "Char", "String",
+        "Byte", "Short", "Unit", "Nothing", "Any", "Array", "List",
+        "Set", "Map", "MutableList", "MutableSet", "MutableMap",
+        "Sequence", "Pair", "Triple"
+    };
+    def.lineCommentPrefix = "//";
+    def.blockCommentStart = "/*";
+    def.blockCommentEnd = "*/";
+    def.hasNumberHighlight = true;
+    return def;
+}
+
+LanguageDefinition languageSwift() {
+    LanguageDefinition def;
+    def.name = "Swift";
+    def.keywords = {
+        "as", "associatedtype", "async", "await", "break", "case", "catch",
+        "class", "continue", "default", "defer", "deinit", "do", "else",
+        "enum", "extension", "fallthrough", "false", "fileprivate", "for",
+        "func", "guard", "if", "import", "in", "init", "inout", "internal",
+        "is", "let", "mutating", "nil", "nonisolated", "open", "operator",
+        "override", "precedencegroup", "private", "protocol", "public",
+        "repeat", "rethrows", "return", "self", "Self", "static", "struct",
+        "subscript", "super", "switch", "throw", "throws", "true", "try",
+        "typealias", "var", "where", "while"
+    };
+    def.types = {
+        "Int", "Float", "Double", "Bool", "String", "Character", "Void",
+        "Array", "Dictionary", "Set", "Optional", "Result", "Error",
+        "Data", "URL", "Date", "Any", "AnyObject", "Never",
+        "UIView", "UIViewController", "SwiftUI"
+    };
+    def.lineCommentPrefix = "//";
+    def.blockCommentStart = "/*";
+    def.blockCommentEnd = "*/";
+    def.hasNumberHighlight = true;
+    return def;
+}
+
 } // namespace NezhaIDE::Editor
+
