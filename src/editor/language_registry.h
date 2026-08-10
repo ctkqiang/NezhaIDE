@@ -2,12 +2,15 @@
 
 #include <QHash>
 #include <QString>
+#include <QStringList>
 #include <functional>
 
 class QSyntaxHighlighter;
 class QTextDocument;
 
 namespace NezhaIDE::Editor {
+
+struct LanguageDefinition;
 
 class LanguageRegistry final {
 public:
@@ -22,6 +25,8 @@ public:
 private:
     LanguageRegistry();
     void registerCpp();
+    void registerAll();
+    void registerLanguage(const QStringList &extensions, const LanguageDefinition &def);
 
     QHash<QString, std::function<QSyntaxHighlighter *(QTextDocument *, QObject *)>> factories_;
 };
