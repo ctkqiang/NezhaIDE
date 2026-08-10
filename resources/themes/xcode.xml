@@ -20,14 +20,14 @@
     <color key="git.untracked">#8E8E93</color>
     <syntax>
         <token name="editor.background">#FFFFFF</token>
-        <token name="editor.foreground">#000000</token>
-        <token name="keyword">#9B2393</token>
-        <token name="type">#272AD8</token>
-        <token name="function">#3F6E74</token>
+        <token name="editor.foreground">#1C1C1C</token>
+        <token name="keyword">#AD3DA4</token>
+        <token name="type">#326D74</token>
+        <token name="function">#326D74</token>
         <token name="string">#C41A16</token>
-        <token name="comment">#2B7D3B</token>
+        <token name="comment">#5D6C79</token>
         <token name="number">#272AD8</token>
-        <token name="operator">#000000</token>
-        <token name="preprocessor">#3F6E74</token>
+        <token name="operator">#1C1C1C</token>
+        <token name="preprocessor">#643820</token>
     </syntax>
 </theme>
