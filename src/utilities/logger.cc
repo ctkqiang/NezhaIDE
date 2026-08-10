@@ -6,6 +6,8 @@
 #include <chrono>
 #include <iostream>
 
+#include "../configuration.h"
+
 namespace NezhaIDE::Utilities {
 
     Logger &Logger::instance() {
@@ -99,6 +101,6 @@ namespace NezhaIDE::Utilities {
     std::string Logger::timestamp() {
         const auto now = std::chrono::system_clock::now();
         const auto time = std::chrono::floor<std::chrono::seconds>(now);
-        return std::format(" 哪吒网络安全IDE@{:%Y-%m-%d %H:%M:%S}", time);
+        return std::format("[{}] {:%Y-%m-%d %H:%M:%S}", NezhaIDE::Constants::ApplicationName, time);
     }
 }
