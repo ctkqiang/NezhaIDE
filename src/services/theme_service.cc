@@ -42,13 +42,21 @@ static const QHash<QString, QString> kFallbackColors = {
 
 static const QHash<QString, QString> kStyleTemplates = {
     {"style.toolbar",
-     "QToolBar { border: none; border-bottom: 1px solid $border; padding: 4px 8px; spacing: 4px; }"},
+     "QToolBar { border: none; border-bottom: 1px solid $border; padding: 4px 6px; spacing: 2px; }"
+     "QToolBar QToolButton { border: none; border-radius: 4px; padding: 4px 8px;"
+     "color: $text.secondary; font-size: 12px; }"
+     "QToolBar QToolButton:hover { background: $overlay.hover; color: $text.primary; }"
+     "QToolBar QToolButton:pressed { background: $overlay.selection; }"
+     "QToolBar::separator { width: 1px; margin: 4px 6px; background: $border; }"},
 
     {"style.tree_view",
-     "QTreeView { border: none; background: $bg.secondary; }"
-     "QTreeView::item { padding: 4px 8px; border-radius: 4px; }"
+     "QTreeView { border: none; background: $bg.secondary; outline: none; }"
+     "QTreeView::item { padding: 5px 8px; border-left: 2px solid transparent; }"
      "QTreeView::item:hover { background: $overlay.hover; }"
-     "QTreeView::item:selected { background: $overlay.selection; color: $accent; }"
+     "QTreeView::item:selected { background: $overlay.selection; color: $accent;"
+     "border-left: 2px solid $accent; }"
+     "QTreeView::item:selected:!active { background: $overlay.hover.subtle; color: $text.primary; }"
+     "QTreeView::branch { background: transparent; }"
      "QTreeView::branch:has-siblings:!adjoins-item { border-image: none; }"
      "QTreeView::branch:has-siblings:adjoins-item { border-image: none; }"
      "QTreeView::branch:!has-children:!has-siblings:adjoins-item { border-image: none; }"},

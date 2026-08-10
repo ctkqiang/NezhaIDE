@@ -1,14 +1,17 @@
 #include "explorer_panel.h"
 #include "src/services/localization_service.h"
 #include "src/services/theme_service.h"
-#include <QVBoxLayout>
+#include <QApplication>
+#include <QDir>
+#include <QDesktopServices>
+#include <QFile>
+#include <QInputDialog>
 #include <QMenu>
 #include <QMessageBox>
-#include <QInputDialog>
-#include <QDir>
-#include <QFile>
-#include <QDesktopServices>
+#include <QScroller>
+#include <QStyle>
 #include <QUrl>
+#include <QVBoxLayout>
 
 namespace NezhaIDE::Views {
 
@@ -51,6 +54,8 @@ ExplorerPanel::ExplorerPanel(QWidget *parent)
 
     layout->addWidget(tree_view_);
 
+    QScroller::grabGesture(tree_view_, QScroller::LeftMouseButtonGesture);
+
     applyStyles();
 
     connect(&NezhaIDE::Services::ThemeService::instance(), &NezhaIDE::Services::ThemeService::themeChanged,
@@ -61,11 +66,17 @@ ExplorerPanel::~ExplorerPanel() = default;
 
 void ExplorerPanel::setupActions()
 {
-    new_file_action_ = toolbar_->addAction(QStringLiteral("➕ ") + LOC("explorer.new_file"));
-    new_folder_action_ = toolbar_->addAction(QStringLiteral("\U0001F4C1 ") + LOC("explorer.new_folder"));
+    auto *style = QApplication::style();
+
+    new_file_action_ = toolbar_->addAction(
+        style->standardIcon(QStyle::SP_FileIcon), LOC("explorer.new_file"));
+    new_folder_action_ = toolbar_->addAction(
+        style->standardIcon(QStyle::SP_DirIcon), LOC("explorer.new_folder"));
     toolbar_->addSeparator();
-    refresh_action_ = toolbar_->addAction(QStringLiteral("↻ ") + LOC("explorer.refresh"));
-    collapse_all_action_ = toolbar_->addAction(QStringLiteral("▲ ") + LOC("explorer.collapse_all"));
+    refresh_action_ = toolbar_->addAction(
+        style->standardIcon(QStyle::SP_BrowserReload), LOC("explorer.refresh"));
+    collapse_all_action_ = toolbar_->addAction(
+        style->standardIcon(QStyle::SP_ArrowUp), LOC("explorer.collapse_all"));
 
     connect(new_file_action_, &QAction::triggered, this, &ExplorerPanel::onNewFile);
     connect(new_folder_action_, &QAction::triggered, this, &ExplorerPanel::onNewFolder);
@@ -205,13 +216,13 @@ void ExplorerPanel::onCustomContextMenu(const QPoint &pos)
     QMenu menu(this);
     menu.setStyleSheet(NezhaIDE::Services::ThemeService::instance().qss(QStringLiteral("style.menu")));
 
-    menu.addAction(QStringLiteral("☁️ ") + LOC("explorer.new_file"), this, &ExplorerPanel::onNewFile);
-    menu.addAction(QStringLiteral("\U0001F4C1 ") + LOC("explorer.new_folder"), this, &ExplorerPanel::onNewFolder);
+    menu.addAction(LOC("explorer.new_file"), this, &ExplorerPanel::onNewFile);
+    menu.addAction(LOC("explorer.new_folder"), this, &ExplorerPanel::onNewFolder);
     menu.addSeparator();
-    menu.addAction(QStringLiteral("✏️ ") + LOC("explorer.rename"), this, &ExplorerPanel::onRenameFile);
-    menu.addAction(QStringLiteral("\U0001F5D1️ ") + LOC("explorer.delete"), this, &ExplorerPanel::onDeleteFile);
+    menu.addAction(LOC("explorer.rename"), this, &ExplorerPanel::onRenameFile);
+    menu.addAction(LOC("explorer.delete"), this, &ExplorerPanel::onDeleteFile);
     menu.addSeparator();
-    menu.addAction(QStringLiteral("\U0001F4C2 ") + LOC("explorer.open_in_finder"), this, &ExplorerPanel::onOpenInFinder);
+    menu.addAction(LOC("explorer.open_in_finder"), this, &ExplorerPanel::onOpenInFinder);
 
     menu.exec(tree_view_->viewport()->mapToGlobal(pos));
 }
