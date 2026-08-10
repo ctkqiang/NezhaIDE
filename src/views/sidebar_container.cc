@@ -1,6 +1,7 @@
 #include "sidebar_container.h"
 #include "explorer_panel.h"
 #include "git_panel.h"
+#include "src/services/localization_service.h"
 #include <QVBoxLayout>
 
 namespace NezhaIDE::Views {
@@ -54,8 +55,8 @@ void SidebarContainer::setupHeader()
     header_layout->setContentsMargins(8, 0, 8, 0);
     header_layout->setSpacing(0);
 
-    explorer_tab_ = new QPushButton(tr("资源管理器"), header_);
-    git_tab_ = new QPushButton(QStringLiteral("Git"), header_);
+    explorer_tab_ = new QPushButton(LOC("sidebar.explorer"), header_);
+    git_tab_ = new QPushButton(LOC("sidebar.git"), header_);
     git_tab_->setFixedWidth(60);
 
     header_layout->addWidget(explorer_tab_);

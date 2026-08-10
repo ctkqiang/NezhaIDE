@@ -2,6 +2,7 @@
 #include "sidebar_container.h"
 #include "explorer_panel.h"
 #include "git_panel.h"
+#include "src/services/localization_service.h"
 #include "ui_main_window.h"
 #include <QSplitter>
 #include <QTabWidget>
@@ -43,7 +44,7 @@ void MainWindow::setupLayout()
         "QTabBar::tab:selected { color: #1F2329; font-weight: bold; background: #FFFFFF; }"
         "QTabBar::tab:hover { background: rgba(0,0,0,0.02); }"
     );
-    editor_host_->addTab(new QLabel(tr("打开文件以开始编辑")), tr("欢迎"));
+    editor_host_->addTab(new QLabel(LOC("editor.open_to_edit")), LOC("editor.welcome"));
     splitter_->addWidget(editor_host_);
 
     splitter_->setStretchFactor(0, 0);
