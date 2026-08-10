@@ -18,9 +18,9 @@ add_executable(NezhaIDE main.cc
         src/views/main_window.cc
         src/views/main_window.h
         src/views/main_window.ui
+        src/model/column_def.h
         src/model/user_preference.h
-        src/repository/user_preference_repository.h
-        src/repository/user_preference_repository.cc)
+        src/repository/orm.h)
 
 target_include_directories(NezhaIDE PRIVATE ${CMAKE_SOURCE_DIR})
 

@@ -176,7 +176,7 @@ public:
     [[ nodiscard ]]
     Result Execute(
         std::string_view SQL
-    );
+    ) const;
 
     [[ nodiscard ]]
     Result Transaction(
@@ -189,15 +189,18 @@ public:
     [[ nodiscard ]]
     bool IsDatabaseConnected() const noexcept;
 
+    [[ nodiscard ]]
+    std::int64_t last_insert_rowid() const noexcept;
+
 private:
     [[ nodiscard ]]
     Result ConfigureDatabase();
 
     [[ nodiscard ]]
-    Result EnableForeignKeys();
+    Result EnableForeignKeys() const;
 
     [[ nodiscard ]]
-    Result EnableWAL();
+    Result EnableWAL() const;
 
     [[ nodiscard ]]
     DatabaseError CreateDatabaseError(

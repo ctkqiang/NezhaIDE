@@ -212,11 +212,11 @@ namespace NezhaIDE::Services {
         return {};
     }
 
-    DatabaseHelper::Result DatabaseHelper::EnableForeignKeys() {
+    DatabaseHelper::Result DatabaseHelper::EnableForeignKeys() const {
         return Execute("PRAGMA foreign_keys = ON;");
     }
 
-    DatabaseHelper::Result DatabaseHelper::EnableWAL() {
+    DatabaseHelper::Result DatabaseHelper::EnableWAL() const {
         return Execute("PRAGMA journal_mode=WAL;");
     }
 
@@ -232,7 +232,7 @@ namespace NezhaIDE::Services {
         return DatabaseHelper::SQLQuery(Database, stmt, std::string(SQL));
     }
 
-    DatabaseHelper::Result DatabaseHelper::Execute(const std::string_view SQL) {
+    DatabaseHelper::Result DatabaseHelper::Execute(const std::string_view SQL) const {
         auto prepareResult = Prepare(SQL);
         if (!prepareResult.has_value()) {
             return std::unexpected(prepareResult.error());
@@ -269,6 +269,10 @@ namespace NezhaIDE::Services {
 
     bool DatabaseHelper::IsDatabaseConnected() const noexcept {
         return Database != nullptr;
+    }
+
+    std::int64_t DatabaseHelper::last_insert_rowid() const noexcept {
+        return sqlite3_last_insert_rowid(Database);
     }
 
     DatabaseHelper::DatabaseError DatabaseHelper::CreateDatabaseError(
