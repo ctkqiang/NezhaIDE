@@ -9,7 +9,10 @@
 #endif
 
 class QSplitter;
-class QTabWidget;
+
+namespace NezhaIDE::Editor {
+    class EditorTabHost;
+}
 
 namespace Ui {
     class MainWindow;
@@ -33,7 +36,7 @@ private:
     Ui::MainWindow *ui{};
     SidebarContainer *sidebar_{};
     QSplitter *splitter_{};
-    QTabWidget *editor_host_{};
+    NezhaIDE::Editor::EditorTabHost *editor_host_{};
 };
 
 } // namespace NezhaIDE::Views

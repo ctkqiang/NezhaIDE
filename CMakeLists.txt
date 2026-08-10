@@ -17,6 +17,14 @@ add_executable(NezhaIDE main.cc
         src/services/localization_service.h
         src/services/theme_service.cc
         src/services/theme_service.h
+        src/editor/code_editor.cc
+        src/editor/code_editor.h
+        src/editor/cpp_highlighter.cc
+        src/editor/cpp_highlighter.h
+        src/editor/language_registry.cc
+        src/editor/language_registry.h
+        src/editor/editor_tab_host.cc
+        src/editor/editor_tab_host.h
         src/configuration.h
         src/configuration.cc
         src/views/main_window.cc

@@ -18,4 +18,16 @@
     <color key="git.added">#1A7F37</color>
     <color key="git.deleted">#D73A49</color>
     <color key="git.untracked">#8E8E93</color>
+    <syntax>
+        <token name="editor.background">#FFFFFF</token>
+        <token name="editor.foreground">#000000</token>
+        <token name="keyword">#9B2393</token>
+        <token name="type">#272AD8</token>
+        <token name="function">#3F6E74</token>
+        <token name="string">#C41A16</token>
+        <token name="comment">#2B7D3B</token>
+        <token name="number">#272AD8</token>
+        <token name="operator">#000000</token>
+        <token name="preprocessor">#3F6E74</token>
+    </syntax>
 </theme>

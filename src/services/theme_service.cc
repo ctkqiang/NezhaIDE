@@ -28,6 +28,16 @@ static const QHash<QString, QString> kFallbackColors = {
     {"git.added",          "#27AE60"},
     {"git.deleted",        "#E74C3C"},
     {"git.untracked",      "#999999"},
+    {"syntax.editor.background", "#FFFFFF"},
+    {"syntax.editor.foreground", "#1F2329"},
+    {"syntax.keyword",     "#A626A4"},
+    {"syntax.type",        "#0B7285"},
+    {"syntax.function",    "#3574F0"},
+    {"syntax.string",      "#50A14F"},
+    {"syntax.comment",     "#A0A1A7"},
+    {"syntax.number",      "#986801"},
+    {"syntax.operator",    "#1F2329"},
+    {"syntax.preprocessor","#7A3E9D"},
 };
 
 static const QHash<QString, QString> kStyleTemplates = {
@@ -111,6 +121,12 @@ static const QHash<QString, QString> kStyleTemplates = {
 
     {"style.status_label",
      "QLabel { padding: 4px 12px; font-size: 11px; color: $text.tertiary; background: $bg.secondary; }"},
+
+    {"style.editor",
+     "QPlainTextEdit { background: $syntax.editor.background; color: $syntax.editor.foreground;"
+     "border: none; selection-background-color: $overlay.selection;"
+     "font-family: 'JetBrains Mono', 'SF Mono', Menlo, monospace; font-size: 13px; }"
+     "QWidget#lineNumberArea { background: $bg.secondary; color: $text.tertiary; }"},
 };
 
 ThemeService &ThemeService::instance()
@@ -157,6 +173,17 @@ QColor ThemeService::qcolor(const QString &key) const
 QString ThemeService::qss(const QString &key) const
 {
     return styles_.value(key);
+}
+
+QHash<QString, QColor> ThemeService::syntaxColors() const
+{
+    QHash<QString, QColor> result;
+    for (auto it = colors_.cbegin(); it != colors_.cend(); ++it) {
+        if (it.key().startsWith(QStringLiteral("syntax."))) {
+            result[it.key()] = QColor(it.value());
+        }
+    }
+    return result;
 }
 
 IDETheme ThemeService::currentTheme() const noexcept
@@ -217,14 +244,27 @@ void ThemeService::loadXml(const QString &path)
     }
 
     QXmlStreamReader xml(&file);
+    bool in_syntax = false;
     while (!xml.atEnd() && !xml.hasError()) {
         const auto token = xml.readNext();
-        if (token == QXmlStreamReader::StartElement && xml.name() == QStringLiteral("color")) {
-            const auto key = xml.attributes().value("key").toString();
-            const auto value = xml.readElementText();
-            if (!key.isEmpty()) {
-                colors_[key] = value;
+        if (token == QXmlStreamReader::StartElement) {
+            if (xml.name() == QStringLiteral("color")) {
+                const auto key = xml.attributes().value("key").toString();
+                const auto value = xml.readElementText();
+                if (!key.isEmpty()) {
+                    colors_[key] = value;
+                }
+            } else if (xml.name() == QStringLiteral("syntax")) {
+                in_syntax = true;
+            } else if (in_syntax && xml.name() == QStringLiteral("token")) {
+                const auto name = xml.attributes().value("name").toString();
+                const auto value = xml.readElementText();
+                if (!name.isEmpty()) {
+                    colors_[QStringLiteral("syntax.") + name] = value;
+                }
             }
+        } else if (token == QXmlStreamReader::EndElement && xml.name() == QStringLiteral("syntax")) {
+            in_syntax = false;
         }
     }
 

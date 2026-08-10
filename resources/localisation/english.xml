@@ -29,6 +29,7 @@
     <string key="sidebar.git">Git</string>
     <string key="editor.welcome">Welcome</string>
     <string key="editor.open_to_edit">Open a file to start editing</string>
+    <string key="editor.file_read_error">Could not open file: %1</string>
     <string key="git.refresh">Refresh</string>
     <string key="git.stage">Stage</string>
     <string key="git.unstage">Unstage</string>

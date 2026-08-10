@@ -2,12 +2,11 @@
 #include "sidebar_container.h"
 #include "explorer_panel.h"
 #include "git_panel.h"
+#include "src/editor/editor_tab_host.h"
 #include "src/services/localization_service.h"
 #include "src/services/theme_service.h"
 #include "ui_main_window.h"
 #include <QSplitter>
-#include <QTabWidget>
-#include <QLabel>
 
 namespace NezhaIDE::Views {
 
@@ -34,10 +33,7 @@ void MainWindow::setupLayout()
     sidebar_ = new SidebarContainer(this);
     splitter_->addWidget(sidebar_);
 
-    editor_host_ = new QTabWidget(this);
-    editor_host_->setTabsClosable(true);
-    editor_host_->setMovable(true);
-    editor_host_->addTab(new QLabel(LOC("editor.open_to_edit")), LOC("editor.welcome"));
+    editor_host_ = new NezhaIDE::Editor::EditorTabHost(this);
     splitter_->addWidget(editor_host_);
 
     splitter_->setStretchFactor(0, 0);
@@ -48,9 +44,8 @@ void MainWindow::setupLayout()
 
     applyStyles();
 
-    connect(sidebar_->explorer(), &ExplorerPanel::fileOpened, this, [this](const QString &path) {
-        editor_host_->setTabText(0, path.section('/', -1));
-    });
+    connect(sidebar_->explorer(), &ExplorerPanel::fileOpened,
+            editor_host_, &NezhaIDE::Editor::EditorTabHost::openFile);
 }
 
 void MainWindow::applyStyles()
@@ -58,7 +53,6 @@ void MainWindow::applyStyles()
     auto &ts = NezhaIDE::Services::ThemeService::instance();
     setStyleSheet(ts.qss(QStringLiteral("style.main_window")));
     splitter_->setStyleSheet(ts.qss(QStringLiteral("style.splitter")));
-    editor_host_->setStyleSheet(ts.qss(QStringLiteral("style.tab_widget")));
 }
 
 } // namespace NezhaIDE::Views

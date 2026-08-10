@@ -28,6 +28,7 @@ public:
     [[nodiscard]] QString color(const QString &key) const;
     [[nodiscard]] QColor qcolor(const QString &key) const;
     [[nodiscard]] QString qss(const QString &key) const;
+    [[nodiscard]] QHash<QString, QColor> syntaxColors() const;
     [[nodiscard]] IDETheme currentTheme() const noexcept;
 
     [[nodiscard]] static QString themeId(IDETheme theme);

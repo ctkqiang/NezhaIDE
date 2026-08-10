@@ -29,6 +29,7 @@
     <string key="sidebar.git">Git</string>
     <string key="editor.welcome">欢迎</string>
     <string key="editor.open_to_edit">打开文件以开始编辑</string>
+    <string key="editor.file_read_error">无法打开文件: %1</string>
     <string key="git.refresh">刷新</string>
     <string key="git.stage">暂存</string>
     <string key="git.unstage">取消暂存</string>
