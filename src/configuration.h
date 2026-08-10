@@ -7,8 +7,12 @@
 #ifndef NEZHAIDE_CONFIGURATION_H
 #define NEZHAIDE_CONFIGURATION_H
 
-#include <QSettings>
-#include <string>
+#if __has_include(<QSettings>)
+    #include <QSettings>
+    #define HAS_QSETTINGS 1
+#else
+    #define HAS_QSETTINGS 0
+#endif
 
 namespace NezhaIDE {
     struct AuthorMetadata final {

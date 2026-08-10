@@ -6,6 +6,7 @@ set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTOUIC ON)
 
 find_package(Qt6 REQUIRED COMPONENTS Core Widgets)
+find_package(SQLite3 REQUIRED)
 
 add_executable(NezhaIDE main.cc
         src/utilities/logger.cc
@@ -16,6 +17,14 @@ add_executable(NezhaIDE main.cc
         src/configuration.cc
         src/views/main_window.cc
         src/views/main_window.h
-        src/views/main_window.ui)
+        src/views/main_window.ui
+        src/model/column_def.h
+        src/model/user_preference.h
+        src/repository/orm.h
+        src/model/tool_registry.h)
 
-target_link_libraries(NezhaIDE PRIVATE Qt6::Core Qt6::Widgets)
+target_include_directories(NezhaIDE PRIVATE ${CMAKE_SOURCE_DIR})
+
+target_compile_definitions(NezhaIDE PRIVATE NEZHA_PROJECT_ROOT="${CMAKE_SOURCE_DIR}")
+
+target_link_libraries(NezhaIDE PRIVATE Qt6::Core Qt6::Widgets SQLite3::SQLite3)

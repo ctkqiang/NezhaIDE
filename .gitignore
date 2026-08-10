@@ -7,3 +7,5 @@
 .workbuddy
 .codebuddy
 .NezhaAI
+cmake-build-*/
+data/*.db*

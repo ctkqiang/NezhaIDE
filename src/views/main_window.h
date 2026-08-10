@@ -5,7 +5,13 @@
 #ifndef NEZHAIDE_MAIN_WINDOW_H
 #define NEZHAIDE_MAIN_WINDOW_H
 
-#include <QMainWindow>
+#if __has_include(<QMainWindow>)
+    #include <QMainWindow>
+    #define HAS_QMAINWINDOW 1
+#else
+    #define HAS_QMAINWINDOW 0
+    #error "缺少QT，请先安装 QT。"
+#endif
 
 namespace Ui {
     class MainWindow;
