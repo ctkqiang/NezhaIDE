@@ -1,9 +1,11 @@
 #include "sidebar_container.h"
 #include "explorer_panel.h"
 #include "git_panel.h"
-#include "src/services/localization_service.h"
 #include "src/services/theme_service.h"
+#include <QDir>
 #include <QVBoxLayout>
+#include <QHBoxLayout>
+#include <QPushButton>
 
 namespace NezhaIDE::Views {
 
@@ -18,13 +20,10 @@ SidebarContainer::SidebarContainer(QWidget *parent)
     layout->addWidget(header_);
 
     stack_ = new QStackedWidget(this);
-
     explorer_panel_ = new ExplorerPanel(this);
     git_panel_ = new GitPanel(this);
-
     stack_->addWidget(explorer_panel_);
     stack_->addWidget(git_panel_);
-
     layout->addWidget(stack_, 1);
 
     applyStyles();
@@ -32,7 +31,7 @@ SidebarContainer::SidebarContainer(QWidget *parent)
     connect(&NezhaIDE::Services::ThemeService::instance(), &NezhaIDE::Services::ThemeService::themeChanged,
             this, [this] { applyStyles(); });
 
-    switchToTab(SidebarTab::Explorer);
+    showExplorer();
 }
 
 SidebarContainer::~SidebarContainer() = default;
@@ -40,72 +39,59 @@ SidebarContainer::~SidebarContainer() = default;
 void SidebarContainer::setupHeader()
 {
     header_ = new QWidget(this);
-    header_->setFixedHeight(56);
+    header_->setFixedHeight(32);
     header_->setObjectName(QStringLiteral("sidebarHeader"));
 
-    auto *outer = new QVBoxLayout(header_);
-    outer->setContentsMargins(0, 0, 0, 0);
-    outer->setSpacing(0);
+    auto *layout = new QHBoxLayout(header_);
+    layout->setContentsMargins(12, 0, 4, 0);
+    layout->setSpacing(4);
 
-    auto *title_bar = new QHBoxLayout();
-    title_bar->setContentsMargins(16, 8, 8, 0);
-    title_bar->setSpacing(0);
+    project_name_ = new QLabel(QStringLiteral("PROJECT"), header_);
+    project_name_->setStyleSheet(
+        QStringLiteral("QLabel { font-size: 11px; font-weight: bold;"
+        "text-transform: uppercase; letter-spacing: 0.5px; background: transparent; }"));
+    layout->addWidget(project_name_);
+    layout->addStretch();
 
-    section_title_ = new QLabel(LOC("sidebar.explorer").toUpper(), header_);
-    section_title_->setObjectName(QStringLiteral("sidebarSectionTitle"));
-    section_title_->setStyleSheet(
-        QStringLiteral("QLabel { font-size: 11px; font-weight: bold; color: ") +
-        NezhaIDE::Services::ThemeService::instance().color(QStringLiteral("text.secondary")) +
-        QStringLiteral("; text-transform: uppercase; letter-spacing: 1px; }"));
-    title_bar->addWidget(section_title_);
-    title_bar->addStretch();
-    outer->addLayout(title_bar);
+    auto *btn_new = new QPushButton(QStringLiteral("+"), header_);
+    btn_new->setFixedSize(20, 20);
+    btn_new->setFlat(true);
+    btn_new->setCursor(Qt::PointingHandCursor);
+    btn_new->setStyleSheet(
+        QStringLiteral("QPushButton { border: none; font-size: 14px; font-weight: bold;"
+        "background: transparent; border-radius: 3px; }"
+        "QPushButton:hover { background: rgba(0,0,0,0.08); }"));
+    connect(btn_new, &QPushButton::clicked, explorer_panel_, &ExplorerPanel::onNewFile);
+    layout->addWidget(btn_new);
 
-    auto *tab_bar = new QHBoxLayout();
-    tab_bar->setContentsMargins(12, 4, 8, 0);
-    tab_bar->setSpacing(0);
-
-    explorer_tab_ = new QPushButton(LOC("sidebar.explorer").toUpper(), header_);
-    git_tab_ = new QPushButton(LOC("sidebar.git").toUpper(), header_);
-
-    tab_bar->addWidget(explorer_tab_);
-    tab_bar->addWidget(git_tab_);
-    tab_bar->addStretch();
-    outer->addLayout(tab_bar);
-
-    connect(explorer_tab_, &QPushButton::clicked, this, &SidebarContainer::switchToExplorer);
-    connect(git_tab_, &QPushButton::clicked, this, &SidebarContainer::switchToGit);
+    auto *btn_refresh = new QPushButton(QStringLiteral("↻"), header_);
+    btn_refresh->setFixedSize(20, 20);
+    btn_refresh->setFlat(true);
+    btn_refresh->setCursor(Qt::PointingHandCursor);
+    btn_refresh->setStyleSheet(btn_new->styleSheet());
+    connect(btn_refresh, &QPushButton::clicked, this, [this] {
+        explorer()->setRootPath(QDir::currentPath());
+    });
+    layout->addWidget(btn_refresh);
 }
 
 ExplorerPanel *SidebarContainer::explorer() const { return explorer_panel_; }
-
 GitPanel *SidebarContainer::gitPanel() const { return git_panel_; }
 
-void SidebarContainer::switchToExplorer()
+void SidebarContainer::showExplorer()
 {
-    switchToTab(SidebarTab::Explorer);
+    stack_->setCurrentIndex(0);
+    project_name_->setText(QStringLiteral("EXPLORER"));
+    project_name_->setStyleSheet(
+        project_name_->styleSheet() +
+        QStringLiteral(" color: %1;").arg(
+            NezhaIDE::Services::ThemeService::instance().color(QStringLiteral("text.secondary"))));
 }
 
-void SidebarContainer::switchToGit()
+void SidebarContainer::showGit()
 {
-    switchToTab(SidebarTab::Git);
-}
-
-void SidebarContainer::switchToTab(SidebarTab tab)
-{
-    current_tab_ = tab;
-    stack_->setCurrentIndex(static_cast<int>(tab));
-    updateTabStyles();
-    emit tabChanged(tab);
-}
-
-void SidebarContainer::updateTabStyles()
-{
-    auto &ts = NezhaIDE::Services::ThemeService::instance();
-    const auto is_explorer = (current_tab_ == SidebarTab::Explorer);
-    explorer_tab_->setStyleSheet(ts.qss(is_explorer ? QStringLiteral("style.tab_active") : QStringLiteral("style.tab_inactive")));
-    git_tab_->setStyleSheet(ts.qss(is_explorer ? QStringLiteral("style.tab_inactive") : QStringLiteral("style.tab_active")));
-    section_title_->setText(is_explorer ? LOC("sidebar.explorer").toUpper() : LOC("sidebar.git").toUpper());
+    stack_->setCurrentIndex(1);
+    project_name_->setText(QStringLiteral("GIT"));
 }
 
 void SidebarContainer::applyStyles()
@@ -114,7 +100,6 @@ void SidebarContainer::applyStyles()
     setStyleSheet(ts.qss(QStringLiteral("style.panel")));
     stack_->setStyleSheet(ts.qss(QStringLiteral("style.stack")));
     header_->setStyleSheet(ts.qss(QStringLiteral("style.header")));
-    updateTabStyles();
 }
 
 } // namespace NezhaIDE::Views

@@ -40,6 +40,8 @@ add_executable(NezhaIDE main.cc
         src/views/explorer_panel.ui
         src/views/preferences_dialog.cc
         src/views/preferences_dialog.h
+        src/views/activity_bar.cc
+        src/views/activity_bar.h
         src/views/git_panel.cc
         src/views/git_panel.h
         src/views/git_panel.ui

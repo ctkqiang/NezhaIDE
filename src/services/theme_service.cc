@@ -42,51 +42,47 @@ static const QHash<QString, QString> kFallbackColors = {
 
 static const QHash<QString, QString> kStyleTemplates = {
     {"style.toolbar",
-     "QToolBar { border: none; border-bottom: 1px solid $border; padding: 4px 6px; spacing: 2px;"
-     "background: $bg.secondary; }"
+     "QToolBar { border: none; padding: 4px 6px; spacing: 2px;"
+     "background: transparent; }"
      "QToolBar QToolButton { border: none; border-radius: 4px; padding: 4px 8px;"
      "color: $text.secondary; font-size: 12px; }"
      "QToolBar QToolButton:hover { background: $overlay.hover; color: $text.primary; }"
      "QToolBar QToolButton:pressed { background: $overlay.selection; }"
-     "QToolBar::separator { width: 1px; margin: 4px 6px; background: $border; }"},
+     "QToolBar::separator { width: 1px; margin: 4px 6px; background: transparent; }"},
 
     {"style.tree_view",
      "QTreeView { border: none; background: $bg.secondary; outline: none;"
      "font-size: 13px; }"
-     "QTreeView::item { padding: 5px 8px; border-left: 2px solid transparent;"
-     "border-radius: 0; min-height: 22px; }"
+     "QTreeView::item { padding: 4px 8px; min-height: 24px; }"
      "QTreeView::item:hover { background: $overlay.hover; }"
-     "QTreeView::item:selected { background: $overlay.selection; color: $accent;"
-     "border-left: 2px solid $accent; }"
-     "QTreeView::item:selected:!active { background: $overlay.hover.subtle; color: $text.primary; }"
+     "QTreeView::item:selected { background: $overlay.selection; color: $text.primary; }"
      "QTreeView::branch { background: transparent; }"
      "QTreeView::branch:has-siblings:!adjoins-item { border-image: none; }"
      "QTreeView::branch:has-siblings:adjoins-item { border-image: none; }"
      "QTreeView::branch:!has-children:!has-siblings:adjoins-item { border-image: none; }"},
 
     {"style.list_widget",
-     "QListWidget { border: none; background: $bg.secondary; font-size: 13px; }"
-     "QListWidget::item { padding: 4px 12px; border-radius: 0; min-height: 22px; }"
+     "QListWidget { border: none; background: transparent; font-size: 13px; }"
+     "QListWidget::item { padding: 4px 12px; min-height: 24px; }"
      "QListWidget::item:hover { background: $overlay.hover; }"
-     "QListWidget::item:selected { background: $overlay.selection; color: $accent; }"},
+     "QListWidget::item:selected { background: $overlay.selection; color: $text.primary; }"},
 
     {"style.splitter",
-     "QSplitter::handle { background: $border; }"
-     "QSplitter::handle:hover { background: $accent; }"},
+     "QSplitter::handle { background: transparent; width: 1px; }"
+     "QSplitter::handle:hover { background: $border; }"},
 
     {"style.tab_widget",
-     "QTabWidget::pane { border: none; background: $bg.primary; top: -1px; }"
-     "QTabWidget::tab-bar { alignment: left; }"
-     "QTabBar { background: $bg.secondary; border-bottom: 1px solid $border; }"
+     "QTabWidget::pane { border: none; background: $bg.primary; }"
+     "QTabWidget::tab-bar { alignment: left; left: 0; }"
+     "QTabBar { background: $bg.secondary; padding: 2px 4px 0 4px; }"
      "QTabBar::tab { background: transparent; color: $text.secondary;"
-     "padding: 6px 12px; margin: 4px 1px 0 1px;"
-     "border: none; border-bottom: 2px solid transparent;"
-     "font-size: 12px; height: 28px; }"
+     "padding: 5px 12px; margin: 2px 1px 0 1px;"
+     "border: none; border-radius: 4px 4px 0 0;"
+     "font-size: 12px; height: 24px; }"
      "QTabBar::tab:hover { background: $overlay.hover; color: $text.primary; }"
-     "QTabBar::tab:selected { color: $text.primary; background: $bg.primary;"
-     "border-bottom: 2px solid $accent; }"
+     "QTabBar::tab:selected { background: $bg.primary; color: $text.primary; }"
      "QTabBar::close-button { subcontrol-position: right;"
-     "border-radius: 3px; padding: 2px; margin-left: 6px; }"
+     "border-radius: 8px; padding: 0; margin: 0 0 0 4px; }"
      "QTabBar::close-button:hover { background: $overlay.hover; }"},
 
     {"style.panel",
@@ -96,11 +92,10 @@ static const QHash<QString, QString> kStyleTemplates = {
      "QStackedWidget { background: $bg.secondary; }"},
 
     {"style.header",
-     "QWidget { background: $bg.secondary; border-bottom: 1px solid $border; }"},
+     "QWidget { background: $bg.secondary; }"},
 
     {"style.main_window",
-     "QMainWindow { background: $bg.primary; }"
-     "QMainWindow::separator { width: 1px; background: $border; }"},
+     "QMainWindow { background: $bg.primary; }"},
 
     {"style.explorer_root",
      "QWidget#ExplorerPanel { background: $bg.secondary; }"},
@@ -116,10 +111,10 @@ static const QHash<QString, QString> kStyleTemplates = {
      "border: none; border-bottom: 2px solid transparent;"
      "padding: 8px 12px; font-size: 11px;"
      "text-transform: uppercase; letter-spacing: 0.5px; }"
-     "QPushButton:hover { background: $overlay.hover; color: $text.secondary; }"},
+     "QPushButton:hover { color: $text.secondary; }"},
 
     {"style.menu",
-     "QMenu { border: 1px solid $border; border-radius: 6px; padding: 4px;"
+     "QMenu { border: none; border-radius: 8px; padding: 4px;"
      "background: $bg.primary; }"
      "QMenu::item { padding: 6px 32px 6px 12px; border-radius: 4px;"
      "font-size: 13px; }"
@@ -127,24 +122,23 @@ static const QHash<QString, QString> kStyleTemplates = {
      "QMenu::separator { height: 1px; background: $border; margin: 4px 8px; }"},
 
     {"style.menubar",
-     "QMenuBar { background: $bg.secondary; border-bottom: 1px solid $border;"
+     "QMenuBar { background: $bg.secondary;"
      "padding: 2px 0; font-size: 13px; }"
      "QMenuBar::item { padding: 4px 10px; border-radius: 4px; }"
      "QMenuBar::item:selected { background: $overlay.hover; }"},
 
     {"style.statusbar",
-     "QStatusBar { background: $accent; color: $button.text;"
-     "border: none; font-size: 12px; padding: 2px 12px; }"
+     "QStatusBar { background: $bg.secondary; color: $text.tertiary;"
+     "border: none; font-size: 11px; padding: 0 12px; }"
      "QStatusBar::item { border: none; }"
-     "QStatusBar QLabel { color: $button.text; padding: 0 8px; }"},
+     "QStatusBar QLabel { color: $text.tertiary; padding: 0 8px; }"},
 
     {"style.branch_label",
-     "QLabel { padding: 8px 12px; font-size: 12px; color: $text.secondary;"
-     "border-bottom: 1px solid $border; background: $bg.primary; }"},
+     "QLabel { padding: 6px 12px; font-size: 12px; font-weight: bold;"
+     "color: $text.primary; background: transparent; }"},
 
     {"style.commit_frame",
-     "QWidget { border-top: 1px solid $border; background: $bg.primary;"
-     "padding: 8px; }"},
+     "QWidget { background: transparent; padding: 8px; }"},
 
     {"style.commit_input",
      "QTextEdit { border: 1px solid $border; border-radius: 6px; padding: 8px;"
@@ -152,18 +146,20 @@ static const QHash<QString, QString> kStyleTemplates = {
      "QTextEdit:focus { border-color: $accent; background: $bg.primary; }"},
 
     {"style.primary_button",
-     "QPushButton { background: $accent; color: $button.text; border: none; border-radius: 6px;"
-     "padding: 6px 16px; font-size: 12px; font-weight: bold; }"
+     "QPushButton { background: $accent; color: $button.text; border: none; border-radius: 5px;"
+     "padding: 5px 14px; font-size: 12px; font-weight: bold; }"
      "QPushButton:hover { background: $accent.hover; }"
      "QPushButton:pressed { background: $accent.pressed; }"},
 
     {"style.status_label",
-     "QLabel { padding: 4px 12px; font-size: 11px; color: $text.tertiary; background: $bg.secondary; }"},
+     "QLabel { padding: 4px 12px; font-size: 11px; color: $text.tertiary;"
+     "background: transparent; }"},
 
     {"style.editor",
      "QPlainTextEdit { background: $syntax.editor.background; color: $syntax.editor.foreground;"
      "border: none; selection-background-color: $overlay.selection;"
-     "font-family: 'JetBrains Mono', 'SF Mono', Menlo, monospace; font-size: 13px; }"
+     "font-family: 'JetBrains Mono', 'SF Mono', Menlo, monospace; font-size: 13px;"
+     "padding: 8px; }"
      "QWidget#lineNumberArea { background: $bg.secondary; color: $text.tertiary;"
      "font-family: 'JetBrains Mono', 'SF Mono', Menlo, monospace; font-size: 12px; }"},
 };

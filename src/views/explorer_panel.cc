@@ -22,13 +22,6 @@ ExplorerPanel::ExplorerPanel(QWidget *parent)
     layout->setContentsMargins(0, 0, 0, 0);
     layout->setSpacing(0);
 
-    toolbar_ = new QToolBar(this);
-    toolbar_->setIconSize({16, 16});
-    toolbar_->setMovable(false);
-    layout->addWidget(toolbar_);
-
-    setupActions();
-
     fs_model_ = new QFileSystemModel(this);
     fs_model_->setRootPath(QDir::currentPath());
     fs_model_->setFilter(QDir::AllEntries | QDir::NoDotAndDotDot | QDir::Hidden);
@@ -63,28 +56,6 @@ ExplorerPanel::ExplorerPanel(QWidget *parent)
 }
 
 ExplorerPanel::~ExplorerPanel() = default;
-
-void ExplorerPanel::setupActions()
-{
-    auto *style = QApplication::style();
-
-    new_file_action_ = toolbar_->addAction(
-        style->standardIcon(QStyle::SP_FileIcon), LOC("explorer.new_file"));
-    new_folder_action_ = toolbar_->addAction(
-        style->standardIcon(QStyle::SP_DirIcon), LOC("explorer.new_folder"));
-    toolbar_->addSeparator();
-    refresh_action_ = toolbar_->addAction(
-        style->standardIcon(QStyle::SP_BrowserReload), LOC("explorer.refresh"));
-    collapse_all_action_ = toolbar_->addAction(
-        style->standardIcon(QStyle::SP_ArrowUp), LOC("explorer.collapse_all"));
-
-    connect(new_file_action_, &QAction::triggered, this, &ExplorerPanel::onNewFile);
-    connect(new_folder_action_, &QAction::triggered, this, &ExplorerPanel::onNewFolder);
-    connect(refresh_action_, &QAction::triggered, this, [this] {
-        fs_model_->setRootPath(QDir::currentPath());
-    });
-    connect(collapse_all_action_, &QAction::triggered, tree_view_, &QTreeView::collapseAll);
-}
 
 void ExplorerPanel::setRootPath(const QString &path)
 {
@@ -242,7 +213,6 @@ void ExplorerPanel::applyStyles()
 {
     auto &ts = NezhaIDE::Services::ThemeService::instance();
     setStyleSheet(ts.qss(QStringLiteral("style.explorer_root")));
-    toolbar_->setStyleSheet(ts.qss(QStringLiteral("style.toolbar")));
     tree_view_->setStyleSheet(ts.qss(QStringLiteral("style.tree_view")));
 }
 

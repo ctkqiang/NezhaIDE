@@ -15,13 +15,16 @@ namespace NezhaIDE::Editor {
     class EditorTabHost;
 }
 
+namespace NezhaIDE::Views {
+    class ActivityBar;
+    class SidebarContainer;
+}
+
 namespace Ui {
     class MainWindow;
 }
 
 namespace NezhaIDE::Views {
-
-class SidebarContainer;
 
 class MainWindow : public QMainWindow {
     Q_OBJECT
@@ -40,6 +43,7 @@ private:
     void onOpenProject();
 
     Ui::MainWindow *ui{};
+    ActivityBar *activity_bar_{};
     SidebarContainer *sidebar_{};
     QSplitter *splitter_{};
     NezhaIDE::Editor::EditorTabHost *editor_host_{};

@@ -1,4 +1,5 @@
 #include "main_window.h"
+#include "activity_bar.h"
 #include "preferences_dialog.h"
 #include "sidebar_container.h"
 #include "explorer_panel.h"
@@ -140,6 +141,9 @@ void MainWindow::setupLayout()
     splitter_ = new QSplitter(Qt::Horizontal, this);
     splitter_->setHandleWidth(1);
 
+    activity_bar_ = new ActivityBar(this);
+    splitter_->addWidget(activity_bar_);
+
     sidebar_ = new SidebarContainer(this);
     splitter_->addWidget(sidebar_);
 
@@ -147,12 +151,21 @@ void MainWindow::setupLayout()
     splitter_->addWidget(editor_host_);
 
     splitter_->setStretchFactor(0, 0);
-    splitter_->setStretchFactor(1, 1);
-    splitter_->setSizes({280, 1000});
+    splitter_->setStretchFactor(1, 0);
+    splitter_->setStretchFactor(2, 1);
+    splitter_->setSizes({36, 280, 964});
 
     ui->centralwidget->layout()->addWidget(splitter_);
 
     applyStyles();
+
+    connect(activity_bar_, &ActivityBar::itemSelected, this, [this](ActivityBarItem item) {
+        switch (item) {
+        case ActivityBarItem::Explorer: sidebar_->showExplorer(); break;
+        case ActivityBarItem::Git: sidebar_->showGit(); break;
+        default: break;
+        }
+    });
 
     connect(sidebar_->explorer(), &ExplorerPanel::fileOpened,
             editor_host_, &NezhaIDE::Editor::EditorTabHost::openFile);
@@ -165,6 +178,7 @@ void MainWindow::applyStyles()
     menuBar()->setStyleSheet(ts.qss(QStringLiteral("style.menubar")));
     statusBar()->setStyleSheet(ts.qss(QStringLiteral("style.statusbar")));
     splitter_->setStyleSheet(ts.qss(QStringLiteral("style.splitter")));
+    activity_bar_->applyStyles();
 }
 
 } // namespace NezhaIDE::Views

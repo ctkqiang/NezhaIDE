@@ -4,6 +4,7 @@
 #include "src/services/theme_service.h"
 #include <QLabel>
 #include <QFileInfo>
+#include <QTabBar>
 
 namespace NezhaIDE::Editor {
 
@@ -12,8 +13,12 @@ EditorTabHost::EditorTabHost(QWidget *parent)
 {
     setTabsClosable(true);
     setMovable(true);
-    setDocumentMode(true);
+    setDocumentMode(false);
     setUsesScrollButtons(true);
+    tabBar()->setDrawBase(false);
+    tabBar()->setExpanding(false);
+    tabBar()->setElideMode(Qt::ElideLeft);
+    tabBar()->setObjectName(QStringLiteral("editorTabBar"));
 
     ensureWelcomeTab();
 
@@ -91,7 +96,8 @@ void EditorTabHost::ensureWelcomeTab()
     for (int i = 0; i < count(); ++i) {
         if (tabText(i) == welcomeTitle) return;
     }
-    addTab(new QLabel(LOC("editor.open_to_edit")), welcomeTitle);
+    const auto idx = addTab(new QLabel(LOC("editor.open_to_edit")), welcomeTitle);
+    tabBar()->setTabButton(idx, QTabBar::RightSide, nullptr);
 }
 
 void EditorTabHost::applyStyles()

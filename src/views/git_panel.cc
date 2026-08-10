@@ -4,9 +4,11 @@
 #include <QVBoxLayout>
 #include <QHBoxLayout>
 #include <algorithm>
-#include <QMessageBox>
+#include <QApplication>
 #include <QDir>
+#include <QMessageBox>
 #include <QProcess>
+#include <QStyle>
 #include <QTimer>
 
 namespace NezhaIDE::Views {
@@ -21,13 +23,21 @@ GitPanel::GitPanel(QWidget *parent)
     toolbar_ = new QToolBar(this);
     toolbar_->setIconSize({16, 16});
     toolbar_->setMovable(false);
-    toolbar_->addAction(QStringLiteral("↻ ") + LOC("git.refresh"), this, &GitPanel::onRefresh);
+    toolbar_->addAction(
+        QApplication::style()->standardIcon(QStyle::SP_BrowserReload),
+        LOC("git.refresh"), this, &GitPanel::onRefresh);
     toolbar_->addSeparator();
-    toolbar_->addAction(QStringLiteral("＋ ") + LOC("git.stage"), this, &GitPanel::onStageFile);
-    toolbar_->addAction(QStringLiteral("－ ") + LOC("git.unstage"), this, &GitPanel::onUnstageFile);
+    toolbar_->addAction(
+        QApplication::style()->standardIcon(QStyle::SP_ArrowUp),
+        LOC("git.stage"), this, &GitPanel::onStageFile);
+    toolbar_->addAction(
+        QApplication::style()->standardIcon(QStyle::SP_ArrowDown),
+        LOC("git.unstage"), this, &GitPanel::onUnstageFile);
     layout->addWidget(toolbar_);
 
     branch_label_ = new QLabel(this);
+    branch_label_->setStyleSheet(
+        QStringLiteral("QLabel { padding: 6px 12px; font-size: 12px; font-weight: bold; }"));
     layout->addWidget(branch_label_);
 
     file_list_ = new QListWidget(this);
@@ -46,7 +56,7 @@ GitPanel::GitPanel(QWidget *parent)
     commit_message_->setMaximumHeight(80);
     commit_layout->addWidget(commit_message_);
 
-    commit_button_ = new QPushButton(QStringLiteral("✓ ") + LOC("git.commit_button"), this);
+    commit_button_ = new QPushButton(LOC("git.commit_button"), this);
     connect(commit_button_, &QPushButton::clicked, this, &GitPanel::onCommit);
     commit_layout->addWidget(commit_button_, 0, Qt::AlignRight);
 
@@ -158,7 +168,7 @@ void GitPanel::onStatusFinished(int exit_code, QProcess::ExitStatus status)
         parseStatusOutput(output);
         status_label_->setText(
             entries_.isEmpty()
-                ? QStringLiteral("✓ ") + LOC("git.working_clean")
+                ? LOC("git.working_clean")
                 : LOC("git.files_changed").arg(entries_.size())
         );
     } else {
@@ -171,7 +181,7 @@ void GitPanel::onBranchFinished(int exit_code, QProcess::ExitStatus status)
 {
     if (status == QProcess::NormalExit && exit_code == 0) {
         const auto branch = QString::fromUtf8(git_process_->readAllStandardOutput()).trimmed();
-        branch_label_->setText(QStringLiteral("⎇ %1").arg(branch));
+        branch_label_->setText(QStringLiteral("branch: %1").arg(branch));
         emit branchChanged(branch);
     }
 }

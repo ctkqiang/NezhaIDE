@@ -1,5 +1,6 @@
 #include "code_editor.h"
 #include "cpp_highlighter.h"
+#include "simple_highlighter.h"
 #include "language_registry.h"
 #include "src/services/localization_service.h"
 #include "src/services/theme_service.h"
@@ -90,8 +91,11 @@ void CodeEditor::applyTheme()
     auto &ts = NezhaIDE::Services::ThemeService::instance();
     setStyleSheet(ts.qss(QStringLiteral("style.editor")));
 
+    const auto tokenColors = ts.syntaxColors();
     if (auto *ch = dynamic_cast<CppHighlighter *>(highlighter_)) {
-        ch->setTokenColors(ts.syntaxColors());
+        ch->setTokenColors(tokenColors);
+    } else if (auto *sh = dynamic_cast<SimpleHighlighter *>(highlighter_)) {
+        sh->setTokenColors(tokenColors);
     }
 }
 
