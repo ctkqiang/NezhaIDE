@@ -4,6 +4,7 @@
 #include <QApplication>
 #include <QCoreApplication>
 #include <QFile>
+#include <QPalette>
 #include <QXmlStreamReader>
 
 namespace NezhaIDE::Services {
