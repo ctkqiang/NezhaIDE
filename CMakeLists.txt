@@ -24,4 +24,4 @@ add_executable(NezhaIDE main.cc
 
 target_include_directories(NezhaIDE PRIVATE ${CMAKE_SOURCE_DIR})
 
-target_link_libraries(NezhaIDE PRIVATE Qt6::Core Qt6::Widgets SQLite::SQLite3)
+target_link_libraries(NezhaIDE PRIVATE Qt6::Core Qt6::Widgets SQLite3::SQLite3)
