@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<localization language="zh_CN">
+    <string key="app.name">哪吒网络安全 IDE</string>
+
+    <string key="menu.file">文件</string>
+    <string key="menu.edit">编辑</string>
+    <string key="menu.view">视图</string>
+
+    <string key="tool.run">运行</string>
+    <string key="tool.stop">停止</string>
+
+    <string key="error.database.connection">
+        数据库连接失败
+    </string>
+</localization>

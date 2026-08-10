@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<localization language="en_US">
+    <string key="app.name">Nezha Network Security IDE</string>
+
+    <string key="menu.file">File</string>
+    <string key="menu.edit">Edit</string>
+    <string key="menu.view">View</string>
+
+    <string key="tool.run">Run</string>
+    <string key="tool.stop">Stop</string>
+
+    <string key="error.database.connection">
+        Database connection failed
+    </string>
+</localization>
