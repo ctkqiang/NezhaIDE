@@ -12,6 +12,8 @@ EditorTabHost::EditorTabHost(QWidget *parent)
 {
     setTabsClosable(true);
     setMovable(true);
+    setDocumentMode(true);
+    setUsesScrollButtons(true);
 
     ensureWelcomeTab();
 

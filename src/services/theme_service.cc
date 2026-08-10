@@ -72,11 +72,20 @@ static const QHash<QString, QString> kStyleTemplates = {
      "QSplitter::handle:hover { background: $accent; }"},
 
     {"style.tab_widget",
-     "QTabWidget::pane { border: none; background: $bg.primary; }"
-     "QTabBar::tab { padding: 8px 16px; border: none; border-right: 1px solid $border;"
-     "min-width: 120px; font-size: 12px; color: $text.secondary; }"
-     "QTabBar::tab:selected { color: $text.primary; font-weight: bold; background: $bg.primary; }"
-     "QTabBar::tab:hover { background: $overlay.hover.subtle; }"},
+     "QTabWidget::pane { border: none; background: $bg.primary; top: -1px; }"
+     "QTabWidget::tab-bar { alignment: left; }"
+     "QTabBar { background: $bg.secondary; border-bottom: 1px solid $border; }"
+     "QTabBar::tab { background: transparent; color: $text.secondary;"
+     "padding: 6px 12px; margin: 4px 1px 0 1px;"
+     "border: none; border-bottom: 2px solid transparent;"
+     "font-size: 12px; height: 28px; }"
+     "QTabBar::tab:hover { background: $overlay.hover; color: $text.primary; }"
+     "QTabBar::tab:selected { color: $text.primary; background: $bg.primary;"
+     "border-bottom: 2px solid $accent; }"
+     "QTabBar::close-button {"
+     "subcontrol-position: right;"
+     "border-radius: 3px; padding: 2px; margin-left: 6px; }"
+     "QTabBar::close-button:hover { background: $overlay.hover; }"},
 
     {"style.panel",
      "QWidget { background: $bg.secondary; }"},
