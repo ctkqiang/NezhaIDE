@@ -13,7 +13,18 @@
         <property name="windowTitle">
             <string>哪吒网络安全IDE</string>
         </property>
-        <widget class="QWidget" name="centralwidget"/>
+        <property name="styleSheet">
+            <string notr="true">QMainWindow { background: #FFFFFF; }</string>
+        </property>
+        <widget class="QWidget" name="centralwidget">
+            <layout class="QHBoxLayout" name="centralLayout">
+                <property name="spacing"><number>0</number></property>
+                <property name="leftMargin"><number>0</number></property>
+                <property name="topMargin"><number>0</number></property>
+                <property name="rightMargin"><number>0</number></property>
+                <property name="bottomMargin"><number>0</number></property>
+            </layout>
+        </widget>
         <widget class="QMenuBar" name="menubar"/>
         <widget class="QStatusBar" name="statusbar"/>
     </widget>
