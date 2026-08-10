@@ -44,6 +44,7 @@ private:
     GitPanel *git_panel_{};
 
     QWidget *header_{};
+    QLabel *section_title_{};
     QPushButton *explorer_tab_{};
     QPushButton *git_tab_{};
     SidebarTab current_tab_ = SidebarTab::Explorer;

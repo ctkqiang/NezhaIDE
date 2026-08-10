@@ -40,19 +40,38 @@ SidebarContainer::~SidebarContainer() = default;
 void SidebarContainer::setupHeader()
 {
     header_ = new QWidget(this);
-    header_->setFixedHeight(36);
+    header_->setFixedHeight(56);
+    header_->setObjectName(QStringLiteral("sidebarHeader"));
 
-    auto *header_layout = new QHBoxLayout(header_);
-    header_layout->setContentsMargins(8, 0, 8, 0);
-    header_layout->setSpacing(0);
+    auto *outer = new QVBoxLayout(header_);
+    outer->setContentsMargins(0, 0, 0, 0);
+    outer->setSpacing(0);
 
-    explorer_tab_ = new QPushButton(LOC("sidebar.explorer"), header_);
-    git_tab_ = new QPushButton(LOC("sidebar.git"), header_);
-    git_tab_->setFixedWidth(60);
+    auto *title_bar = new QHBoxLayout();
+    title_bar->setContentsMargins(16, 8, 8, 0);
+    title_bar->setSpacing(0);
 
-    header_layout->addWidget(explorer_tab_);
-    header_layout->addWidget(git_tab_);
-    header_layout->addStretch();
+    section_title_ = new QLabel(LOC("sidebar.explorer").toUpper(), header_);
+    section_title_->setObjectName(QStringLiteral("sidebarSectionTitle"));
+    section_title_->setStyleSheet(
+        QStringLiteral("QLabel { font-size: 11px; font-weight: bold; color: ") +
+        NezhaIDE::Services::ThemeService::instance().color(QStringLiteral("text.secondary")) +
+        QStringLiteral("; text-transform: uppercase; letter-spacing: 1px; }"));
+    title_bar->addWidget(section_title_);
+    title_bar->addStretch();
+    outer->addLayout(title_bar);
+
+    auto *tab_bar = new QHBoxLayout();
+    tab_bar->setContentsMargins(12, 4, 8, 0);
+    tab_bar->setSpacing(0);
+
+    explorer_tab_ = new QPushButton(LOC("sidebar.explorer").toUpper(), header_);
+    git_tab_ = new QPushButton(LOC("sidebar.git").toUpper(), header_);
+
+    tab_bar->addWidget(explorer_tab_);
+    tab_bar->addWidget(git_tab_);
+    tab_bar->addStretch();
+    outer->addLayout(tab_bar);
 
     connect(explorer_tab_, &QPushButton::clicked, this, &SidebarContainer::switchToExplorer);
     connect(git_tab_, &QPushButton::clicked, this, &SidebarContainer::switchToGit);
@@ -86,6 +105,7 @@ void SidebarContainer::updateTabStyles()
     const auto is_explorer = (current_tab_ == SidebarTab::Explorer);
     explorer_tab_->setStyleSheet(ts.qss(is_explorer ? QStringLiteral("style.tab_active") : QStringLiteral("style.tab_inactive")));
     git_tab_->setStyleSheet(ts.qss(is_explorer ? QStringLiteral("style.tab_inactive") : QStringLiteral("style.tab_active")));
+    section_title_->setText(is_explorer ? LOC("sidebar.explorer").toUpper() : LOC("sidebar.git").toUpper());
 }
 
 void SidebarContainer::applyStyles()

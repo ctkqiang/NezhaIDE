@@ -12,9 +12,11 @@
 #include <QDir>
 #include <QFileDialog>
 #include <QFileInfo>
+#include <QLabel>
 #include <QMenuBar>
 #include <QMessageBox>
 #include <QSplitter>
+#include <QStatusBar>
 
 namespace NezhaIDE::Views {
 
@@ -24,6 +26,7 @@ MainWindow::MainWindow(QWidget *parent)
     ui->setupUi(this);
     setupMenuBar();
     setupLayout();
+    setupStatusBar();
 
     const auto projectPath = NezhaIDE::Configuration::instance().project_root();
     updateProjectRoot(projectPath);
@@ -62,6 +65,36 @@ void MainWindow::setupMenuBar()
     quit_action_->setShortcut(QKeySequence::Quit);
     quit_action_->setMenuRole(QAction::QuitRole);
     connect(quit_action_, &QAction::triggered, this, &QMainWindow::close);
+
+    auto *edit_menu = menuBar()->addMenu(LOC("menu.edit"));
+    auto *undo_action = edit_menu->addAction(LOC("menu.edit_undo"));
+    undo_action->setShortcut(QKeySequence::Undo);
+    auto *redo_action = edit_menu->addAction(LOC("menu.edit_redo"));
+    redo_action->setShortcut(QKeySequence::Redo);
+    edit_menu->addSeparator();
+    auto *cut_action = edit_menu->addAction(LOC("menu.edit_cut"));
+    cut_action->setShortcut(QKeySequence::Cut);
+    auto *copy_action = edit_menu->addAction(LOC("menu.edit_copy"));
+    copy_action->setShortcut(QKeySequence::Copy);
+    auto *paste_action = edit_menu->addAction(LOC("menu.edit_paste"));
+    paste_action->setShortcut(QKeySequence::Paste);
+
+    auto *view_menu = menuBar()->addMenu(LOC("menu.view"));
+    auto *toggle_explorer = view_menu->addAction(LOC("menu.view_explorer"));
+    toggle_explorer->setCheckable(true);
+    toggle_explorer->setChecked(true);
+    auto *toggle_git = view_menu->addAction(LOC("menu.view_git"));
+    toggle_git->setCheckable(true);
+    toggle_git->setChecked(true);
+}
+
+void MainWindow::setupStatusBar()
+{
+    auto *sb = statusBar();
+    sb->setSizeGripEnabled(false);
+    sb->showMessage(QStringLiteral("v") +
+        QString::fromUtf8(NezhaIDE::Constants::ApplicationVersion.data(),
+                          static_cast<int>(NezhaIDE::Constants::ApplicationVersion.size())));
 }
 
 void MainWindow::onOpenProject()
@@ -115,7 +148,7 @@ void MainWindow::setupLayout()
 
     splitter_->setStretchFactor(0, 0);
     splitter_->setStretchFactor(1, 1);
-    splitter_->setSizes({320, 960});
+    splitter_->setSizes({280, 1000});
 
     ui->centralwidget->layout()->addWidget(splitter_);
 
@@ -129,6 +162,8 @@ void MainWindow::applyStyles()
 {
     auto &ts = NezhaIDE::Services::ThemeService::instance();
     setStyleSheet(ts.qss(QStringLiteral("style.main_window")));
+    menuBar()->setStyleSheet(ts.qss(QStringLiteral("style.menubar")));
+    statusBar()->setStyleSheet(ts.qss(QStringLiteral("style.statusbar")));
     splitter_->setStyleSheet(ts.qss(QStringLiteral("style.splitter")));
 }
 

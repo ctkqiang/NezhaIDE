@@ -42,7 +42,8 @@ static const QHash<QString, QString> kFallbackColors = {
 
 static const QHash<QString, QString> kStyleTemplates = {
     {"style.toolbar",
-     "QToolBar { border: none; border-bottom: 1px solid $border; padding: 4px 6px; spacing: 2px; }"
+     "QToolBar { border: none; border-bottom: 1px solid $border; padding: 4px 6px; spacing: 2px;"
+     "background: $bg.secondary; }"
      "QToolBar QToolButton { border: none; border-radius: 4px; padding: 4px 8px;"
      "color: $text.secondary; font-size: 12px; }"
      "QToolBar QToolButton:hover { background: $overlay.hover; color: $text.primary; }"
@@ -50,8 +51,10 @@ static const QHash<QString, QString> kStyleTemplates = {
      "QToolBar::separator { width: 1px; margin: 4px 6px; background: $border; }"},
 
     {"style.tree_view",
-     "QTreeView { border: none; background: $bg.secondary; outline: none; }"
-     "QTreeView::item { padding: 5px 8px; border-left: 2px solid transparent; }"
+     "QTreeView { border: none; background: $bg.secondary; outline: none;"
+     "font-size: 13px; }"
+     "QTreeView::item { padding: 5px 8px; border-left: 2px solid transparent;"
+     "border-radius: 0; min-height: 22px; }"
      "QTreeView::item:hover { background: $overlay.hover; }"
      "QTreeView::item:selected { background: $overlay.selection; color: $accent;"
      "border-left: 2px solid $accent; }"
@@ -62,8 +65,8 @@ static const QHash<QString, QString> kStyleTemplates = {
      "QTreeView::branch:!has-children:!has-siblings:adjoins-item { border-image: none; }"},
 
     {"style.list_widget",
-     "QListWidget { border: none; background: $bg.secondary; }"
-     "QListWidget::item { padding: 4px 12px; border-radius: 2px; }"
+     "QListWidget { border: none; background: $bg.secondary; font-size: 13px; }"
+     "QListWidget::item { padding: 4px 12px; border-radius: 0; min-height: 22px; }"
      "QListWidget::item:hover { background: $overlay.hover; }"
      "QListWidget::item:selected { background: $overlay.selection; color: $accent; }"},
 
@@ -82,8 +85,7 @@ static const QHash<QString, QString> kStyleTemplates = {
      "QTabBar::tab:hover { background: $overlay.hover; color: $text.primary; }"
      "QTabBar::tab:selected { color: $text.primary; background: $bg.primary;"
      "border-bottom: 2px solid $accent; }"
-     "QTabBar::close-button {"
-     "subcontrol-position: right;"
+     "QTabBar::close-button { subcontrol-position: right;"
      "border-radius: 3px; padding: 2px; margin-left: 6px; }"
      "QTabBar::close-button:hover { background: $overlay.hover; }"},
 
@@ -94,40 +96,59 @@ static const QHash<QString, QString> kStyleTemplates = {
      "QStackedWidget { background: $bg.secondary; }"},
 
     {"style.header",
-     "QWidget { background: $bg.primary; border-bottom: 1px solid $border; }"},
+     "QWidget { background: $bg.secondary; border-bottom: 1px solid $border; }"},
 
     {"style.main_window",
-     "QMainWindow { background: $bg.primary; }"},
+     "QMainWindow { background: $bg.primary; }"
+     "QMainWindow::separator { width: 1px; background: $border; }"},
 
     {"style.explorer_root",
      "QWidget#ExplorerPanel { background: $bg.secondary; }"},
 
     {"style.tab_active",
-     "QPushButton { background: $overlay.selection; color: $accent;"
+     "QPushButton { background: transparent; color: $text.primary;"
      "border: none; border-bottom: 2px solid $accent;"
-     "padding: 6px 16px; font-size: 12px; font-weight: bold; border-radius: 0; }"},
+     "padding: 8px 12px; font-size: 11px; font-weight: bold;"
+     "text-transform: uppercase; letter-spacing: 0.5px; }"},
 
     {"style.tab_inactive",
-     "QPushButton { background: transparent; color: $text.secondary;"
+     "QPushButton { background: transparent; color: $text.tertiary;"
      "border: none; border-bottom: 2px solid transparent;"
-     "padding: 6px 16px; font-size: 12px; border-radius: 0; }"
-     "QPushButton:hover { background: $overlay.hover; color: $text.primary; }"},
+     "padding: 8px 12px; font-size: 11px;"
+     "text-transform: uppercase; letter-spacing: 0.5px; }"
+     "QPushButton:hover { background: $overlay.hover; color: $text.secondary; }"},
 
     {"style.menu",
-     "QMenu { border: 1px solid $border; border-radius: 6px; padding: 4px; }"
-     "QMenu::item { padding: 6px 24px; border-radius: 4px; }"
-     "QMenu::item:hover { background: $overlay.hover; }"},
+     "QMenu { border: 1px solid $border; border-radius: 6px; padding: 4px;"
+     "background: $bg.primary; }"
+     "QMenu::item { padding: 6px 32px 6px 12px; border-radius: 4px;"
+     "font-size: 13px; }"
+     "QMenu::item:selected { background: $accent; color: $button.text; }"
+     "QMenu::separator { height: 1px; background: $border; margin: 4px 8px; }"},
+
+    {"style.menubar",
+     "QMenuBar { background: $bg.secondary; border-bottom: 1px solid $border;"
+     "padding: 2px 0; font-size: 13px; }"
+     "QMenuBar::item { padding: 4px 10px; border-radius: 4px; }"
+     "QMenuBar::item:selected { background: $overlay.hover; }"},
+
+    {"style.statusbar",
+     "QStatusBar { background: $accent; color: $button.text;"
+     "border: none; font-size: 12px; padding: 2px 12px; }"
+     "QStatusBar::item { border: none; }"
+     "QStatusBar QLabel { color: $button.text; padding: 0 8px; }"},
 
     {"style.branch_label",
      "QLabel { padding: 8px 12px; font-size: 12px; color: $text.secondary;"
      "border-bottom: 1px solid $border; background: $bg.primary; }"},
 
     {"style.commit_frame",
-     "QWidget { border-top: 1px solid $border; background: $bg.primary; }"},
+     "QWidget { border-top: 1px solid $border; background: $bg.primary;"
+     "padding: 8px; }"},
 
     {"style.commit_input",
-     "QTextEdit { border: 1px solid $border; border-radius: 6px; padding: 6px;"
-     "font-size: 12px; background: $bg.tertiary; }"
+     "QTextEdit { border: 1px solid $border; border-radius: 6px; padding: 8px;"
+     "font-size: 13px; background: $bg.tertiary; }"
      "QTextEdit:focus { border-color: $accent; background: $bg.primary; }"},
 
     {"style.primary_button",
@@ -143,7 +164,8 @@ static const QHash<QString, QString> kStyleTemplates = {
      "QPlainTextEdit { background: $syntax.editor.background; color: $syntax.editor.foreground;"
      "border: none; selection-background-color: $overlay.selection;"
      "font-family: 'JetBrains Mono', 'SF Mono', Menlo, monospace; font-size: 13px; }"
-     "QWidget#lineNumberArea { background: $bg.secondary; color: $text.tertiary; }"},
+     "QWidget#lineNumberArea { background: $bg.secondary; color: $text.tertiary;"
+     "font-family: 'JetBrains Mono', 'SF Mono', Menlo, monospace; font-size: 12px; }"},
 };
 
 ThemeService &ThemeService::instance()
