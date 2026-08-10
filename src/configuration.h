@@ -110,6 +110,11 @@ namespace NezhaIDE {
 
         void clear_memory();
 
+        [[nodiscard]]
+        QString project_root() const;
+
+        void set_project_root(const QString &path);
+
         static void open_documentation();
 
     private:

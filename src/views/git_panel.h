@@ -24,6 +24,7 @@ public:
     ~GitPanel() override;
 
     void refresh();
+    void setWorkingDirectory(const QString &path);
 
 signals:
     void fileStaged(const QString &path);

@@ -9,6 +9,7 @@
 #endif
 
 class QSplitter;
+class QAction;
 
 namespace NezhaIDE::Editor {
     class EditorTabHost;
@@ -31,12 +32,19 @@ public:
 
 private:
     void setupLayout();
+    void setupMenuBar();
     void applyStyles();
+    void updateProjectRoot(const QString &projectPath);
+
+    void onOpenProject();
 
     Ui::MainWindow *ui{};
     SidebarContainer *sidebar_{};
     QSplitter *splitter_{};
     NezhaIDE::Editor::EditorTabHost *editor_host_{};
+
+    QAction *open_project_action_{};
+    QAction *quit_action_{};
 };
 
 } // namespace NezhaIDE::Views

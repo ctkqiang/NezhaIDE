@@ -49,4 +49,8 @@
     <string key="git.status.unstaged_modified">Unstaged (modified)</string>
     <string key="git.status.unstaged_deleted">Unstaged (deleted)</string>
     <string key="git.status.changed">Changed</string>
+    <string key="menu.open_project">Open Project...</string>
+    <string key="menu.quit">Quit</string>
+    <string key="dialog.open_project_title">Open Project</string>
+    <string key="error.project_not_found">Project directory not found: %1</string>
 </localization>

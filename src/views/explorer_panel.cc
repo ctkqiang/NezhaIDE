@@ -88,6 +88,7 @@ void ExplorerPanel::setupActions()
 
 void ExplorerPanel::setRootPath(const QString &path)
 {
+    fs_model_->setRootPath(path);
     tree_view_->setRootIndex(fs_model_->index(path));
 }
 

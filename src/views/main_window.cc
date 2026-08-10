@@ -2,10 +2,17 @@
 #include "sidebar_container.h"
 #include "explorer_panel.h"
 #include "git_panel.h"
+#include "src/configuration.h"
 #include "src/editor/editor_tab_host.h"
 #include "src/services/localization_service.h"
 #include "src/services/theme_service.h"
 #include "ui_main_window.h"
+#include <QAction>
+#include <QDir>
+#include <QFileDialog>
+#include <QFileInfo>
+#include <QMenuBar>
+#include <QMessageBox>
 #include <QSplitter>
 
 namespace NezhaIDE::Views {
@@ -14,7 +21,11 @@ MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent), ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
+    setupMenuBar();
     setupLayout();
+
+    const auto projectPath = NezhaIDE::Configuration::instance().project_root();
+    updateProjectRoot(projectPath);
 
     connect(&NezhaIDE::Services::ThemeService::instance(), &NezhaIDE::Services::ThemeService::themeChanged,
             this, [this] { applyStyles(); });
@@ -23,6 +34,61 @@ MainWindow::MainWindow(QWidget *parent)
 MainWindow::~MainWindow()
 {
     delete ui;
+}
+
+void MainWindow::setupMenuBar()
+{
+    auto *file_menu = menuBar()->addMenu(LOC("menu.file"));
+
+    open_project_action_ = file_menu->addAction(LOC("menu.open_project"));
+    open_project_action_->setShortcut(QKeySequence::Open);
+    open_project_action_->setMenuRole(QAction::NoRole);
+    connect(open_project_action_, &QAction::triggered, this, &MainWindow::onOpenProject);
+
+    file_menu->addSeparator();
+
+    quit_action_ = file_menu->addAction(LOC("menu.quit"));
+    quit_action_->setShortcut(QKeySequence::Quit);
+    quit_action_->setMenuRole(QAction::QuitRole);
+    connect(quit_action_, &QAction::triggered, this, &QMainWindow::close);
+}
+
+void MainWindow::onOpenProject()
+{
+    const auto dir = QFileDialog::getExistingDirectory(
+        this,
+        LOC("dialog.open_project_title"),
+        QString(),
+        QFileDialog::ShowDirsOnly | QFileDialog::DontResolveSymlinks);
+
+    if (dir.isEmpty()) return;
+
+    auto &cfg = NezhaIDE::Configuration::instance();
+    cfg.set_project_root(dir);
+    cfg.save();
+
+    updateProjectRoot(dir);
+}
+
+void MainWindow::updateProjectRoot(const QString &projectPath)
+{
+    const QDir dir(projectPath);
+    if (!dir.exists()) {
+        QMessageBox::warning(this, LOC("error.title"),
+                             LOC("error.project_not_found").arg(projectPath));
+        return;
+    }
+
+    QDir::setCurrent(projectPath);
+
+    sidebar_->explorer()->setRootPath(projectPath);
+    sidebar_->gitPanel()->setWorkingDirectory(projectPath);
+
+    const auto title = QStringLiteral("%1 — %2")
+        .arg(dir.dirName())
+        .arg(QString::fromUtf8(NezhaIDE::Constants::ApplicationName.data(),
+                               static_cast<int>(NezhaIDE::Constants::ApplicationName.size())));
+    setWindowTitle(title);
 }
 
 void MainWindow::setupLayout()

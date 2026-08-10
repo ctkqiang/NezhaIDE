@@ -89,6 +89,13 @@ void GitPanel::refresh()
     git_process_->start("git", {"status", "--porcelain", "-u"});
 }
 
+void GitPanel::setWorkingDirectory(const QString &path)
+{
+    git_process_->setWorkingDirectory(path);
+    updateBranchDisplay();
+    refresh();
+}
+
 void GitPanel::onRefresh()
 {
     refresh();
