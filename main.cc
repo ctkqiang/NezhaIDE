@@ -1,24 +1,29 @@
 #include "src/utilities/logger.h"
+#include "src/views/main_window.h"
+#include <QApplication>
+
+#include "src/configuration.h"
 
 static auto& logger = NezhaIDE::Utilities::Logger::instance();
 
-namespace NezhaIDE {
+int main(int argc, char* argv[]) {
+    QApplication app(argc, argv);
 
-    int static run() {
-        logger.log(
-            Utilities::LogLevel::Info,
-            __FILE__,
-            __LINE__,
-            __func__,
-            "{}!",
-            "IDE 启动中..."
-        );
+    QApplication::setApplicationName(NezhaIDE::Constants::ApplicationName.data());
+    QApplication::setApplicationVersion(NezhaIDE::Constants::ApplicationVersion.data());
+    QApplication::setOrganizationName(NezhaIDE::Constants::OrganisationName.data());
 
-        return 0;
-    }
-}
+    logger.log(
+        NezhaIDE::Utilities::LogLevel::Info,
+        __FILE__,
+        __LINE__,
+        __func__,
+        "{}!",
+        "IDE 启动中..."
+    );
 
+    NezhaIDE::Views::MainWindow window;
+    window.show();
 
-int main() {
-    return NezhaIDE::run();
+    return QApplication::exec();
 }
