@@ -1,5 +1,6 @@
 #include "explorer_panel.h"
 #include "src/services/localization_service.h"
+#include "src/services/theme_service.h"
 #include <QVBoxLayout>
 #include <QMenu>
 #include <QMessageBox>
@@ -21,9 +22,6 @@ ExplorerPanel::ExplorerPanel(QWidget *parent)
     toolbar_ = new QToolBar(this);
     toolbar_->setIconSize({16, 16});
     toolbar_->setMovable(false);
-    toolbar_->setStyleSheet(
-        "QToolBar { border: none; border-bottom: 1px solid #E0E0E0; padding: 4px 8px; spacing: 4px; }"
-    );
     layout->addWidget(toolbar_);
 
     setupActions();
@@ -40,15 +38,6 @@ ExplorerPanel::ExplorerPanel(QWidget *parent)
     tree_view_->setIndentation(16);
     tree_view_->setContextMenuPolicy(Qt::CustomContextMenu);
     tree_view_->setSelectionMode(QAbstractItemView::ExtendedSelection);
-    tree_view_->setStyleSheet(
-        "QTreeView { border: none; background: #F5F6F7; }"
-        "QTreeView::item { padding: 4px 8px; border-radius: 4px; }"
-        "QTreeView::item:hover { background: rgba(0,0,0,0.04); }"
-        "QTreeView::item:selected { background: rgba(51,112,255,0.12); color: #3370FF; }"
-        "QTreeView::branch:has-siblings:!adjoins-item { border-image: none; }"
-        "QTreeView::branch:has-siblings:adjoins-item { border-image: none; }"
-        "QTreeView::branch:!has-children:!has-siblings:adjoins-item { border-image: none; }"
-    );
 
     for (int i = 1; i < fs_model_->columnCount(); ++i) {
         tree_view_->hideColumn(i);
@@ -61,6 +50,11 @@ ExplorerPanel::ExplorerPanel(QWidget *parent)
             this, &ExplorerPanel::onCustomContextMenu);
 
     layout->addWidget(tree_view_);
+
+    applyStyles();
+
+    connect(&NezhaIDE::Services::ThemeService::instance(), &NezhaIDE::Services::ThemeService::themeChanged,
+            this, [this] { applyStyles(); });
 }
 
 ExplorerPanel::~ExplorerPanel() = default;
@@ -209,11 +203,7 @@ void ExplorerPanel::onCustomContextMenu(const QPoint &pos)
     if (!index.isValid()) return;
 
     QMenu menu(this);
-    menu.setStyleSheet(
-        "QMenu { border: 1px solid #E0E0E0; border-radius: 6px; padding: 4px; }"
-        "QMenu::item { padding: 6px 24px; border-radius: 4px; }"
-        "QMenu::item:hover { background: rgba(0,0,0,0.04); }"
-    );
+    menu.setStyleSheet(NezhaIDE::Services::ThemeService::instance().qss(QStringLiteral("style.menu")));
 
     menu.addAction(QStringLiteral("☁️ ") + LOC("explorer.new_file"), this, &ExplorerPanel::onNewFile);
     menu.addAction(QStringLiteral("\U0001F4C1 ") + LOC("explorer.new_folder"), this, &ExplorerPanel::onNewFolder);
@@ -234,6 +224,14 @@ bool ExplorerPanel::confirmDelete(const QString &path)
         : LOC("confirm.delete_file").arg(info.fileName());
     return QMessageBox::question(this, LOC("confirm.delete_title"), msg)
            == QMessageBox::Yes;
+}
+
+void ExplorerPanel::applyStyles()
+{
+    auto &ts = NezhaIDE::Services::ThemeService::instance();
+    setStyleSheet(ts.qss(QStringLiteral("style.explorer_root")));
+    toolbar_->setStyleSheet(ts.qss(QStringLiteral("style.toolbar")));
+    tree_view_->setStyleSheet(ts.qss(QStringLiteral("style.tree_view")));
 }
 
 } // namespace NezhaIDE::Views

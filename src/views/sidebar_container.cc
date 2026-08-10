@@ -2,20 +2,10 @@
 #include "explorer_panel.h"
 #include "git_panel.h"
 #include "src/services/localization_service.h"
+#include "src/services/theme_service.h"
 #include <QVBoxLayout>
 
 namespace NezhaIDE::Views {
-
-static const char *kTabActiveStyle =
-    "QPushButton { background: rgba(51,112,255,0.12); color: #3370FF;"
-    "border: none; border-bottom: 2px solid #3370FF;"
-    "padding: 6px 16px; font-size: 12px; font-weight: bold; border-radius: 0; }";
-
-static const char *kTabInactiveStyle =
-    "QPushButton { background: transparent; color: #646A73;"
-    "border: none; border-bottom: 2px solid transparent;"
-    "padding: 6px 16px; font-size: 12px; border-radius: 0; }"
-    "QPushButton:hover { background: rgba(0,0,0,0.04); color: #1F2329; }";
 
 SidebarContainer::SidebarContainer(QWidget *parent)
     : QWidget(parent)
@@ -24,13 +14,10 @@ SidebarContainer::SidebarContainer(QWidget *parent)
     layout->setContentsMargins(0, 0, 0, 0);
     layout->setSpacing(0);
 
-    setStyleSheet("QWidget { background: #F5F6F7; }");
-
     setupHeader();
     layout->addWidget(header_);
 
     stack_ = new QStackedWidget(this);
-    stack_->setStyleSheet("QStackedWidget { background: #F5F6F7; }");
 
     explorer_panel_ = new ExplorerPanel(this);
     git_panel_ = new GitPanel(this);
@@ -39,6 +26,11 @@ SidebarContainer::SidebarContainer(QWidget *parent)
     stack_->addWidget(git_panel_);
 
     layout->addWidget(stack_, 1);
+
+    applyStyles();
+
+    connect(&NezhaIDE::Services::ThemeService::instance(), &NezhaIDE::Services::ThemeService::themeChanged,
+            this, [this] { applyStyles(); });
 
     switchToTab(SidebarTab::Explorer);
 }
@@ -49,7 +41,6 @@ void SidebarContainer::setupHeader()
 {
     header_ = new QWidget(this);
     header_->setFixedHeight(36);
-    header_->setStyleSheet("QWidget { background: #FFFFFF; border-bottom: 1px solid #E0E0E0; }");
 
     auto *header_layout = new QHBoxLayout(header_);
     header_layout->setContentsMargins(8, 0, 8, 0);
@@ -91,9 +82,19 @@ void SidebarContainer::switchToTab(SidebarTab tab)
 
 void SidebarContainer::updateTabStyles()
 {
+    auto &ts = NezhaIDE::Services::ThemeService::instance();
     const auto is_explorer = (current_tab_ == SidebarTab::Explorer);
-    explorer_tab_->setStyleSheet(is_explorer ? kTabActiveStyle : kTabInactiveStyle);
-    git_tab_->setStyleSheet(is_explorer ? kTabInactiveStyle : kTabActiveStyle);
+    explorer_tab_->setStyleSheet(ts.qss(is_explorer ? QStringLiteral("style.tab_active") : QStringLiteral("style.tab_inactive")));
+    git_tab_->setStyleSheet(ts.qss(is_explorer ? QStringLiteral("style.tab_inactive") : QStringLiteral("style.tab_active")));
+}
+
+void SidebarContainer::applyStyles()
+{
+    auto &ts = NezhaIDE::Services::ThemeService::instance();
+    setStyleSheet(ts.qss(QStringLiteral("style.panel")));
+    stack_->setStyleSheet(ts.qss(QStringLiteral("style.stack")));
+    header_->setStyleSheet(ts.qss(QStringLiteral("style.header")));
+    updateTabStyles();
 }
 
 } // namespace NezhaIDE::Views

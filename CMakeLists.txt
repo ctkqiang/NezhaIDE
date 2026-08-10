@@ -15,6 +15,8 @@ add_executable(NezhaIDE main.cc
         src/services/database_helper.h
         src/services/localization_service.cc
         src/services/localization_service.h
+        src/services/theme_service.cc
+        src/services/theme_service.h
         src/configuration.h
         src/configuration.cc
         src/views/main_window.cc

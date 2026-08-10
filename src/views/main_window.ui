@@ -13,9 +13,6 @@
         <property name="windowTitle">
             <string>哪吒网络安全IDE</string>
         </property>
-        <property name="styleSheet">
-            <string notr="true">QMainWindow { background: #FFFFFF; }</string>
-        </property>
         <widget class="QWidget" name="centralwidget">
             <layout class="QHBoxLayout" name="centralLayout">
                 <property name="spacing"><number>0</number></property>

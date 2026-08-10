@@ -1,7 +1,9 @@
 #include "git_panel.h"
 #include "src/services/localization_service.h"
+#include "src/services/theme_service.h"
 #include <QVBoxLayout>
 #include <QHBoxLayout>
+#include <algorithm>
 #include <QMessageBox>
 #include <QDir>
 #include <QProcess>
@@ -19,9 +21,6 @@ GitPanel::GitPanel(QWidget *parent)
     toolbar_ = new QToolBar(this);
     toolbar_->setIconSize({16, 16});
     toolbar_->setMovable(false);
-    toolbar_->setStyleSheet(
-        "QToolBar { border: none; border-bottom: 1px solid #E0E0E0; padding: 4px 8px; spacing: 4px; }"
-    );
     toolbar_->addAction(QStringLiteral("↻ ") + LOC("git.refresh"), this, &GitPanel::onRefresh);
     toolbar_->addSeparator();
     toolbar_->addAction(QStringLiteral("＋ ") + LOC("git.stage"), this, &GitPanel::onStageFile);
@@ -29,26 +28,15 @@ GitPanel::GitPanel(QWidget *parent)
     layout->addWidget(toolbar_);
 
     branch_label_ = new QLabel(this);
-    branch_label_->setStyleSheet(
-        "QLabel { padding: 8px 12px; font-size: 12px; color: #646A73;"
-        "border-bottom: 1px solid #E0E0E0; background: #FFFFFF; }"
-    );
     layout->addWidget(branch_label_);
 
     file_list_ = new QListWidget(this);
     file_list_->setContextMenuPolicy(Qt::CustomContextMenu);
     file_list_->setSelectionMode(QAbstractItemView::ExtendedSelection);
-    file_list_->setStyleSheet(
-        "QListWidget { border: none; background: #F5F6F7; }"
-        "QListWidget::item { padding: 4px 12px; border-radius: 2px; }"
-        "QListWidget::item:hover { background: rgba(0,0,0,0.04); }"
-        "QListWidget::item:selected { background: rgba(51,112,255,0.12); color: #3370FF; }"
-    );
     connect(file_list_, &QListWidget::itemClicked, this, &GitPanel::onListItemClicked);
     layout->addWidget(file_list_, 1);
 
     auto *commit_frame = new QWidget(this);
-    commit_frame->setStyleSheet("QWidget { border-top: 1px solid #E0E0E0; background: #FFFFFF; }");
     auto *commit_layout = new QVBoxLayout(commit_frame);
     commit_layout->setContentsMargins(8, 8, 8, 8);
     commit_layout->setSpacing(6);
@@ -56,35 +44,29 @@ GitPanel::GitPanel(QWidget *parent)
     commit_message_ = new QTextEdit(this);
     commit_message_->setPlaceholderText(LOC("git.commit_placeholder"));
     commit_message_->setMaximumHeight(80);
-    commit_message_->setStyleSheet(
-        "QTextEdit { border: 1px solid #E0E0E0; border-radius: 6px; padding: 6px;"
-        "font-size: 12px; background: #FAFAFA; }"
-        "QTextEdit:focus { border-color: #3370FF; background: #FFFFFF; }"
-    );
     commit_layout->addWidget(commit_message_);
 
     commit_button_ = new QPushButton(QStringLiteral("✓ ") + LOC("git.commit_button"), this);
-    commit_button_->setStyleSheet(
-        "QPushButton { background: #3370FF; color: white; border: none; border-radius: 6px;"
-        "padding: 6px 16px; font-size: 12px; font-weight: bold; }"
-        "QPushButton:hover { background: #2860DF; }"
-        "QPushButton:pressed { background: #1E50C8; }"
-    );
     connect(commit_button_, &QPushButton::clicked, this, &GitPanel::onCommit);
     commit_layout->addWidget(commit_button_, 0, Qt::AlignRight);
 
     layout->addWidget(commit_frame);
 
     status_label_ = new QLabel(this);
-    status_label_->setStyleSheet(
-        "QLabel { padding: 4px 12px; font-size: 11px; color: #999; background: #F5F6F7; }"
-    );
     layout->addWidget(status_label_);
 
     git_process_ = new QProcess(this);
     git_process_->setWorkingDirectory(QDir::currentPath());
     connect(git_process_, QOverload<int, QProcess::ExitStatus>::of(&QProcess::finished),
             this, &GitPanel::onStatusFinished);
+
+    applyStyles();
+
+    connect(&NezhaIDE::Services::ThemeService::instance(), &NezhaIDE::Services::ThemeService::themeChanged,
+            this, [this] {
+        applyStyles();
+        applyGitColors();
+    });
 
     updateBranchDisplay();
     QTimer::singleShot(100, this, &GitPanel::refresh);
@@ -224,13 +206,13 @@ void GitPanel::parseStatusOutput(const QString &output)
         auto *item = new QListWidgetItem(prefix + entry.path);
 
         if (entry.status_x == 'M' || entry.status_y == 'M') {
-            item->setForeground(QColor("#E67E22"));
+            item->setForeground(NezhaIDE::Services::ThemeService::instance().qcolor(QStringLiteral("git.modified")));
         } else if (entry.status_x == 'A') {
-            item->setForeground(QColor("#27AE60"));
+            item->setForeground(NezhaIDE::Services::ThemeService::instance().qcolor(QStringLiteral("git.added")));
         } else if (entry.status_x == 'D' || entry.status_y == 'D') {
-            item->setForeground(QColor("#E74C3C"));
+            item->setForeground(NezhaIDE::Services::ThemeService::instance().qcolor(QStringLiteral("git.deleted")));
         } else if (entry.status_x == '?') {
-            item->setForeground(QColor("#999999"));
+            item->setForeground(NezhaIDE::Services::ThemeService::instance().qcolor(QStringLiteral("git.untracked")));
         }
 
         file_list_->addItem(item);
@@ -258,6 +240,38 @@ QString GitPanel::statusCharToText(QChar x, QChar y) const
     if (y == 'M') return LOC("git.status.unstaged_modified");
     if (y == 'D') return LOC("git.status.unstaged_deleted");
     return LOC("git.status.changed");
+}
+
+void GitPanel::applyStyles()
+{
+    auto &ts = NezhaIDE::Services::ThemeService::instance();
+    toolbar_->setStyleSheet(ts.qss(QStringLiteral("style.toolbar")));
+    branch_label_->setStyleSheet(ts.qss(QStringLiteral("style.branch_label")));
+    file_list_->setStyleSheet(ts.qss(QStringLiteral("style.list_widget")));
+    commit_message_->setStyleSheet(ts.qss(QStringLiteral("style.commit_input")));
+    commit_button_->setStyleSheet(ts.qss(QStringLiteral("style.primary_button")));
+    status_label_->setStyleSheet(ts.qss(QStringLiteral("style.status_label")));
+    if (auto *cf = commit_message_->parentWidget()) {
+        cf->setStyleSheet(ts.qss(QStringLiteral("style.commit_frame")));
+    }
+}
+
+void GitPanel::applyGitColors()
+{
+    for (int i = 0; i < std::min(static_cast<int>(entries_.size()), file_list_->count()); ++i) {
+        auto *item = file_list_->item(i);
+        if (!item) continue;
+        const auto &entry = entries_[i];
+        if (entry.status_x == 'M' || entry.status_y == 'M') {
+            item->setForeground(NezhaIDE::Services::ThemeService::instance().qcolor(QStringLiteral("git.modified")));
+        } else if (entry.status_x == 'A') {
+            item->setForeground(NezhaIDE::Services::ThemeService::instance().qcolor(QStringLiteral("git.added")));
+        } else if (entry.status_x == 'D' || entry.status_y == 'D') {
+            item->setForeground(NezhaIDE::Services::ThemeService::instance().qcolor(QStringLiteral("git.deleted")));
+        } else if (entry.status_x == '?') {
+            item->setForeground(NezhaIDE::Services::ThemeService::instance().qcolor(QStringLiteral("git.untracked")));
+        }
+    }
 }
 
 } // namespace NezhaIDE::Views

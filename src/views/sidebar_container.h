@@ -37,6 +37,7 @@ signals:
 private:
     void setupHeader();
     void updateTabStyles();
+    void applyStyles();
 
     QStackedWidget *stack_{};
     ExplorerPanel *explorer_panel_{};

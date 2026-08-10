@@ -35,6 +35,7 @@ private:
     void setupActions();
     void setupContextMenu();
     bool confirmDelete(const QString &path);
+    void applyStyles();
 
     QTreeView *tree_view_{};
     QFileSystemModel *fs_model_{};

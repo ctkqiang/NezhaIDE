@@ -28,6 +28,7 @@ public:
 
 private:
     void setupLayout();
+    void applyStyles();
 
     Ui::MainWindow *ui{};
     SidebarContainer *sidebar_{};

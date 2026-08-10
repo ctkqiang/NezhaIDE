@@ -30,7 +30,9 @@ namespace NezhaIDE {
     enum class IDETheme {
         Auto,
         Light,
-        Dark
+        Dark,
+        GitHub,
+        Xcode
     };
 
     enum class IDELanguage {

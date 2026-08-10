@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<theme name="GitHub Light" id="github">
+    <color key="bg.primary">#FFFFFF</color>
+    <color key="bg.secondary">#F6F8FA</color>
+    <color key="bg.tertiary">#FAFBFC</color>
+    <color key="border">#D1D5DA</color>
+    <color key="accent">#0969DA</color>
+    <color key="accent.hover">#0550AE</color>
+    <color key="accent.pressed">#033D8B</color>
+    <color key="button.text">#FFFFFF</color>
+    <color key="text.primary">#24292F</color>
+    <color key="text.secondary">#57606A</color>
+    <color key="text.tertiary">#8B949E</color>
+    <color key="overlay.hover">rgba(208,215,222,0.48)</color>
+    <color key="overlay.hover.subtle">rgba(208,215,222,0.24)</color>
+    <color key="overlay.selection">rgba(9,105,218,0.12)</color>
+    <color key="git.modified">#9A6700</color>
+    <color key="git.added">#1A7F37</color>
+    <color key="git.deleted">#CF222E</color>
+    <color key="git.untracked">#8B949E</color>
+</theme>
