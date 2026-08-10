@@ -33,6 +33,7 @@ public:
 private:
     void setupLayout();
     void setupMenuBar();
+    void setupStatusBar();
     void applyStyles();
     void updateProjectRoot(const QString &projectPath);
 

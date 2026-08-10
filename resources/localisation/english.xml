@@ -67,4 +67,11 @@
     <string key="prefs.llm_provider">Provider</string>
     <string key="prefs.llm_token">API Token</string>
     <string key="prefs.restart_hint">Language change will take effect after restart.</string>
+    <string key="menu.edit_undo">Undo</string>
+    <string key="menu.edit_redo">Redo</string>
+    <string key="menu.edit_cut">Cut</string>
+    <string key="menu.edit_copy">Copy</string>
+    <string key="menu.edit_paste">Paste</string>
+    <string key="menu.view_explorer">Explorer</string>
+    <string key="menu.view_git">Source Control</string>
 </localization>

@@ -67,4 +67,11 @@
     <string key="prefs.llm_provider">服务商</string>
     <string key="prefs.llm_token">API Token</string>
     <string key="prefs.restart_hint">语言更改将在重启后生效。</string>
+    <string key="menu.edit_undo">撤销</string>
+    <string key="menu.edit_redo">重做</string>
+    <string key="menu.edit_cut">剪切</string>
+    <string key="menu.edit_copy">复制</string>
+    <string key="menu.edit_paste">粘贴</string>
+    <string key="menu.view_explorer">资源管理器</string>
+    <string key="menu.view_git">源代码管理</string>
 </localization>
