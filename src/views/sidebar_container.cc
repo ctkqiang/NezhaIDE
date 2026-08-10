@@ -12,6 +12,9 @@ namespace NezhaIDE::Views {
 SidebarContainer::SidebarContainer(QWidget *parent)
     : QWidget(parent)
 {
+    explorer_panel_ = new ExplorerPanel(this);
+    git_panel_ = new GitPanel(this);
+
     auto *layout = new QVBoxLayout(this);
     layout->setContentsMargins(0, 0, 0, 0);
     layout->setSpacing(0);
@@ -20,8 +23,6 @@ SidebarContainer::SidebarContainer(QWidget *parent)
     layout->addWidget(header_);
 
     stack_ = new QStackedWidget(this);
-    explorer_panel_ = new ExplorerPanel(this);
-    git_panel_ = new GitPanel(this);
     stack_->addWidget(explorer_panel_);
     stack_->addWidget(git_panel_);
     layout->addWidget(stack_, 1);
@@ -64,7 +65,7 @@ void SidebarContainer::setupHeader()
     connect(btn_new, &QPushButton::clicked, explorer_panel_, &ExplorerPanel::onNewFile);
     layout->addWidget(btn_new);
 
-    auto *btn_refresh = new QPushButton(QStringLiteral("↻"), header_);
+    auto *btn_refresh = new QPushButton(QStringLiteral("~"), header_);
     btn_refresh->setFixedSize(20, 20);
     btn_refresh->setFlat(true);
     btn_refresh->setCursor(Qt::PointingHandCursor);

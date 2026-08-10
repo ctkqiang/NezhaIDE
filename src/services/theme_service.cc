@@ -158,10 +158,10 @@ static const QHash<QString, QString> kStyleTemplates = {
     {"style.editor",
      "QPlainTextEdit { background: $syntax.editor.background; color: $syntax.editor.foreground;"
      "border: none; selection-background-color: $overlay.selection;"
-     "font-family: 'JetBrains Mono', 'SF Mono', Menlo, monospace; font-size: 13px;"
+     "font-family: 'SF Mono', Menlo, 'Courier New', monospace; font-size: 13px;"
      "padding: 8px; }"
      "QWidget#lineNumberArea { background: $bg.secondary; color: $text.tertiary;"
-     "font-family: 'JetBrains Mono', 'SF Mono', Menlo, monospace; font-size: 12px; }"},
+     "font-family: 'SF Mono', Menlo, 'Courier New', monospace; font-size: 12px; }"},
 };
 
 ThemeService &ThemeService::instance()
