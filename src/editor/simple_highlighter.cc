@@ -26,8 +26,9 @@ SimpleHighlighter::SimpleHighlighter(const LanguageDefinition &def, QTextDocumen
 
 void SimpleHighlighter::setTokenColors(const QHash<QString, QColor> &tokens)
 {
+    const QColor fallback = tokens.value(QStringLiteral("syntax.editor.foreground"), QColor("#E6EDF3"));
     auto setFmt = [&](QTextCharFormat &fmt, const QString &key) {
-        fmt.setForeground(tokens.value(key, QColor("#000000")));
+        fmt.setForeground(tokens.value(key, fallback));
     };
     setFmt(fmt_keyword_, QStringLiteral("syntax.keyword"));
     fmt_keyword_.setFontWeight(QFont::Bold);
@@ -65,19 +66,19 @@ void SimpleHighlighter::highlightBlock(const QString &text)
 {
     highlightBlockComment(text);
 
-    if (commentLine_.isValid()) {
-        auto it = commentLine_.globalMatch(text);
-        while (it.hasNext()) {
-            const auto m = it.next();
-            setFormat(m.capturedStart(), m.capturedLength(), fmt_comment_);
-        }
-    }
-
     for (const auto &rule : rules_) {
         auto it = rule.pattern.globalMatch(text);
         while (it.hasNext()) {
             const auto m = it.next();
             setFormat(m.capturedStart(), m.capturedLength(), rule.format);
+        }
+    }
+
+    if (commentLine_.isValid()) {
+        auto it = commentLine_.globalMatch(text);
+        while (it.hasNext()) {
+            const auto m = it.next();
+            setFormat(m.capturedStart(), m.capturedLength(), fmt_comment_);
         }
     }
 

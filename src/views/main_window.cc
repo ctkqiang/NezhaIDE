@@ -93,9 +93,20 @@ void MainWindow::setupStatusBar()
 {
     auto *sb = statusBar();
     sb->setSizeGripEnabled(false);
-    sb->showMessage(QStringLiteral("v") +
-        QString::fromUtf8(NezhaIDE::Constants::ApplicationVersion.data(),
-                          static_cast<int>(NezhaIDE::Constants::ApplicationVersion.size())));
+
+    auto *branch_label = new QLabel(this);
+    branch_label->setObjectName(QStringLiteral("statusBranch"));
+    connect(sidebar_->gitPanel(), &GitPanel::branchChanged, this,
+            [branch_label](const QString &branch) {
+        branch_label->setText(QStringLiteral("  branch: %1  ").arg(branch));
+    });
+
+    auto *info_label = new QLabel(this);
+    info_label->setObjectName(QStringLiteral("statusInfo"));
+    info_label->setText(QStringLiteral("  Ready  "));
+
+    sb->addWidget(branch_label);
+    sb->addPermanentWidget(info_label);
 }
 
 void MainWindow::onOpenProject()

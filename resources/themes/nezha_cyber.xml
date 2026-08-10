@@ -1,19 +1,19 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <theme name="Nezha Cyber" id="nezha_cyber">
-    <color key="bg.primary">#0F1117</color>
+    <color key="bg.primary">#0D1117</color>
     <color key="bg.secondary">#161B22</color>
     <color key="bg.tertiary">#1C2128</color>
     <color key="border">#30363D</color>
-    <color key="accent">#4C8DFF</color>
-    <color key="accent.hover">#6FA3FF</color>
-    <color key="accent.pressed">#2F6FE0</color>
+    <color key="accent">#58A6FF</color>
+    <color key="accent.hover">#79C0FF</color>
+    <color key="accent.pressed">#388BFD</color>
     <color key="button.text">#FFFFFF</color>
     <color key="text.primary">#E6EDF3</color>
-    <color key="text.secondary">#9198A1</color>
+    <color key="text.secondary">#8B949E</color>
     <color key="text.tertiary">#6E7681</color>
-    <color key="overlay.hover">rgba(255,255,255,0.06)</color>
-    <color key="overlay.hover.subtle">rgba(255,255,255,0.03)</color>
-    <color key="overlay.selection">rgba(76,141,255,0.25)</color>
+    <color key="overlay.hover">rgba(255,255,255,0.08)</color>
+    <color key="overlay.hover.subtle">rgba(255,255,255,0.04)</color>
+    <color key="overlay.selection">rgba(88,166,255,0.20)</color>
     <color key="git.modified">#F0883E</color>
     <color key="git.added">#3FB950</color>
     <color key="git.deleted">#F85149</color>
@@ -25,7 +25,7 @@
         <token name="type">#FFA657</token>
         <token name="function">#D2A8FF</token>
         <token name="string">#A5D6FF</token>
-        <token name="comment">#6E7681</token>
+        <token name="comment">#8B949E</token>
         <token name="number">#79C0FF</token>
         <token name="operator">#E6EDF3</token>
         <token name="preprocessor">#F0883E</token>

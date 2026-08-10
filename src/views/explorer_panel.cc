@@ -31,9 +31,11 @@ ExplorerPanel::ExplorerPanel(QWidget *parent)
     tree_view_->setRootIndex(fs_model_->index(QDir::currentPath()));
     tree_view_->setHeaderHidden(true);
     tree_view_->setAnimated(true);
-    tree_view_->setIndentation(16);
+    tree_view_->setIndentation(20);
+    tree_view_->setIconSize({18, 18});
     tree_view_->setContextMenuPolicy(Qt::CustomContextMenu);
     tree_view_->setSelectionMode(QAbstractItemView::ExtendedSelection);
+    tree_view_->setRootIsDecorated(true);
 
     for (int i = 1; i < fs_model_->columnCount(); ++i) {
         tree_view_->hideColumn(i);

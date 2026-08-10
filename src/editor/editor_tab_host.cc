@@ -1,10 +1,12 @@
 #include "editor_tab_host.h"
 #include "code_editor.h"
+#include "src/configuration.h"
 #include "src/services/localization_service.h"
 #include "src/services/theme_service.h"
 #include <QLabel>
 #include <QFileInfo>
 #include <QTabBar>
+#include <QVBoxLayout>
 
 namespace NezhaIDE::Editor {
 
@@ -96,7 +98,40 @@ void EditorTabHost::ensureWelcomeTab()
     for (int i = 0; i < count(); ++i) {
         if (tabText(i) == welcomeTitle) return;
     }
-    const auto idx = addTab(new QLabel(LOC("editor.open_to_edit")), welcomeTitle);
+
+    auto *welcome = new QWidget();
+    auto *wl = new QVBoxLayout(welcome);
+    wl->setAlignment(Qt::AlignCenter);
+    wl->setSpacing(8);
+
+    auto *title = new QLabel(QString::fromUtf8(
+        NezhaIDE::Constants::ApplicationName.data(),
+        static_cast<int>(NezhaIDE::Constants::ApplicationName.size())));
+    title->setStyleSheet(QStringLiteral("QLabel { font-size: 24px; font-weight: bold;"
+        "color: $c; }").replace(QStringLiteral("$c"),
+        NezhaIDE::Services::ThemeService::instance().color(QStringLiteral("text.primary"))));
+    title->setAlignment(Qt::AlignCenter);
+    wl->addWidget(title);
+
+    auto *ver = new QLabel(QStringLiteral("v") + QString::fromUtf8(
+        NezhaIDE::Constants::ApplicationVersion.data(),
+        static_cast<int>(NezhaIDE::Constants::ApplicationVersion.size())));
+    ver->setAlignment(Qt::AlignCenter);
+    ver->setStyleSheet(QStringLiteral("QLabel { font-size: 13px; color: $c; }")
+        .replace(QStringLiteral("$c"),
+        NezhaIDE::Services::ThemeService::instance().color(QStringLiteral("text.tertiary"))));
+    wl->addWidget(ver);
+
+    wl->addSpacing(16);
+
+    auto *hint = new QLabel(LOC("editor.open_to_edit"));
+    hint->setAlignment(Qt::AlignCenter);
+    hint->setStyleSheet(QStringLiteral("QLabel { font-size: 13px; color: $c; }")
+        .replace(QStringLiteral("$c"),
+        NezhaIDE::Services::ThemeService::instance().color(QStringLiteral("text.secondary"))));
+    wl->addWidget(hint);
+
+    const auto idx = addTab(welcome, welcomeTitle);
     tabBar()->setTabButton(idx, QTabBar::RightSide, nullptr);
 }
 

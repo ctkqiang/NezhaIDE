@@ -54,22 +54,29 @@ void SidebarContainer::setupHeader()
     layout->addWidget(project_name_);
     layout->addStretch();
 
-    auto *btn_new = new QPushButton(QStringLiteral("+"), header_);
-    btn_new->setFixedSize(20, 20);
-    btn_new->setFlat(true);
-    btn_new->setCursor(Qt::PointingHandCursor);
-    btn_new->setStyleSheet(
-        QStringLiteral("QPushButton { border: none; font-size: 14px; font-weight: bold;"
-        "background: transparent; border-radius: 3px; }"
-        "QPushButton:hover { background: rgba(0,0,0,0.08); }"));
+    auto makeHeaderBtn = [](const QString &text, QWidget *parent) -> QPushButton * {
+        auto *btn = new QPushButton(text, parent);
+        btn->setFixedSize(20, 20);
+        btn->setFlat(true);
+        btn->setCursor(Qt::PointingHandCursor);
+        btn->setStyleSheet(
+            QStringLiteral("QPushButton { border: none; font-size: 13px;"
+            "background: transparent; border-radius: 4px; }"
+            "QPushButton:hover { background: $hover; }")
+            .replace(QStringLiteral("$hover"),
+                NezhaIDE::Services::ThemeService::instance().color(QStringLiteral("overlay.hover"))));
+        return btn;
+    };
+
+    auto *btn_new = makeHeaderBtn(QStringLiteral("+"), header_);
     connect(btn_new, &QPushButton::clicked, explorer_panel_, &ExplorerPanel::onNewFile);
     layout->addWidget(btn_new);
 
-    auto *btn_refresh = new QPushButton(QStringLiteral("~"), header_);
-    btn_refresh->setFixedSize(20, 20);
-    btn_refresh->setFlat(true);
-    btn_refresh->setCursor(Qt::PointingHandCursor);
-    btn_refresh->setStyleSheet(btn_new->styleSheet());
+    auto *btn_folder = makeHeaderBtn(QStringLiteral("D"), header_);
+    connect(btn_folder, &QPushButton::clicked, explorer_panel_, &ExplorerPanel::onNewFolder);
+    layout->addWidget(btn_folder);
+
+    auto *btn_refresh = makeHeaderBtn(QStringLiteral("R"), header_);
     connect(btn_refresh, &QPushButton::clicked, this, [this] {
         explorer()->setRootPath(QDir::currentPath());
     });
