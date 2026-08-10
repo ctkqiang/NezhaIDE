@@ -81,7 +81,7 @@ namespace NezhaIDE::Repository {
             if (!er.has_value()) {
                 return er;
             }
-            instance.id = static_cast<int>(sqlite3_last_insert_rowid(db_.handle()));
+            instance.id = static_cast<int>(db_.last_insert_rowid());
             return {};
         }
 
@@ -96,7 +96,7 @@ namespace NezhaIDE::Repository {
             return query.Execute();
         }
 
-        static constexpr const ColumnDef* primary_key_column() {
+        static constexpr const ::NezhaIDE::Model::ColumnDef* primary_key_column() {
             const auto cols = Model::columns();
             for (const auto& col : cols) {
                 if (col.is_primary) {

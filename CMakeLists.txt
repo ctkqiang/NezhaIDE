@@ -20,8 +20,11 @@ add_executable(NezhaIDE main.cc
         src/views/main_window.ui
         src/model/column_def.h
         src/model/user_preference.h
-        src/repository/orm.h)
+        src/repository/orm.h
+        src/model/tool_registry.h)
 
 target_include_directories(NezhaIDE PRIVATE ${CMAKE_SOURCE_DIR})
+
+target_compile_definitions(NezhaIDE PRIVATE NEZHA_PROJECT_ROOT="${CMAKE_SOURCE_DIR}")
 
 target_link_libraries(NezhaIDE PRIVATE Qt6::Core Qt6::Widgets SQLite3::SQLite3)
