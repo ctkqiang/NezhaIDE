@@ -43,6 +43,8 @@ private slots:
 private:
     void parseStatusOutput(const QString &output);
     void updateBranchDisplay();
+    void applyStyles();
+    void applyGitColors();
     QString statusCharToText(QChar x, QChar y) const;
 
     QListWidget *file_list_{};
