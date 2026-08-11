@@ -17,6 +17,7 @@ ActivityBar::ActivityBar(QWidget *parent)
 
     btn_explorer_ = addButton(QStringLiteral("▣"), "Explorer", ActivityBarItem::Explorer);
     btn_git_ = addButton(QStringLiteral("⎇"), "Git", ActivityBarItem::Git);
+    btn_http_ = addButton(QStringLiteral("⟐"), "HTTP Client", ActivityBarItem::HttpClient);
     layout->addStretch();
     btn_prefs_ = addButton(QStringLiteral("⚙"), "Preferences", ActivityBarItem::Preferences);
 
@@ -70,6 +71,7 @@ void ActivityBar::setActive(ActivityBarItem item)
 
     applyBtn(btn_explorer_, item == ActivityBarItem::Explorer);
     applyBtn(btn_git_, item == ActivityBarItem::Git);
+    applyBtn(btn_http_, item == ActivityBarItem::HttpClient);
     applyBtn(btn_prefs_, false);
 }
 

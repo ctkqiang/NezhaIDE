@@ -74,4 +74,14 @@
     <string key="menu.edit_paste">粘贴</string>
     <string key="menu.view_explorer">资源管理器</string>
     <string key="menu.view_git">源代码管理</string>
+    <string key="menu.view_http">HTTP 客户端</string>
+    <string key="http.send">发送</string>
+    <string key="http.headers">请求头</string>
+    <string key="http.body">请求体</string>
+    <string key="http.response">响应</string>
+    <string key="http.new_request">新建请求</string>
+    <string key="http.delete_request">删除请求</string>
+    <string key="http.url_placeholder">https://api.example.com/endpoint</string>
+    <string key="http.header_name">名称</string>
+    <string key="http.header_value">值</string>
 </localization>

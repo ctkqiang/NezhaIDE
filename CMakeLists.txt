@@ -5,7 +5,7 @@ set(CMAKE_CXX_STANDARD 26)
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTOUIC ON)
 
-find_package(Qt6 REQUIRED COMPONENTS Core Widgets)
+find_package(Qt6 REQUIRED COMPONENTS Core Widgets Network)
 find_package(SQLite3 REQUIRED)
 
 add_executable(NezhaIDE main.cc
@@ -47,13 +47,16 @@ add_executable(NezhaIDE main.cc
         views/git_panel.ui
         src/model/column_def.h
         src/model/user_preference.h
+        src/model/http_request.h
         src/repository/orm.h
         src/model/tool_registry.h
         src/services/http.cc
-        src/services/http.h)
+        src/services/http.h
+        views/http_client_panel.cc
+        views/http_client_panel.h)
 
 target_include_directories(NezhaIDE PRIVATE ${CMAKE_SOURCE_DIR})
 
 target_compile_definitions(NezhaIDE PRIVATE NEZHA_PROJECT_ROOT="${CMAKE_SOURCE_DIR}")
 
-target_link_libraries(NezhaIDE PRIVATE Qt6::Core Qt6::Widgets SQLite3::SQLite3)
+target_link_libraries(NezhaIDE PRIVATE Qt6::Core Qt6::Widgets Qt6::Network SQLite3::SQLite3)

@@ -162,6 +162,47 @@ static const QHash<QString, QString> kStyleTemplates = {
      "padding: 8px; }"
      "QWidget#lineNumberArea { background: $bg.secondary; color: $text.tertiary;"
      "font-family: 'SF Mono', Menlo, 'Courier New', monospace; font-size: 12px; }"},
+
+    {"style.http_panel",
+     "QWidget#httpClientRoot { background: $bg.secondary; }"},
+
+    {"style.http_url_input",
+     "QLineEdit { border: 1px solid $border; border-radius: 4px; padding: 4px 8px;"
+     "background: $bg.tertiary; color: $text.primary; font-size: 12px; }"
+     "QLineEdit:focus { border-color: $accent; }"},
+
+    {"style.http_input",
+     "QPlainTextEdit { border: none; background: $bg.tertiary; color: $text.primary;"
+     "font-family: 'SF Mono', Menlo, monospace; font-size: 12px; }"
+     "QComboBox { border: 1px solid $border; border-radius: 4px; padding: 4px 8px;"
+     "background: $bg.tertiary; color: $text.primary; font-size: 12px; }"
+     "QComboBox::drop-down { border: none; }"
+     "QComboBox QAbstractItemView { background: $bg.tertiary; color: $text.primary;"
+     "selection-background-color: $overlay.selection; }"
+     "QTableWidget { border: 1px solid $border; gridline-color: $border;"
+     "background: $bg.tertiary; color: $text.primary; font-size: 12px; }"
+     "QHeaderView::section { background: $bg.secondary; color: $text.primary;"
+     "border: none; padding: 4px 8px; font-size: 11px; font-weight: bold; }"},
+
+    {"style.http_response",
+     "QPlainTextEdit { border: none; background: $bg.tertiary; color: $text.primary;"
+     "font-family: 'SF Mono', Menlo, monospace; font-size: 12px; }"},
+
+    {"style.http_request_list",
+     "QListWidget { border: none; background: transparent; font-size: 11px; }"
+     "QListWidget::item { padding: 3px 6px; color: $text.secondary; }"
+     "QListWidget::item:hover { background: $overlay.hover; }"
+     "QListWidget::item:selected { background: $overlay.selection; color: $text.primary; }"},
+
+    {"style.http_tab",
+     "QTabWidget::pane { border: 1px solid $border; background: $bg.tertiary; }"
+     "QTabBar::tab { background: transparent; color: $text.tertiary; padding: 4px 12px;"
+     "border: none; border-bottom: 2px solid transparent; font-size: 11px; }"
+     "QTabBar::tab:selected { color: $accent; border-bottom: 2px solid $accent; }"
+     "QTabBar::tab:hover { color: $text.primary; }"},
+
+    {"style.http_status_label",
+     "QLabel { font-size: 13px; font-weight: bold; color: $accent; padding: 2px 0; }"},
 };
 
 ThemeService &ThemeService::instance()

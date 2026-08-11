@@ -1,6 +1,7 @@
 #include "sidebar_container.h"
 #include "explorer_panel.h"
 #include "git_panel.h"
+#include "http_client_panel.h"
 #include "src/services/theme_service.h"
 #include <QDir>
 #include <QVBoxLayout>
@@ -14,6 +15,7 @@ SidebarContainer::SidebarContainer(QWidget *parent)
 {
     explorer_panel_ = new ExplorerPanel(this);
     git_panel_ = new GitPanel(this);
+    http_panel_ = new HttpClientPanel(this);
 
     auto *layout = new QVBoxLayout(this);
     layout->setContentsMargins(0, 0, 0, 0);
@@ -25,6 +27,7 @@ SidebarContainer::SidebarContainer(QWidget *parent)
     stack_ = new QStackedWidget(this);
     stack_->addWidget(explorer_panel_);
     stack_->addWidget(git_panel_);
+    stack_->addWidget(http_panel_);
     layout->addWidget(stack_, 1);
 
     applyStyles();
@@ -85,6 +88,7 @@ void SidebarContainer::setupHeader()
 
 ExplorerPanel *SidebarContainer::explorer() const { return explorer_panel_; }
 GitPanel *SidebarContainer::gitPanel() const { return git_panel_; }
+HttpClientPanel *SidebarContainer::httpClient() const { return http_panel_; }
 
 void SidebarContainer::showExplorer()
 {
@@ -100,6 +104,12 @@ void SidebarContainer::showGit()
 {
     stack_->setCurrentIndex(1);
     project_name_->setText(QStringLiteral("GIT"));
+}
+
+void SidebarContainer::showHttpClient()
+{
+    stack_->setCurrentIndex(2);
+    project_name_->setText(QStringLiteral("HTTP CLIENT"));
 }
 
 void SidebarContainer::applyStyles()

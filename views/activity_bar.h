@@ -9,7 +9,8 @@ namespace NezhaIDE::Views {
 enum class ActivityBarItem {
     Explorer = 0,
     Git = 1,
-    Preferences = 2
+    HttpClient = 2,
+    Preferences = 3
 };
 
 class ActivityBar final : public QWidget {
@@ -29,6 +30,7 @@ private:
 
     QPushButton *btn_explorer_{};
     QPushButton *btn_git_{};
+    QPushButton *btn_http_{};
     QPushButton *btn_prefs_{};
     ActivityBarItem active_ = ActivityBarItem::Explorer;
 };

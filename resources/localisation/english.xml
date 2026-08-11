@@ -74,4 +74,14 @@
     <string key="menu.edit_paste">Paste</string>
     <string key="menu.view_explorer">Explorer</string>
     <string key="menu.view_git">Source Control</string>
+    <string key="menu.view_http">HTTP Client</string>
+    <string key="http.send">Send</string>
+    <string key="http.headers">Headers</string>
+    <string key="http.body">Body</string>
+    <string key="http.response">Response</string>
+    <string key="http.new_request">New Request</string>
+    <string key="http.delete_request">Delete Request</string>
+    <string key="http.url_placeholder">https://api.example.com/endpoint</string>
+    <string key="http.header_name">Name</string>
+    <string key="http.header_value">Value</string>
 </localization>

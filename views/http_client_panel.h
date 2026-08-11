@@ -10,7 +10,6 @@
 #include <QTabWidget>
 #include <QTableWidget>
 #include <QLabel>
-#include <QTextEdit>
 
 namespace NezhaIDE::Views {
 
@@ -23,9 +22,6 @@ public:
 
 private:
     void setupUI();
-    void setupRequestList(QSplitter *splitter);
-    void setupRequestEditor(QSplitter *splitter);
-    void setupResponseArea(QSplitter *splitter);
     void onSendClicked();
     void onNewRequest();
     void onDeleteRequest();

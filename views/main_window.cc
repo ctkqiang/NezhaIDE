@@ -87,6 +87,9 @@ void MainWindow::setupMenuBar()
     auto *toggle_git = view_menu->addAction(LOC("menu.view_git"));
     toggle_git->setCheckable(true);
     toggle_git->setChecked(true);
+    auto *toggle_http = view_menu->addAction(LOC("menu.view_http"));
+    toggle_http->setCheckable(true);
+    toggle_http->setChecked(true);
 }
 
 void MainWindow::setupStatusBar()
@@ -174,6 +177,7 @@ void MainWindow::setupLayout()
         switch (item) {
         case ActivityBarItem::Explorer: sidebar_->showExplorer(); break;
         case ActivityBarItem::Git: sidebar_->showGit(); break;
+        case ActivityBarItem::HttpClient: sidebar_->showHttpClient(); break;
         default: break;
         }
     });

@@ -9,6 +9,7 @@ namespace NezhaIDE::Views {
 
 class ExplorerPanel;
 class GitPanel;
+class HttpClientPanel;
 
 class SidebarContainer : public QWidget {
     Q_OBJECT
@@ -19,9 +20,11 @@ public:
 
     ExplorerPanel *explorer() const;
     GitPanel *gitPanel() const;
+    HttpClientPanel *httpClient() const;
 
     void showExplorer();
     void showGit();
+    void showHttpClient();
 
 private:
     void setupHeader();
@@ -30,6 +33,7 @@ private:
     QStackedWidget *stack_{};
     ExplorerPanel *explorer_panel_{};
     GitPanel *git_panel_{};
+    HttpClientPanel *http_panel_{};
 
     QWidget *header_{};
     QLabel *project_name_{};

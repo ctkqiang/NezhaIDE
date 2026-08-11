@@ -1,4 +1,8 @@
-#include "http.h"
+#if __has_include("http.h")
+    #include "http.h"
+    #define __HAS_HTTP 1
+#endif
+
 #include <QFile>
 #include <QUrl>
 #include <QUrlQuery>
