@@ -74,7 +74,7 @@ void SimpleHighlighter::highlightBlock(const QString &text)
         }
     }
 
-    if (commentLine_.isValid()) {
+    if (commentLine_.isValid() && !commentLine_.pattern().isEmpty()) {
         auto it = commentLine_.globalMatch(text);
         while (it.hasNext()) {
             const auto m = it.next();
@@ -100,7 +100,10 @@ void SimpleHighlighter::highlightBlock(const QString &text)
 
 void SimpleHighlighter::highlightBlockComment(const QString &text)
 {
-    if (!commentBlockStart_.isValid()) return;
+    if (!commentBlockStart_.isValid() || commentBlockStart_.pattern().isEmpty()
+        || !commentBlockEnd_.isValid() || commentBlockEnd_.pattern().isEmpty()) {
+        return;
+    }
 
     const auto prevState = previousBlockState();
     setCurrentBlockState(0);
