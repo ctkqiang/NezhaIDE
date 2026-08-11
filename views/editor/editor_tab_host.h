@@ -5,6 +5,7 @@
 
 namespace NezhaIDE::Views {
     class HttpViewPanel;
+    class HexEditor;
 }
 
 namespace NezhaIDE::Editor {
@@ -21,6 +22,7 @@ public:
 
 public slots:
     void openFile(const QString &path);
+    void openBinaryFile(const QString &path);
     void openHttpClient();
 
 signals:
@@ -33,6 +35,7 @@ private:
     void applyStyles();
 
     QHash<QString, CodeEditor *> editors_;
+    QHash<QString, NezhaIDE::Views::HexEditor *> hex_editors_;
     NezhaIDE::Views::HttpViewPanel *http_panel_{};
     QWidget *welcome_tab_{};
 };

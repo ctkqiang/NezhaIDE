@@ -1,6 +1,7 @@
 #include "git_panel.h"
 #include "src/services/localization_service.h"
 #include "src/services/theme_service.h"
+#include "src/utilities/logger.h"
 #include <QVBoxLayout>
 #include <QHBoxLayout>
 #include <algorithm>
@@ -146,6 +147,10 @@ void GitPanel::onCommit()
             LOC("git.error_commit_message"));
         return;
     }
+
+    NezhaIDE::Utilities::Logger::instance().log(
+        NezhaIDE::Utilities::LogLevel::Info, __FILE__, __LINE__, __func__,
+        "Git 提交: {}", msg.left(60).toStdString());
 
     QProcess proc;
     proc.start("git", {"commit", "-m", msg});

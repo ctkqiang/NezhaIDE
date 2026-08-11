@@ -4,6 +4,7 @@
 #include "language_registry.h"
 #include "src/services/localization_service.h"
 #include "src/services/theme_service.h"
+#include "src/utilities/logger.h"
 #include <QFile>
 #include <QFileInfo>
 #include <QMessageBox>
@@ -53,6 +54,9 @@ bool CodeEditor::load()
 {
     QFile file(file_path_);
     if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
+        NezhaIDE::Utilities::Logger::instance().log(
+            NezhaIDE::Utilities::LogLevel::Error, __FILE__, __LINE__, __func__,
+            "文件读取失败: {} error={}", file_path_.toStdString(), file.errorString().toStdString());
         QMessageBox::warning(
             const_cast<CodeEditor *>(this),
             LOC("error.title"),
@@ -69,6 +73,9 @@ bool CodeEditor::save()
 {
     QFile file(file_path_);
     if (!file.open(QIODevice::WriteOnly | QIODevice::Text)) {
+        NezhaIDE::Utilities::Logger::instance().log(
+            NezhaIDE::Utilities::LogLevel::Error, __FILE__, __LINE__, __func__,
+            "文件保存失败: {} error={}", file_path_.toStdString(), file.errorString().toStdString());
         QMessageBox::warning(
             const_cast<CodeEditor *>(this),
             LOC("error.title"),

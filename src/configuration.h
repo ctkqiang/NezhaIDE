@@ -39,7 +39,8 @@ namespace NezhaIDE {
 
     enum class IDELanguage {
         Chinese,
-        English
+        English,
+        German
     };
 
     class Constants {

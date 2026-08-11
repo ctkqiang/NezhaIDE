@@ -3,9 +3,14 @@
 //
 
 #include "configuration.h"
+#include "utilities/logger.h"
 #include <QDir>
 
 namespace NezhaIDE {
+
+namespace {
+    auto& log() { return Utilities::Logger::instance(); }
+}
     Configuration::Configuration()
         : settings_(QString::fromUtf8(Constants::OrganisationName.data(),
                                       static_cast<qsizetype>(Constants::OrganisationName.size())),
@@ -28,6 +33,8 @@ namespace NezhaIDE {
     }
 
     void Configuration::set_theme(const IDETheme theme) {
+        log().log(Utilities::LogLevel::Info, __FILE__, __LINE__, __func__,
+            "主题切换: {}", static_cast<int>(theme));
         settings_.setValue(QStringLiteral("theme"), static_cast<int>(theme));
     }
 
@@ -66,6 +73,8 @@ namespace NezhaIDE {
     }
 
     void Configuration::clear_memory() {
+        log().log(Utilities::LogLevel::Info, __FILE__, __LINE__, __func__,
+            "清除敏感数据");
         settings_.remove(QStringLiteral("llm/token"));
         settings_.remove(QStringLiteral("user/name"));
         settings_.sync();

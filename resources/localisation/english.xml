@@ -117,4 +117,16 @@
     <string key="http.url_empty_detail">Enter a URL to request, e.g. https://api.example.com.</string>
     <string key="http.invalid_url_title">Invalid URL</string>
     <string key="http.invalid_url_detail">Could not parse the URL: %1. Check the format or start it with https:// or http://.</string>
+    <string key="http.raw">Raw</string>
+    <string key="http.preview">Preview</string>
+    <string key="http.no_preview">No preview available</string>
+    <string key="http.raw_parse_error">Invalid raw request: %1</string>
+    <string key="hex.disassembly">Disassembly</string>
+    <string key="hex.strings">Strings</string>
+    <string key="hex.sections">Sections</string>
+    <string key="hex.symbols">Symbols</string>
+    <string key="hex.imports">Imports</string>
+    <string key="hex.info">Info</string>
+    <string key="hex.no_data">No data available</string>
+    <string key="hex.stripped">Stripped binary — no symbol table</string>
 </localization>
