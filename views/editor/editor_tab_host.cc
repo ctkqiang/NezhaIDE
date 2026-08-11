@@ -1,5 +1,6 @@
 #include "editor_tab_host.h"
 #include "code_editor.h"
+#include "views/hex_editor/hex_editor.h"
 #include "views/http_view_panel/http_view_panel.h"
 #include "src/configuration.h"
 #include "src/services/localization_service.h"
@@ -46,6 +47,16 @@ void EditorTabHost::openFile(const QString &path)
         setCurrentWidget(it.value());
         return;
     }
+    if (auto it = hex_editors_.find(canonical); it != hex_editors_.end()) {
+        setCurrentWidget(it.value());
+        return;
+    }
+
+    auto binaryCheck = Model::BinaryParser::open(canonical);
+    if (binaryCheck.has_value()) {
+        openBinaryFile(canonical);
+        return;
+    }
 
     NezhaIDE::Utilities::Logger::instance().log(
         NezhaIDE::Utilities::LogLevel::Info, __FILE__, __LINE__, __func__,
@@ -81,6 +92,42 @@ void EditorTabHost::openFile(const QString &path)
 
     removeWelcomeTab();
     setCurrentIndex(index);
+    emit editActionsChanged();
+}
+
+void EditorTabHost::openBinaryFile(const QString &path)
+{
+    const auto canonical = QFileInfo(path).canonicalFilePath();
+    if (canonical.isEmpty()) return;
+
+    if (auto it = hex_editors_.find(canonical); it != hex_editors_.end()) {
+        setCurrentWidget(it.value());
+        return;
+    }
+
+    auto *hexEditor = new NezhaIDE::Views::HexEditor(canonical, this);
+    if (!hexEditor->load()) {
+        delete hexEditor;
+        openFile(path);
+        return;
+    }
+
+    hex_editors_[canonical] = hexEditor;
+
+    const auto title = QStringLiteral("Hex: ") + QFileInfo(canonical).fileName();
+    const auto idx = addTab(hexEditor, title);
+
+    connect(hexEditor, &NezhaIDE::Views::HexEditor::titleChanged, this,
+            [this](const QString &t) {
+        auto *he = qobject_cast<NezhaIDE::Views::HexEditor *>(sender());
+        if (he) {
+            const int i = indexOf(he);
+            if (i >= 0) setTabText(i, t);
+        }
+    });
+
+    removeWelcomeTab();
+    setCurrentIndex(idx);
     emit editActionsChanged();
 }
 
@@ -135,6 +182,10 @@ void EditorTabHost::onTabCloseRequested(int index)
 
     if (w == http_panel_) {
         http_panel_ = nullptr;
+    }
+
+    if (auto *hex = qobject_cast<NezhaIDE::Views::HexEditor *>(w)) {
+        hex_editors_.remove(hex->filePath());
     }
 
     removeTab(index);
@@ -196,6 +247,9 @@ void EditorTabHost::applyStyles()
     setStyleSheet(ts.qss(QStringLiteral("style.tab_widget")));
     for (auto *editor : editors_) {
         editor->applyTheme();
+    }
+    for (auto *hex : hex_editors_) {
+        hex->applyTheme();
     }
 }
 

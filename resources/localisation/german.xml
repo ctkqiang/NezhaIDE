@@ -117,4 +117,12 @@
     <string key="http.url_empty_detail">Geben Sie eine URL für die Anfrage ein, z. B. https://api.example.com.</string>
     <string key="http.invalid_url_title">Ungültige URL</string>
     <string key="http.invalid_url_detail">Die URL konnte nicht analysiert werden: %1. Überprüfen Sie das Format oder beginnen Sie sie mit https:// oder http://.</string>
+    <string key="hex.disassembly">Disassembly</string>
+    <string key="hex.strings">Zeichenketten</string>
+    <string key="hex.sections">Sektionen</string>
+    <string key="hex.symbols">Symbole</string>
+    <string key="hex.imports">Importe</string>
+    <string key="hex.info">Info</string>
+    <string key="hex.no_data">Keine Daten verfügbar</string>
+    <string key="hex.stripped">Ohne Symbole — keine Symboltabelle</string>
 </localization>

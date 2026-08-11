@@ -121,4 +121,12 @@
     <string key="http.preview">预览</string>
     <string key="http.no_preview">无预览可用</string>
     <string key="http.raw_parse_error">原始请求无效：%1</string>
+    <string key="hex.disassembly">反汇编</string>
+    <string key="hex.strings">字符串</string>
+    <string key="hex.sections">段信息</string>
+    <string key="hex.symbols">符号</string>
+    <string key="hex.imports">导入</string>
+    <string key="hex.info">信息</string>
+    <string key="hex.no_data">无可用数据</string>
+    <string key="hex.stripped">已剥离符号 — 无符号表</string>
 </localization>

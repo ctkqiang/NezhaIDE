@@ -1,5 +1,7 @@
 #pragma once
 
+#include <QFileInfo>
+#include <QString>
 #include <cstdint>
 #include <expected>
 #include <memory>

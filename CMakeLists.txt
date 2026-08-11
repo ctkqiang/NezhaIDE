@@ -7,6 +7,7 @@ set(CMAKE_AUTOUIC ON)
 
 find_package(Qt6 REQUIRED COMPONENTS Core Widgets Network)
 find_package(SQLite3 REQUIRED)
+find_package(tl-expected REQUIRED)
 find_package(LIEF REQUIRED)
 find_library(CAPSTONE_LIBRARY capstone REQUIRED)
 find_path(CAPSTONE_INCLUDE_DIR capstone/capstone.h REQUIRED)
