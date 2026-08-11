@@ -10,6 +10,7 @@
 #include <QTableWidget>
 #include <QLabel>
 #include <QComboBox>
+#include <QTextBrowser>
 #include "src/model/http_request.h"
 #include "views/editor/simple_highlighter.h"
 
@@ -43,6 +44,11 @@ private:
     void setResponseState(ResponseState state);
     void applySendButtonStyle();
     void applyResponseHighlighting(const QString &contentType, const QString &body);
+    void applyBodyHighlighting();
+    void updateHtmlPreview(const QString &contentType);
+    void syncRawFromWidgets();
+    void syncWidgetsFromRaw();
+    void applyDefaultValues();
 
     NezhaIDE::Model::HTTP::HttpRequest collectRequest() const;
     QString normalizeUrl(QString url) const;
@@ -55,6 +61,9 @@ private:
     QComboBox *body_type_combo_{};
     QPlainTextEdit *body_editor_{};
     QTabWidget *request_tabs_{};
+    QPlainTextEdit *raw_request_editor_{};
+    NezhaIDE::Editor::SimpleHighlighter *request_raw_highlighter_{};
+    NezhaIDE::Editor::SimpleHighlighter *body_highlighter_{};
 
     QLabel *status_pill_{};
     QLabel *time_label_{};
@@ -68,9 +77,15 @@ private:
     QLabel *error_title_{};
     QLabel *error_detail_{};
     NezhaIDE::Editor::SimpleHighlighter *response_highlighter_{};
+    QPlainTextEdit *raw_response_editor_{};
+    NezhaIDE::Editor::SimpleHighlighter *response_raw_highlighter_{};
+    QTextBrowser *html_preview_{};
 
     QString method_{QStringLiteral("GET")};
     bool sending_{false};
+    bool syncing_raw_{false};
+    bool raw_dirty_{false};
+    QString body_highlight_language_;
     NezhaIDE::Model::HTTP::RequestId current_request_id_{};
 };
 

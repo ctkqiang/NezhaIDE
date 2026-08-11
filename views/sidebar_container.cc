@@ -3,6 +3,7 @@
 #include "views/git_panel/git_panel.h"
 #include "src/services/localization_service.h"
 #include "src/services/theme_service.h"
+#include "src/utilities/logger.h"
 #include <QDir>
 #include <QVBoxLayout>
 #include <QHBoxLayout>

@@ -1,7 +1,9 @@
 #include "http_view_panel.h"
+#include "src/configuration.h"
 #include "src/services/http.h"
 #include "src/services/localization_service.h"
 #include "src/services/theme_service.h"
+#include "src/utilities/logger.h"
 #include <QAction>
 #include <QByteArray>
 #include <QFrame>
@@ -9,6 +11,7 @@
 #include <QHBoxLayout>
 #include <QJsonDocument>
 #include <QMenu>
+#include <QRegularExpression>
 #include <QStringDecoder>
 #include <QUrl>
 #include <QVBoxLayout>
@@ -81,6 +84,199 @@ QString prettyPrintBody(const QString &raw)
         : raw;
 }
 
+QString methodToString(NezhaIDE::Model::HTTP::HttpMethod m)
+{
+    using namespace NezhaIDE::Model::HTTP;
+    switch (m) {
+    case HttpMethod::Get:     return QStringLiteral("GET");
+    case HttpMethod::Post:    return QStringLiteral("POST");
+    case HttpMethod::Put:     return QStringLiteral("PUT");
+    case HttpMethod::Patch:   return QStringLiteral("PATCH");
+    case HttpMethod::Delete:  return QStringLiteral("DELETE");
+    case HttpMethod::Head:    return QStringLiteral("HEAD");
+    case HttpMethod::Options: return QStringLiteral("OPTIONS");
+    }
+    return QStringLiteral("GET");
+}
+
+QString serializeRequest(const NezhaIDE::Model::HTTP::HttpRequest &req)
+{
+    using namespace NezhaIDE::Model::HTTP;
+    QUrl url(QString::fromStdString(req.url));
+    if (url.scheme().isEmpty()) url.setScheme(QStringLiteral("https"));
+
+    const auto path = url.path(QUrl::FullyEncoded).isEmpty()
+        ? QStringLiteral("/") : url.path(QUrl::FullyEncoded);
+    const auto query = url.query(QUrl::FullyEncoded);
+    const auto target = query.isEmpty() ? path : path + QStringLiteral("?") + query;
+
+    QStringList lines;
+    lines.append(methodToString(req.method) + QStringLiteral(" ") + target + QStringLiteral(" HTTP/1.1"));
+
+    const auto host = url.host().isEmpty() ? QStringLiteral("localhost") : url.host();
+    const auto port = url.port(-1);
+    const auto hostHeader = (port > 0 && port != 80 && port != 443)
+        ? host + QStringLiteral(":") + QString::number(port) : host;
+    lines.append(QStringLiteral("Host: ") + hostHeader);
+
+    for (const auto &h : req.headers) {
+        if (!h.enabled || h.name.empty()) continue;
+        lines.append(QString::fromStdString(h.name) + QStringLiteral(": ")
+                     + QString::fromStdString(h.value));
+    }
+
+    const auto bodyBytes = QByteArray::fromStdString(req.body.content);
+    lines.append(QStringLiteral("Content-Length: ") + QString::number(bodyBytes.size()));
+    lines.append(QString());
+    if (!bodyBytes.isEmpty()) {
+        lines.append(QString::fromUtf8(bodyBytes));
+    }
+
+    return lines.join(QStringLiteral("\r\n"));
+}
+
+bool parseRawRequest(const QString &text, NezhaIDE::Model::HTTP::HttpRequest *out, QString *error)
+{
+    using namespace NezhaIDE::Model::HTTP;
+    const auto rawLines = text.split(QChar('\n'));
+    QStringList lines;
+    lines.reserve(rawLines.size());
+    for (const auto &l : rawLines) {
+        auto trimmed = l;
+        if (trimmed.endsWith(QChar('\r'))) trimmed.chop(1);
+        lines.append(trimmed);
+    }
+
+    int lineIdx = 0;
+    while (lineIdx < lines.size() && lines[lineIdx].trimmed().isEmpty()) ++lineIdx;
+    if (lineIdx >= lines.size()) {
+        if (error) *error = QStringLiteral("empty request");
+        return false;
+    }
+
+    static const QRegularExpression requestLineRx(
+        QStringLiteral(R"(^(\S+)\s+(\S+)(?:\s+HTTP/\S+)?$)"));
+    const auto rlMatch = requestLineRx.match(lines[lineIdx]);
+    if (!rlMatch.hasMatch()) {
+        if (error) *error = QStringLiteral("invalid request line: ") + lines[lineIdx];
+        return false;
+    }
+
+    const auto methodStr = rlMatch.captured(1).toUpper();
+    const auto target = rlMatch.captured(2);
+    ++lineIdx;
+
+    HttpMethod method = HttpMethod::Get;
+    if (methodStr == QStringLiteral("GET")) method = HttpMethod::Get;
+    else if (methodStr == QStringLiteral("POST")) method = HttpMethod::Post;
+    else if (methodStr == QStringLiteral("PUT")) method = HttpMethod::Put;
+    else if (methodStr == QStringLiteral("PATCH")) method = HttpMethod::Patch;
+    else if (methodStr == QStringLiteral("DELETE")) method = HttpMethod::Delete;
+    else if (methodStr == QStringLiteral("HEAD")) method = HttpMethod::Head;
+    else if (methodStr == QStringLiteral("OPTIONS")) method = HttpMethod::Options;
+    else {
+        if (error) *error = QStringLiteral("unsupported method: ") + methodStr;
+        return false;
+    }
+
+    QString host;
+    std::vector<HttpHeader> headers;
+    while (lineIdx < lines.size() && !lines[lineIdx].trimmed().isEmpty()) {
+        const auto &headerLine = lines[lineIdx];
+        const auto colonPos = headerLine.indexOf(QChar(':'));
+        if (colonPos < 0) { ++lineIdx; continue; }
+        auto name = headerLine.left(colonPos).trimmed();
+        auto value = headerLine.mid(colonPos + 1).trimmed();
+
+        if (name.compare(QStringLiteral("Content-Length"), Qt::CaseInsensitive) == 0) {
+            ++lineIdx;
+            continue;
+        }
+
+        if (name.compare(QStringLiteral("Host"), Qt::CaseInsensitive) == 0) {
+            host = value;
+        }
+
+        HttpHeader h;
+        h.name = name.toStdString();
+        h.value = value.toStdString();
+        h.enabled = true;
+        headers.push_back(std::move(h));
+        ++lineIdx;
+    }
+
+    if (host.isEmpty() && target.startsWith(QStringLiteral("http://"))
+        && !target.startsWith(QStringLiteral("http:///"))) {
+        const QUrl tgt(target);
+        if (!tgt.host().isEmpty()) host = tgt.host();
+    }
+
+    ++lineIdx;
+
+    QString urlStr;
+    if (target.contains(QStringLiteral("://"))) {
+        urlStr = target;
+    } else {
+        if (host.isEmpty()) {
+            if (error) *error = QStringLiteral("missing Host header");
+            return false;
+        }
+        urlStr = QStringLiteral("https://") + host + target;
+    }
+
+    QString bodyStr;
+    if (lineIdx < lines.size()) {
+        bodyStr = QStringList(lines.mid(lineIdx)).join(QStringLiteral("\n"));
+    }
+
+    BodyType bodyType = BodyType::None;
+    std::string contentTypeStr;
+    for (const auto &h : headers) {
+        if (QString::fromStdString(h.name).compare(QStringLiteral("Content-Type"), Qt::CaseInsensitive) == 0) {
+            contentTypeStr = h.value;
+            break;
+        }
+    }
+    const auto ctLower = QString::fromStdString(contentTypeStr).toLower();
+    if (!bodyStr.isEmpty()) {
+        if (ctLower.contains(QStringLiteral("application/json"))
+            || ctLower.contains(QStringLiteral("+json"))) {
+            bodyType = BodyType::Json;
+        } else if (ctLower.contains(QStringLiteral("application/xml"))
+                   || ctLower.contains(QStringLiteral("text/xml"))
+                   || ctLower.contains(QStringLiteral("+xml"))) {
+            bodyType = BodyType::Xml;
+        } else if (ctLower.contains(QStringLiteral("application/x-www-form-urlencoded"))) {
+            bodyType = BodyType::FormUrlEncoded;
+        } else {
+            bodyType = BodyType::Raw;
+        }
+    }
+
+    out->method = method;
+    out->url = urlStr.toStdString();
+    out->headers = std::move(headers);
+    out->body.type = bodyType;
+    out->body.content = bodyStr.toStdString();
+    out->queryParameters.clear();
+    return true;
+}
+
+QString buildRawResponseText(const NezhaIDE::Model::HTTP::HttpResponse &resp)
+{
+    QStringList lines;
+    auto reason = QString::fromStdString(resp.statusText);
+    lines.append(QStringLiteral("HTTP/1.1 %1 %2").arg(resp.statusCode).arg(reason));
+    for (const auto &h : resp.headers) {
+        lines.append(QString::fromStdString(h.name) + QStringLiteral(": ")
+                     + QString::fromStdString(h.value));
+    }
+    lines.append(QString());
+    const auto raw = QByteArray::fromStdString(resp.body);
+    lines.append(decodeBody(raw, QString::fromStdString(resp.contentType)));
+    return lines.join(QStringLiteral("\r\n"));
+}
+
 }
 
 HttpViewPanel::HttpViewPanel(QWidget *parent)
@@ -115,6 +311,9 @@ HttpViewPanel::HttpViewPanel(QWidget *parent)
         response_body_->setPlainText(bodyText);
         applyResponseHighlighting(contentType, bodyText);
 
+        raw_response_editor_->setPlainText(buildRawResponseText(resp));
+        updateHtmlPreview(contentType);
+
         response_headers_table_->setRowCount(0);
         for (const auto &h : resp.headers) {
             const auto row = response_headers_table_->rowCount();
@@ -145,11 +344,30 @@ HttpViewPanel::HttpViewPanel(QWidget *parent)
         time_label_->clear();
         size_label_->clear();
         response_body_->clear();
+        raw_response_editor_->clear();
         response_headers_table_->setRowCount(0);
 
         showErrorState(LOC("http.error_title"), error);
         setResponseState(ResponseState::Error);
     });
+
+    connect(request_tabs_, &QTabWidget::currentChanged, this, [this](int) {
+        if (request_tabs_->currentWidget() == raw_request_editor_) {
+            if (!raw_dirty_) syncRawFromWidgets();
+        } else if (raw_dirty_) {
+            syncWidgetsFromRaw();
+        }
+    });
+    connect(raw_request_editor_, &QPlainTextEdit::textChanged, this, [this] {
+        if (!syncing_raw_) raw_dirty_ = true;
+    });
+    connect(body_type_combo_, QOverload<int>::of(&QComboBox::currentIndexChanged),
+            this, [this] { applyBodyHighlighting(); });
+    connect(body_editor_, &QPlainTextEdit::textChanged,
+            this, [this] { applyBodyHighlighting(); });
+
+    applyDefaultValues();
+    syncRawFromWidgets();
 }
 
 HttpViewPanel::~HttpViewPanel() = default;
@@ -232,6 +450,17 @@ void HttpViewPanel::buildRequestTabs()
 {
     request_tabs_ = new QTabWidget(this);
     request_tabs_->setObjectName(QStringLiteral("httpRequestTabs"));
+
+    raw_request_editor_ = new QPlainTextEdit(request_tabs_);
+    raw_request_editor_->setObjectName(QStringLiteral("httpRawRequestEditor"));
+    raw_request_editor_->setPlaceholderText(
+        QStringLiteral("GET / HTTP/1.1\r\nHost: example.com\r\n\r\n"));
+    raw_request_editor_->setTabStopDistance(28.0);
+    request_raw_highlighter_ = new NezhaIDE::Editor::SimpleHighlighter(
+        NezhaIDE::Editor::languageHttp(), raw_request_editor_->document(), this);
+    request_raw_highlighter_->setTokenColors(
+        NezhaIDE::Services::ThemeService::instance().syntaxColors());
+    request_tabs_->addTab(raw_request_editor_, LOC("http.raw"));
 
     auto *paramsTab = buildKeyValueTab();
     params_table_ = paramsTab->findChild<QTableWidget *>(QStringLiteral("kvTable"));
@@ -441,6 +670,16 @@ void HttpViewPanel::buildResponseArea()
     response_tabs_ = new QTabWidget(donePage);
     response_tabs_->setObjectName(QStringLiteral("httpResponseTabs"));
 
+    raw_response_editor_ = new QPlainTextEdit(response_tabs_);
+    raw_response_editor_->setObjectName(QStringLiteral("httpRawResponseEditor"));
+    raw_response_editor_->setReadOnly(true);
+    raw_response_editor_->setTabStopDistance(28.0);
+    response_raw_highlighter_ = new NezhaIDE::Editor::SimpleHighlighter(
+        NezhaIDE::Editor::languageHttp(), raw_response_editor_->document(), this);
+    response_raw_highlighter_->setTokenColors(
+        NezhaIDE::Services::ThemeService::instance().syntaxColors());
+    response_tabs_->addTab(raw_response_editor_, LOC("http.raw"));
+
     response_body_ = new QPlainTextEdit(response_tabs_);
     response_body_->setObjectName(QStringLiteral("httpResponseBody"));
     response_body_->setReadOnly(true);
@@ -466,8 +705,144 @@ void HttpViewPanel::buildResponseArea()
     response_tabs_->addTab(response_body_, LOC("http.response_body"));
     response_tabs_->addTab(response_headers_table_, LOC("http.response_headers"));
 
+    html_preview_ = new QTextBrowser(response_tabs_);
+    html_preview_->setObjectName(QStringLiteral("httpHtmlPreview"));
+    html_preview_->setOpenExternalLinks(true);
+    response_tabs_->addTab(html_preview_, LOC("http.preview"));
+
     doneLayout->addWidget(response_tabs_, 1);
     response_stack_->addWidget(donePage);
+}
+
+void HttpViewPanel::applyDefaultValues()
+{
+    url_input_->setText(QStringLiteral("https://example.com/api"));
+
+    headers_table_->setRowCount(0);
+    auto addDefaultHeader = [&](const QString &name, const QString &value) {
+        const auto row = headers_table_->rowCount();
+        headers_table_->insertRow(row);
+        auto *enabled = new QTableWidgetItem();
+        enabled->setFlags(Qt::ItemIsUserCheckable | Qt::ItemIsEnabled);
+        enabled->setCheckState(Qt::Checked);
+        headers_table_->setItem(row, 0, enabled);
+        headers_table_->setItem(row, 1, new QTableWidgetItem(name));
+        headers_table_->setItem(row, 2, new QTableWidgetItem(value));
+        auto *removeBtn = new QPushButton(QStringLiteral("✕"), headers_table_);
+        removeBtn->setObjectName(QStringLiteral("httpRemoveRow"));
+        removeBtn->setCursor(Qt::PointingHandCursor);
+        removeBtn->setFixedSize(22, 22);
+        removeBtn->setToolTip(LOC("http.remove_row"));
+        connect(removeBtn, &QPushButton::clicked, headers_table_, [table = headers_table_, row] {
+            table->removeRow(row);
+        });
+        headers_table_->setCellWidget(row, 2, removeBtn);
+    };
+    addDefaultHeader(QStringLiteral("Accept"), QStringLiteral("*/*"));
+    addDefaultHeader(QStringLiteral("User-Agent"),
+        QStringLiteral("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
+                       "AppleWebKit/537.36 (KHTML, like Gecko) "
+                       "Chrome/131.0.0.0 Safari/537.36"));
+    addDefaultHeader(QStringLiteral("Content-Type"), QStringLiteral("application/json"));
+
+    body_editor_->setPlainText(QStringLiteral("{\n  \"key\": \"value\"\n}"));
+}
+
+void HttpViewPanel::syncRawFromWidgets()
+{
+    syncing_raw_ = true;
+    raw_request_editor_->setPlainText(serializeRequest(collectRequest()));
+    syncing_raw_ = false;
+    raw_dirty_ = false;
+}
+
+void HttpViewPanel::syncWidgetsFromRaw()
+{
+    using namespace NezhaIDE::Model::HTTP;
+    HttpRequest req;
+    QString error;
+    if (!parseRawRequest(raw_request_editor_->toPlainText(), &req, &error)) return;
+
+    method_ = methodToString(req.method);
+    setMethodStyle(method_);
+
+    QUrl url(QString::fromStdString(req.url));
+    url_input_->setText(QString::fromStdString(req.url));
+
+    headers_table_->setRowCount(0);
+    for (const auto &h : req.headers) {
+        const auto row = headers_table_->rowCount();
+        headers_table_->insertRow(row);
+        auto *enabled = new QTableWidgetItem();
+        enabled->setFlags(Qt::ItemIsUserCheckable | Qt::ItemIsEnabled);
+        enabled->setCheckState(h.enabled ? Qt::Checked : Qt::Unchecked);
+        headers_table_->setItem(row, 0, enabled);
+        headers_table_->setItem(row, 1, new QTableWidgetItem(QString::fromStdString(h.name)));
+        headers_table_->setItem(row, 2, new QTableWidgetItem(QString::fromStdString(h.value)));
+        auto *removeBtn = new QPushButton(QStringLiteral("✕"), headers_table_);
+        removeBtn->setObjectName(QStringLiteral("httpRemoveRow"));
+        removeBtn->setCursor(Qt::PointingHandCursor);
+        removeBtn->setFixedSize(22, 22);
+        removeBtn->setToolTip(LOC("http.remove_row"));
+        connect(removeBtn, &QPushButton::clicked, headers_table_, [table = headers_table_, row] {
+            table->removeRow(row);
+        });
+        headers_table_->setCellWidget(row, 2, removeBtn);
+    }
+
+    int comboIdx = 0;
+    switch (req.body.type) {
+    case BodyType::Json:           comboIdx = 1; break;
+    case BodyType::Raw:            comboIdx = 2; break;
+    case BodyType::Xml:            comboIdx = 3; break;
+    case BodyType::FormUrlEncoded: comboIdx = 4; break;
+    default:                       comboIdx = 0; break;
+    }
+    body_type_combo_->setCurrentIndex(comboIdx);
+    body_editor_->setPlainText(QString::fromStdString(req.body.content));
+
+    raw_dirty_ = false;
+}
+
+void HttpViewPanel::applyBodyHighlighting()
+{
+    const auto text = body_editor_->toPlainText();
+    const auto index = body_type_combo_->currentIndex();
+    const auto trimmed = text.trimmed();
+
+    QString lang;
+    if (index == 1 || (!trimmed.isEmpty()
+        && (trimmed.front() == QChar('{') || trimmed.front() == QChar('[')))) {
+        lang = QStringLiteral("json");
+    } else if (index == 3 || (!trimmed.isEmpty() && trimmed.front() == QChar('<'))) {
+        lang = QStringLiteral("xml");
+    }
+
+    if (lang == body_highlight_language_) return;
+    body_highlight_language_ = lang;
+
+    delete body_highlighter_;
+    body_highlighter_ = nullptr;
+    if (lang.isEmpty()) return;
+
+    const auto def = (lang == QStringLiteral("json"))
+        ? NezhaIDE::Editor::languageJson() : NezhaIDE::Editor::languageXml();
+    body_highlighter_ = new NezhaIDE::Editor::SimpleHighlighter(def, body_editor_->document(), this);
+    body_highlighter_->setTokenColors(
+        NezhaIDE::Services::ThemeService::instance().syntaxColors());
+}
+
+void HttpViewPanel::updateHtmlPreview(const QString &contentType)
+{
+    if (!html_preview_) return;
+    if (contentType.contains(QStringLiteral("text/html"), Qt::CaseInsensitive)
+        || contentType.contains(QStringLiteral("application/xhtml"), Qt::CaseInsensitive)) {
+        html_preview_->setHtml(response_body_->toPlainText());
+        response_tabs_->setTabEnabled(response_tabs_->indexOf(html_preview_), true);
+    } else {
+        html_preview_->setPlainText(LOC("http.no_preview"));
+        response_tabs_->setTabEnabled(response_tabs_->indexOf(html_preview_), false);
+    }
 }
 
 void HttpViewPanel::onMethodClicked()
@@ -508,9 +883,9 @@ void HttpViewPanel::setMethodStyle(const QString &method)
         QStringLiteral("QPushButton { background: %1; border: none; border-radius: 5px;"
                        "padding: 5px 12px; font-size: 12px; font-weight: bold; color: %2; }"
                        "QPushButton:hover { background: %3; }")
-            .arg(bg,
-                 NezhaIDE::Services::ThemeService::instance().color(QStringLiteral("button.text")),
-                 bg));
+            .arg(bg)
+            .arg(NezhaIDE::Services::ThemeService::instance().color(QStringLiteral("button.text")))
+            .arg(bg));
 }
 
 void HttpViewPanel::setStatusPill(int statusCode, const QString &text)
@@ -533,7 +908,8 @@ void HttpViewPanel::setStatusPill(int statusCode, const QString &text)
         QStringLiteral("QLabel#httpStatusPill { background: %1; color: %2;"
                        "border-radius: 11px; padding: 4px 14px;"
                        "font-size: 13px; font-weight: bold; }")
-            .arg(color, ts.color(QStringLiteral("button.text")));
+            .arg(color)
+            .arg(ts.color(QStringLiteral("button.text"))));
     status_pill_->setText(text);
 }
 
@@ -583,28 +959,51 @@ void HttpViewPanel::onSendClicked()
         return;
     }
 
-    const auto rawUrl = url_input_->text().trimmed();
-    if (rawUrl.isEmpty()) {
-        setStatusPill(-1, LOC("http.err"));
-        time_label_->clear();
-        size_label_->clear();
-        showErrorState(LOC("http.url_empty_title"), LOC("http.url_empty_detail"));
-        setResponseState(ResponseState::Error);
-        return;
-    }
+    using namespace NezhaIDE::Model::HTTP;
+    HttpRequest req;
 
-    const auto url = normalizeUrl(rawUrl);
-    const QUrl parsed(url);
-    if (!parsed.isValid()
-        || (parsed.scheme() != QStringLiteral("https") && parsed.scheme() != QStringLiteral("http"))) {
-        setStatusPill(-1, LOC("http.err"));
-        time_label_->clear();
-        size_label_->clear();
-        showErrorState(LOC("http.invalid_url_title"), LOC("http.invalid_url_detail").arg(rawUrl));
-        setResponseState(ResponseState::Error);
-        return;
+    if (request_tabs_->currentWidget() == raw_request_editor_ && raw_dirty_) {
+        QString error;
+        if (!parseRawRequest(raw_request_editor_->toPlainText(), &req, &error)) {
+            setStatusPill(-1, LOC("http.err"));
+            time_label_->clear();
+            size_label_->clear();
+            showErrorState(LOC("http.raw_parse_error"), error);
+            setResponseState(ResponseState::Error);
+            return;
+        }
+        req.id = nextRequestId();
+        const QUrl parsed(QString::fromStdString(req.url));
+        if (!parsed.isValid()
+            || (parsed.scheme() != QStringLiteral("https") && parsed.scheme() != QStringLiteral("http"))) {
+            req.url = (QStringLiteral("https://") + QString::fromStdString(req.url)).toStdString();
+        }
+    } else {
+        const auto rawUrl = url_input_->text().trimmed();
+        if (rawUrl.isEmpty()) {
+            setStatusPill(-1, LOC("http.err"));
+            time_label_->clear();
+            size_label_->clear();
+            showErrorState(LOC("http.url_empty_title"), LOC("http.url_empty_detail"));
+            setResponseState(ResponseState::Error);
+            return;
+        }
+
+        const auto url = normalizeUrl(rawUrl);
+        const QUrl parsed(url);
+        if (!parsed.isValid()
+            || (parsed.scheme() != QStringLiteral("https") && parsed.scheme() != QStringLiteral("http"))) {
+            setStatusPill(-1, LOC("http.err"));
+            time_label_->clear();
+            size_label_->clear();
+            showErrorState(LOC("http.invalid_url_title"), LOC("http.invalid_url_detail").arg(rawUrl));
+            setResponseState(ResponseState::Error);
+            return;
+        }
+        url_input_->setText(url);
+
+        req = collectRequest();
     }
-    url_input_->setText(url);
 
     sending_ = true;
     send_btn_->setText(LOC("http.cancel"));
@@ -612,8 +1011,10 @@ void HttpViewPanel::onSendClicked()
     applySendButtonStyle();
     setResponseState(ResponseState::Sending);
 
-    auto req = collectRequest();
     current_request_id_ = req.id;
+    NezhaIDE::Utilities::Logger::instance().log(
+        NezhaIDE::Utilities::LogLevel::Info, __FILE__, __LINE__, __func__,
+        "发送 HTTP 请求: id={} url={}", req.id, req.url);
     NezhaIDE::Services::HTTP::HttpClientService::send(req);
 }
 
@@ -769,6 +1170,18 @@ void HttpViewPanel::applyStyles()
     if (response_highlighter_) {
         response_highlighter_->setTokenColors(ts.syntaxColors());
     }
+    if (raw_request_editor_)
+        raw_request_editor_->setStyleSheet(ts.qss(QStringLiteral("style.http_body_editor")));
+    if (raw_response_editor_)
+        raw_response_editor_->setStyleSheet(ts.qss(QStringLiteral("style.http_response_body")));
+    if (html_preview_)
+        html_preview_->setStyleSheet(ts.qss(QStringLiteral("style.http_response_body")));
+    if (request_raw_highlighter_)
+        request_raw_highlighter_->setTokenColors(ts.syntaxColors());
+    if (response_raw_highlighter_)
+        response_raw_highlighter_->setTokenColors(ts.syntaxColors());
+    if (body_highlighter_)
+        body_highlighter_->setTokenColors(ts.syntaxColors());
     applySendButtonStyle();
     setMethodStyle(method_);
 }

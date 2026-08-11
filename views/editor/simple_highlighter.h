@@ -16,6 +16,7 @@ struct LanguageDefinition {
     QString blockCommentStart;   // "/*" or "\"\"\"" or empty
     QString blockCommentEnd;     // "*/" or "\"\"\"" or empty
     bool hasNumberHighlight = true;
+    bool hasHeaderHighlight = false;
 };
 
 class SimpleHighlighter final : public QSyntaxHighlighter {
@@ -48,6 +49,7 @@ private:
     QRegularExpression commentLine_;
     QRegularExpression commentBlockStart_;
     QRegularExpression commentBlockEnd_;
+    QRegularExpression headerRx_;
 };
 
 LanguageDefinition languageJson();
@@ -71,5 +73,6 @@ LanguageDefinition languageSql();
 LanguageDefinition languageLua();
 LanguageDefinition languageKotlin();
 LanguageDefinition languageSwift();
+LanguageDefinition languageHttp();
 
 } // namespace NezhaIDE::Editor

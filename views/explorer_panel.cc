@@ -1,6 +1,7 @@
 #include "explorer_panel.h"
 #include "src/services/localization_service.h"
 #include "src/services/theme_service.h"
+#include "src/utilities/logger.h"
 #include <QApplication>
 #include <QDir>
 #include <QDesktopServices>
@@ -145,6 +146,10 @@ void ExplorerPanel::onDeleteFile()
 
     const auto path = fs_model_->filePath(indexes.first());
     if (!confirmDelete(path)) return;
+
+    NezhaIDE::Utilities::Logger::instance().log(
+        NezhaIDE::Utilities::LogLevel::Info, __FILE__, __LINE__, __func__,
+        "删除文件: {}", path.toStdString());
 
     const QFileInfo info(path);
     if (info.isDir()) {

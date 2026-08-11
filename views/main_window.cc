@@ -5,6 +5,7 @@
 #include "explorer_panel.h"
 #include "views/git_panel/git_panel.h"
 #include "src/configuration.h"
+#include "src/utilities/logger.h"
 #include "views/editor/editor_tab_host.h"
 #include "views/editor/code_editor.h"
 #include "src/services/localization_service.h"
@@ -195,10 +196,17 @@ void MainWindow::updateProjectRoot(const QString &projectPath)
 {
     const QDir dir(projectPath);
     if (!dir.exists()) {
+        NezhaIDE::Utilities::Logger::instance().log(
+            NezhaIDE::Utilities::LogLevel::Warn, __FILE__, __LINE__, __func__,
+            "项目目录不存在: {}", projectPath.toStdString());
         QMessageBox::warning(this, LOC("error.title"),
                              LOC("error.project_not_found").arg(projectPath));
         return;
     }
+
+    NezhaIDE::Utilities::Logger::instance().log(
+        NezhaIDE::Utilities::LogLevel::Info, __FILE__, __LINE__, __func__,
+        "打开项目: {}", projectPath.toStdString());
 
     QDir::setCurrent(projectPath);
 

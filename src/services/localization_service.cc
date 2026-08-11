@@ -1,5 +1,6 @@
 #include "localization_service.h"
 #include "src/configuration.h"
+#include "src/utilities/logger.h"
 #include <QCoreApplication>
 #include <QFile>
 #include <QXmlStreamReader>
@@ -14,6 +15,9 @@ LocalizationService &LocalizationService::instance()
 
 void LocalizationService::initialize(IDELanguage language)
 {
+    auto& lgr = NezhaIDE::Utilities::Logger::instance();
+    lgr.log(NezhaIDE::Utilities::LogLevel::Info, __FILE__, __LINE__, __func__,
+        "语言初始化: {}", static_cast<int>(language));
     current_language_ = language;
     loadXml(xmlPath(language));
 }
@@ -22,6 +26,9 @@ void LocalizationService::switchLanguage(IDELanguage language)
 {
     if (language == current_language_) return;
 
+    auto& lgr = NezhaIDE::Utilities::Logger::instance();
+    lgr.log(NezhaIDE::Utilities::LogLevel::Info, __FILE__, __LINE__, __func__,
+        "语言切换: {}", static_cast<int>(language));
     current_language_ = language;
     loadXml(xmlPath(language));
 
@@ -46,7 +53,12 @@ void LocalizationService::loadXml(const QString &path)
     strings_.clear();
 
     QFile file(path);
-    if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) return;
+    if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
+        NezhaIDE::Utilities::Logger::instance().log(
+            NezhaIDE::Utilities::LogLevel::Warn, __FILE__, __LINE__, __func__,
+            "无法加载语言文件: {}", path.toStdString());
+        return;
+    }
 
     QXmlStreamReader xml(&file);
     while (!xml.atEnd() && !xml.hasError()) {

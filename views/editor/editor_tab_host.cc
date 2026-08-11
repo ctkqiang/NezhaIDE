@@ -4,6 +4,7 @@
 #include "src/configuration.h"
 #include "src/services/localization_service.h"
 #include "src/services/theme_service.h"
+#include "src/utilities/logger.h"
 #include <QLabel>
 #include <QFileInfo>
 #include <QMessageBox>
@@ -45,6 +46,10 @@ void EditorTabHost::openFile(const QString &path)
         setCurrentWidget(it.value());
         return;
     }
+
+    NezhaIDE::Utilities::Logger::instance().log(
+        NezhaIDE::Utilities::LogLevel::Info, __FILE__, __LINE__, __func__,
+        "打开文件: {}", canonical.toStdString());
 
     auto *editor = new CodeEditor(canonical, this);
     if (!editor->load()) {

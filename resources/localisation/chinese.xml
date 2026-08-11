@@ -117,4 +117,8 @@
     <string key="http.url_empty_detail">请输入要请求的网址,例如 https://api.example.com。</string>
     <string key="http.invalid_url_title">URL 无效</string>
     <string key="http.invalid_url_detail">无法解析该 URL: %1。请检查格式,或以 https:// 或 http:// 开头。</string>
+    <string key="http.raw">原始</string>
+    <string key="http.preview">预览</string>
+    <string key="http.no_preview">无预览可用</string>
+    <string key="http.raw_parse_error">原始请求无效：%1</string>
 </localization>

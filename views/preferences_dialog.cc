@@ -2,6 +2,7 @@
 #include "src/configuration.h"
 #include "src/services/localization_service.h"
 #include "src/services/theme_service.h"
+#include "src/utilities/logger.h"
 #include <QComboBox>
 #include <QDialogButtonBox>
 #include <QFormLayout>
@@ -103,6 +104,11 @@ void PreferencesDialog::applySettings()
 
     bool themeChanged_ = (newTheme != cfg.theme());
     bool langChanged_ = (newLang != cfg.language());
+
+    NezhaIDE::Utilities::Logger::instance().log(
+        NezhaIDE::Utilities::LogLevel::Info, __FILE__, __LINE__, __func__,
+        "应用设置: theme={} lang={} llm={}", static_cast<int>(newTheme),
+        static_cast<int>(newLang), static_cast<int>(newLlm));
 
     cfg.set_theme(newTheme);
     cfg.set_language(newLang);

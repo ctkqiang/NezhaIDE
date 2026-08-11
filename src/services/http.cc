@@ -1,5 +1,5 @@
 #include "http.h"
-#include "src/configuration.h"
+#include "src/utilities/logger.h"
 #include <QFile>
 #include <QUrl>
 #include <QUrlQuery>
@@ -66,9 +66,16 @@ void HttpClientService::send(const Model::HTTP::HttpRequest &req)
     }
 
     if (!reply) {
+        NezhaIDE::Utilities::Logger::instance().log(
+            NezhaIDE::Utilities::LogLevel::Error, __FILE__, __LINE__, __func__,
+            "无法创建网络请求: method={}", static_cast<int>(req.method));
         emit self.requestError(req.id, 0, QStringLiteral("Failed to create network request"));
         return;
     }
+
+    NezhaIDE::Utilities::Logger::instance().log(
+        NezhaIDE::Utilities::LogLevel::Verbose, __FILE__, __LINE__, __func__,
+        "HTTP 请求已发送: id={} url={}", req.id, req.url);
 
     auto *timer = new QElapsedTimer();
     timer->start();
@@ -91,6 +98,10 @@ void HttpClientService::send(const Model::HTTP::HttpRequest &req)
                 message = QStringLiteral("Network error (%1)")
                     .arg(static_cast<int>(reply->error()));
             }
+            NezhaIDE::Utilities::Logger::instance().log(
+                NezhaIDE::Utilities::LogLevel::Warn, __FILE__, __LINE__, __func__,
+                "HTTP 请求错误: id={} status={} error={}",
+                requestId, statusCode, message.toStdString());
             emit self.requestError(requestId, statusCode, message);
             delete timer;
             reply->deleteLater();
@@ -131,6 +142,9 @@ void HttpClientService::cancel(Model::HTTP::RequestId id)
 {
     auto &self = instance();
     if (auto it = self.replies_.find(id); it != self.replies_.end()) {
+        NezhaIDE::Utilities::Logger::instance().log(
+            NezhaIDE::Utilities::LogLevel::Debug, __FILE__, __LINE__, __func__,
+            "取消 HTTP 请求: id={}", id);
         auto *reply = it.value();
         self.replies_.erase(it);
         reply->abort();
@@ -154,10 +168,11 @@ QNetworkRequest HttpClientService::buildRequest(const Model::HTTP::HttpRequest &
     }
 
     QNetworkRequest request(url);
-    request.setHeader(QNetworkRequest::UserAgentHeader, QStringLiteral("NezhaIDE/%1")
-        .arg(QString::fromUtf8(
-            NezhaIDE::Constants::ApplicationVersion.data(),
-            static_cast<int>(NezhaIDE::Constants::ApplicationVersion.size()))));
+    request.setAttribute(QNetworkRequest::Http2AllowedAttribute, false);
+    request.setHeader(QNetworkRequest::UserAgentHeader, QStringLiteral(
+        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
+        "AppleWebKit/537.36 (KHTML, like Gecko) "
+        "Chrome/131.0.0.0 Safari/537.36"));
 
     for (const auto &h : req.headers) {
         if (h.enabled && !h.name.empty()) {

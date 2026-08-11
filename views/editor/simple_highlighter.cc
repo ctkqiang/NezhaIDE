@@ -60,6 +60,11 @@ void SimpleHighlighter::buildRules()
             "\\b(0[bB][01]+|0[oO]?[0-7]+|0[xX][0-9a-fA-F]+|[0-9]+\\.[0-9]*[fF]?|\\.[0-9]+[fF]?|[0-9]+[fF]?)\\b")),
             fmt_number_});
     }
+    if (def_.hasHeaderHighlight) {
+        headerRx_ = QRegularExpression(QStringLiteral(R"(^[ \t]*[A-Za-z][A-Za-z0-9\-]*:)"));
+    } else {
+        headerRx_ = QRegularExpression();
+    }
 }
 
 void SimpleHighlighter::highlightBlock(const QString &text)
@@ -71,6 +76,14 @@ void SimpleHighlighter::highlightBlock(const QString &text)
         while (it.hasNext()) {
             const auto m = it.next();
             setFormat(m.capturedStart(), m.capturedLength(), rule.format);
+        }
+    }
+
+    if (headerRx_.isValid() && !headerRx_.pattern().isEmpty()) {
+        auto it = headerRx_.globalMatch(text);
+        while (it.hasNext()) {
+            const auto m = it.next();
+            setFormat(m.capturedStart(), m.capturedLength(), fmt_type_);
         }
     }
 
@@ -548,6 +561,16 @@ LanguageDefinition languageSwift() {
     def.lineCommentPrefix = "//";
     def.blockCommentStart = "/*";
     def.blockCommentEnd = "*/";
+    def.hasNumberHighlight = true;
+    return def;
+}
+
+LanguageDefinition languageHttp() {
+    LanguageDefinition def;
+    def.name = "HTTP";
+    def.keywords = {"GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS", "TRACE", "CONNECT"};
+    def.types = {"HTTP/1.0", "HTTP/1.1", "HTTP/2", "HTTP/3"};
+    def.hasHeaderHighlight = true;
     def.hasNumberHighlight = true;
     return def;
 }
