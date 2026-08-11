@@ -203,6 +203,15 @@ static const QHash<QString, QString> kStyleTemplates = {
 
     {"style.http_status_label",
      "QLabel { font-size: 13px; font-weight: bold; color: $accent; padding: 2px 0; }"},
+
+    {"style.http_method_button",
+     "QPushButton { border: none; border-radius: 4px; padding: 5px 12px;"
+     "font-size: 12px; font-weight: bold; color: #FFFFFF; }"
+     "QPushButton:hover { opacity: 0.85; }"},
+
+    {"style.http_section_label",
+     "QLabel { font-size: 11px; font-weight: bold;"
+     "text-transform: uppercase; letter-spacing: 0.5px; color: $text.secondary; }"},
 };
 
 ThemeService &ThemeService::instance()

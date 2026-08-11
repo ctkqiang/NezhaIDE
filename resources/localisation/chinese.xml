@@ -84,4 +84,8 @@
     <string key="http.url_placeholder">https://api.example.com/endpoint</string>
     <string key="http.header_name">名称</string>
     <string key="http.header_value">值</string>
+    <string key="http.params">参数</string>
+    <string key="http.param_name">键</string>
+    <string key="http.param_value">值</string>
+    <string key="http.response_headers">响应头</string>
 </localization>

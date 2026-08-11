@@ -84,4 +84,8 @@
     <string key="http.url_placeholder">https://api.example.com/endpoint</string>
     <string key="http.header_name">Name</string>
     <string key="http.header_value">Value</string>
+    <string key="http.params">Params</string>
+    <string key="http.param_name">Key</string>
+    <string key="http.param_value">Value</string>
+    <string key="http.response_headers">Headers</string>
 </localization>

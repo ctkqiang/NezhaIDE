@@ -1,9 +1,8 @@
 #pragma once
 
 #include <QWidget>
-#include <QComboBox>
-#include <QLineEdit>
 #include <QPushButton>
+#include <QLineEdit>
 #include <QPlainTextEdit>
 #include <QSplitter>
 #include <QTabWidget>
@@ -21,19 +20,26 @@ public:
 
 private:
     void setupUI();
+    void onMethodClicked();
     void onSendClicked();
     void applyStyles();
+    void setMethodStyle(const QString &method);
+    void setStatusColor(int statusCode);
 
-    QComboBox *method_combo_{};
+    QPushButton *method_btn_{};
     QLineEdit *url_input_{};
     QPushButton *send_btn_{};
+    QTableWidget *params_table_{};
     QTableWidget *headers_table_{};
     QPlainTextEdit *body_editor_{};
     QTabWidget *request_tabs_{};
     QLabel *status_label_{};
     QLabel *time_label_{};
-    QPlainTextEdit *response_body_{};
     QLabel *response_size_label_{};
+    QTabWidget *response_tabs_{};
+    QTableWidget *response_headers_table_{};
+    QPlainTextEdit *response_body_{};
+    QString method_{QStringLiteral("GET")};
 };
 
 } // namespace NezhaIDE::Views
