@@ -3,8 +3,10 @@
 #include "src/model/user_preference.h"
 #include "src/repository/orm.h"
 #include "src/services/database_helper.h"
+#include "src/services/localization_service.h"
+#include "src/services/theme_service.h"
 #include "src/utilities/logger.h"
-#include "src/views/main_window.h"
+#include "views/main_window.h"
 #include <QApplication>
 #include <QDir>
 
@@ -88,6 +90,12 @@ int main(int argc, char* argv[]) {
         "数据库就绪: {}",
         db_path.toStdString()
     );
+
+    auto &lang_mgr = NezhaIDE::Services::LocalizationService::instance();
+    lang_mgr.initialize(NezhaIDE::Configuration::instance().language());
+
+    NezhaIDE::Services::ThemeService::instance().initialize(
+        NezhaIDE::Configuration::instance().theme());
 
     NezhaIDE::Views::MainWindow window;
     window.show();

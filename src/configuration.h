@@ -30,7 +30,9 @@ namespace NezhaIDE {
     enum class IDETheme {
         Auto,
         Light,
-        Dark
+        Dark,
+        GitHub,
+        Xcode
     };
 
     enum class IDELanguage {
@@ -107,6 +109,11 @@ namespace NezhaIDE {
         QString llm_api_token() const;
 
         void clear_memory();
+
+        [[nodiscard]]
+        QString project_root() const;
+
+        void set_project_root(const QString &path);
 
         static void open_documentation();
 

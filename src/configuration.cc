@@ -3,6 +3,7 @@
 //
 
 #include "configuration.h"
+#include <QDir>
 
 namespace NezhaIDE {
     Configuration::Configuration()
@@ -68,6 +69,14 @@ namespace NezhaIDE {
         settings_.remove(QStringLiteral("llm/token"));
         settings_.remove(QStringLiteral("user/name"));
         settings_.sync();
+    }
+
+    QString Configuration::project_root() const {
+        return settings_.value(QStringLiteral("project/root"), QDir::currentPath()).toString();
+    }
+
+    void Configuration::set_project_root(const QString &path) {
+        settings_.setValue(QStringLiteral("project/root"), path);
     }
 
     void Configuration::open_documentation() {

@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<theme name="Default" id="default">
+    <color key="bg.primary">#FFFFFF</color>
+    <color key="bg.secondary">#F5F6F7</color>
+    <color key="bg.tertiary">#FAFAFA</color>
+    <color key="border">#E0E0E0</color>
+    <color key="accent">#3370FF</color>
+    <color key="accent.hover">#2860DF</color>
+    <color key="accent.pressed">#1E50C8</color>
+    <color key="button.text">#FFFFFF</color>
+    <color key="text.primary">#1F2329</color>
+    <color key="text.secondary">#646A73</color>
+    <color key="text.tertiary">#999999</color>
+    <color key="overlay.hover">rgba(0,0,0,0.04)</color>
+    <color key="overlay.hover.subtle">rgba(0,0,0,0.02)</color>
+    <color key="overlay.selection">rgba(51,112,255,0.12)</color>
+    <color key="git.modified">#E67E22</color>
+    <color key="git.added">#27AE60</color>
+    <color key="git.deleted">#E74C3C</color>
+    <color key="git.untracked">#999999</color>
+    <syntax>
+        <token name="editor.background">#FFFFFF</token>
+        <token name="editor.foreground">#1A1A1A</token>
+        <token name="keyword">#CF1F8B</token>
+        <token name="type">#0E7A7A</token>
+        <token name="function">#2563EB</token>
+        <token name="string">#1A8C3A</token>
+        <token name="comment">#6B7280</token>
+        <token name="number">#C06014</token>
+        <token name="operator">#1A1A1A</token>
+        <token name="preprocessor">#7C3AED</token>
+    </syntax>
+</theme>
