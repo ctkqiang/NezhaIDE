@@ -8,10 +8,10 @@
 #define NEZHAIDE_CONFIGURATION_H
 
 #if __has_include(<QSettings>)
-    #include <QSettings>
-    #define HAS_QSETTINGS 1
+#include <QSettings>
+#define HAS_QSETTINGS 1
 #else
-    #define HAS_QSETTINGS 0
+#define HAS_QSETTINGS 0
 #endif
 
 #include <array>
@@ -104,6 +104,7 @@ namespace NezhaIDE {
         [[nodiscard]]
         IDELanguage language() const noexcept;
 
+        [[ noreturn ]]
         void set_language(IDELanguage language);
 
         [[clang::annotate("security-sensitive")]]

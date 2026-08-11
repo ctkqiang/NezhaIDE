@@ -97,6 +97,7 @@ HttpClientPanel::HttpClientPanel(QWidget *parent)
             this, [this](const NezhaIDE::Model::HTTP::HttpResponse &resp) {
         sending_ = false;
         send_btn_->setText(LOC("http.send"));
+        send_btn_->setObjectName(QStringLiteral("httpSendButton"));
         applySendButtonStyle();
 
         auto statusText = QString::fromStdString(resp.statusText);
@@ -134,6 +135,7 @@ HttpClientPanel::HttpClientPanel(QWidget *parent)
 
         sending_ = false;
         send_btn_->setText(LOC("http.send"));
+        send_btn_->setObjectName(QStringLiteral("httpSendButton"));
         applySendButtonStyle();
 
         setStatusPill(statusCode > 0 ? statusCode : -1,

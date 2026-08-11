@@ -110,91 +110,103 @@ int main(int argc, char* argv[]) {
     window.show();
 
     if (qEnvironmentVariableIsSet("NEZHA_SELFTEST")) {
-        QTimer::singleShot(500, [&window] {
-            auto *editorHost = window.findChild<NezhaIDE::Editor::EditorTabHost *>();
-            if (!editorHost) {
-                std::printf("SELFTEST: no editor host\n");
-                QApplication::exit(2);
-                return;
-            }
-            editorHost->openHttpClient();
+        struct Selftest : QObject {
+            NezhaIDE::Views::MainWindow &window;
+            NezhaIDE::Views::HttpClientPanel *panel{};
+            QLineEdit *urlInput{};
+            QPushButton *sendBtn{};
 
-            auto *panel = editorHost->findChild<NezhaIDE::Views::HttpClientPanel *>();
-            if (!panel) {
-                std::printf("SELFTEST: no http panel\n");
-                QApplication::exit(2);
-                return;
-            }
+            explicit Selftest(NezhaIDE::Views::MainWindow &w) : window(w) {}
 
-            const auto dumpGeometry = [](QWidget *w, const char *name) {
+            void dump(QWidget *w, const char *name) {
+                if (!w) {
+                    std::printf("SELFTEST: geo %s NULL\n", name);
+                    return;
+                }
                 std::printf("SELFTEST: geo %s x=%d y=%d w=%d h=%d visible=%d\n",
                     name, w->x(), w->y(), w->width(), w->height(), w->isVisible() ? 1 : 0);
-            };
-            dumpGeometry(panel, "panel");
-            dumpGeometry(panel->findChild<QPushButton *>(QStringLiteral("httpMethodButton")), "methodBtn");
-            dumpGeometry(panel->findChild<QLineEdit *>(QStringLiteral("httpUrlInput")), "urlInput");
-            dumpGeometry(panel->findChild<QPushButton *>(QStringLiteral("httpSendButton")), "sendBtn");
-            dumpGeometry(panel->findChild<QTableWidget *>(QStringLiteral("kvTable")), "paramsTable");
-            dumpGeometry(panel->findChild<QPlainTextEdit *>(QStringLiteral("httpBodyEditor")), "bodyEditor");
-            panel->grab().save(QStringLiteral("/tmp/nezha_01_initial.png"));
+            }
 
-            auto *urlInput = panel->findChild<QLineEdit *>(QStringLiteral("httpUrlInput"));
-            auto *sendBtn = panel->findChild<QPushButton *>(QStringLiteral("httpSendButton"));
+            void start() {
+                auto *editorHost = window.findChild<NezhaIDE::Editor::EditorTabHost *>();
+                if (!editorHost) {
+                    std::printf("SELFTEST: no editor host\n");
+                    QApplication::exit(2);
+                    return;
+                }
+                editorHost->openHttpClient();
+                panel = editorHost->findChild<NezhaIDE::Views::HttpClientPanel *>();
+                if (!panel) {
+                    std::printf("SELFTEST: no http panel\n");
+                    QApplication::exit(2);
+                    return;
+                }
+                urlInput = panel->findChild<QLineEdit *>(QStringLiteral("httpUrlInput"));
+                sendBtn = panel->findChild<QPushButton *>(QStringLiteral("httpSendButton"));
 
-            const auto url = qEnvironmentVariable("NEZHA_SELFTEST_URL");
-            urlInput->setText(url);
-            std::printf("SELFTEST: url=%s\n", url.toUtf8().constData());
-            sendBtn->click();
+                dump(panel, "panel");
+                dump(panel->findChild<QPushButton *>(QStringLiteral("httpMethodButton")), "methodBtn");
+                dump(urlInput, "urlInput");
+                dump(sendBtn, "sendBtn");
+                panel->grab().save(QStringLiteral("/tmp/nezha_01_initial.png"));
 
-            QTimer::singleShot(1200, [panel] {
-                panel->grab().save(QStringLiteral("/tmp/nezha_02_sending.png"));
-            });
+                const auto url = qEnvironmentVariable("NEZHA_SELFTEST_URL");
+                urlInput->setText(url);
+                std::printf("SELFTEST: url=%s\n", url.toUtf8().constData());
+                sendBtn->click();
 
-            QTimer::singleShot(10000, [&window, panel, urlInput, sendBtn, &dumpGeometry] {
-                auto *pill = panel->findChild<QLabel *>(QStringLiteral("httpStatusPill"));
-                auto *timeLabel = panel->findChild<QLabel *>(QStringLiteral("httpTimeLabel"));
-                auto *sizeLabel = panel->findChild<QLabel *>(QStringLiteral("httpSizeLabel"));
-                auto *body = panel->findChild<QPlainTextEdit *>(QStringLiteral("httpResponseBody"));
-                auto *headers = panel->findChild<QTableWidget *>(QStringLiteral("httpHeadersTable"));
+                QTimer::singleShot(1500, this, [this] {
+                    panel->grab().save(QStringLiteral("/tmp/nezha_02_sending.png"));
+                });
 
-                std::printf("SELFTEST: status=%s\n", pill->text().toUtf8().constData());
-                std::printf("SELFTEST: time=%s\n", timeLabel->text().toUtf8().constData());
-                std::printf("SELFTEST: size=%s\n", sizeLabel->text().toUtf8().constData());
-                std::printf("SELFTEST: bodyLen=%d\n", static_cast<int>(body->toPlainText().size()));
-                std::printf("SELFTEST: headers=%d\n", headers->rowCount());
-                dumpGeometry(panel, "panel(resp)");
-                dumpGeometry(pill, "statusPill");
-                dumpGeometry(timeLabel, "timeLabel");
-                dumpGeometry(body, "respBody");
-                panel->grab().save(QStringLiteral("/tmp/nezha_03_response.png"));
+                QTimer::singleShot(10000, this, [this] {
+                    auto *pill = panel->findChild<QLabel *>(QStringLiteral("httpStatusPill"));
+                    auto *timeLabel = panel->findChild<QLabel *>(QStringLiteral("httpTimeLabel"));
+                    auto *sizeLabel = panel->findChild<QLabel *>(QStringLiteral("httpSizeLabel"));
+                    auto *body = panel->findChild<QPlainTextEdit *>(QStringLiteral("httpResponseBody"));
+                    auto *headers = panel->findChild<QTableWidget *>(QStringLiteral("httpHeadersTable"));
 
-                window.resize(760, 560);
-                QTimer::singleShot(300, [&window, panel, urlInput, sendBtn, &dumpGeometry] {
-                    std::printf("SELFTEST: resized window to 760x560\n");
-                    dumpGeometry(panel, "panel(small)");
-                    dumpGeometry(panel->findChild<QPushButton *>(QStringLiteral("httpMethodButton")), "methodBtn(small)");
-                    dumpGeometry(panel->findChild<QLineEdit *>(QStringLiteral("httpUrlInput")), "urlInput(small)");
-                    dumpGeometry(panel->findChild<QPushButton *>(QStringLiteral("httpSendButton")), "sendBtn(small)");
-                    panel->grab().save(QStringLiteral("/tmp/nezha_04_small.png"));
+                    std::printf("SELFTEST: status=%s\n", pill->text().toUtf8().constData());
+                    std::printf("SELFTEST: time=%s\n", timeLabel->text().toUtf8().constData());
+                    std::printf("SELFTEST: size=%s\n", sizeLabel->text().toUtf8().constData());
+                    std::printf("SELFTEST: bodyLen=%d\n", static_cast<int>(body->toPlainText().size()));
+                    std::printf("SELFTEST: headers=%d\n", headers->rowCount());
+                    dump(panel, "panel(resp)");
+                    dump(pill, "statusPill");
+                    dump(timeLabel, "timeLabel");
+                    dump(body, "respBody");
+                    panel->grab().save(QStringLiteral("/tmp/nezha_03_response.png"));
 
-                    urlInput->setText(QStringLiteral("not a url"));
-                    sendBtn->click();
-                    QTimer::singleShot(400, [panel] {
-                        panel->grab().save(QStringLiteral("/tmp/nezha_05_invalid.png"));
-                    });
+                    window.resize(760, 560);
+                    QTimer::singleShot(400, this, [this] {
+                        std::printf("SELFTEST: resized window to 760x560\n");
+                        dump(panel, "panel(small)");
+                        dump(panel->findChild<QPushButton *>(QStringLiteral("httpMethodButton")), "methodBtn(small)");
+                        dump(urlInput, "urlInput(small)");
+                        dump(sendBtn, "sendBtn(small)");
+                        panel->grab().save(QStringLiteral("/tmp/nezha_04_small.png"));
 
-                    urlInput->setText(QStringLiteral("https://nonexistent-domain-zzz12345.com"));
-                    sendBtn->click();
-                    QTimer::singleShot(6000, [panel] {
-                        auto *pill = panel->findChild<QLabel *>(QStringLiteral("httpStatusPill"));
-                        std::printf("SELFTEST: errorPill=%s\n", pill->text().toUtf8().constData());
-                        panel->grab().save(QStringLiteral("/tmp/nezha_06_error.png"));
-                        std::printf("SELFTEST: DONE\n");
-                        QApplication::exit(0);
+                        urlInput->setText(QStringLiteral("not a url"));
+                        sendBtn->click();
+                        QTimer::singleShot(400, this, [this] {
+                            panel->grab().save(QStringLiteral("/tmp/nezha_05_invalid.png"));
+                        });
+
+                        urlInput->setText(QStringLiteral("https://nonexistent-domain-zzz12345.com"));
+                        sendBtn->click();
+                        QTimer::singleShot(6000, this, [this] {
+                            auto *pill = panel->findChild<QLabel *>(QStringLiteral("httpStatusPill"));
+                            std::printf("SELFTEST: errorPill=%s\n", pill->text().toUtf8().constData());
+                            panel->grab().save(QStringLiteral("/tmp/nezha_06_error.png"));
+                            std::printf("SELFTEST: DONE\n");
+                            QApplication::exit(0);
+                        });
                     });
                 });
-            });
-        });
+            }
+        };
+        auto *st = new Selftest(window);
+        QTimer::singleShot(500, st, [st] { st->start(); });
     }
 
     return QApplication::exec();
