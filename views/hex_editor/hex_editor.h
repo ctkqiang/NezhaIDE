@@ -14,14 +14,37 @@
 
 namespace NezhaIDE::Views {
 
+/**
+ * 二进制分析编辑器主控件。
+ *
+ * 上部为 HexData 视图，下部为 QTabWidget 包含 6 个分析面板：
+ * Disassembly、Strings、Sections、Symbols、Imports、Info。
+ * 通过 BinaryParser 和 Disassembler 获取真实数据。
+ * HexData 与 Disassembly 之间支持双向选中联动。
+ */
 class HexEditor final : public QWidget {
     Q_OBJECT
 
 public:
     explicit HexEditor(const QString &filePath, QWidget *parent = nullptr);
 
+    /**
+     * 加载并解析二进制文件。
+     *
+     * @return true 表示解析成功，false 表示加载失败。
+     */
     bool load();
+
+    /**
+     * 根据当前主题重新应用颜色和样式。
+     */
     void applyTheme();
+
+    /**
+     * 获取当前打开文件的路径。
+     *
+     * @return 文件完整路径。
+     */
     QString filePath() const;
 
 signals:

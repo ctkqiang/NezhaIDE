@@ -7,6 +7,11 @@
 
 namespace NezhaIDE::Editor {
 
+/**
+ * C/C++ 专用语法高亮器，基于正则表达式。
+ *
+ * 额外支持运算符和函数调用的高亮规则，以及跨行块注释处理。
+ */
 class CppHighlighter final : public QSyntaxHighlighter {
     Q_OBJECT
 

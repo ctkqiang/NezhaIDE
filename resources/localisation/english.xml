@@ -72,6 +72,7 @@
     <string key="prefs.theme_xcode">Xcode</string>
     <string key="prefs.lang_chinese">Chinese</string>
     <string key="prefs.lang_english">English</string>
+    <string key="prefs.lang_german">German</string>
     <string key="prefs.llm_provider">Provider</string>
     <string key="prefs.llm_token">API Token</string>
     <string key="prefs.restart_hint">Language change will take effect after restart.</string>

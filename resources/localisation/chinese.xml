@@ -72,6 +72,7 @@
     <string key="prefs.theme_xcode">Xcode</string>
     <string key="prefs.lang_chinese">中文</string>
     <string key="prefs.lang_english">English</string>
+    <string key="prefs.lang_german">Deutsch</string>
     <string key="prefs.llm_provider">服务商</string>
     <string key="prefs.llm_token">API Token</string>
     <string key="prefs.restart_hint">语言更改将在重启后生效。</string>

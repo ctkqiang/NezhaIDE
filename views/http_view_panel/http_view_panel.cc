@@ -312,6 +312,28 @@ HttpViewPanel::HttpViewPanel(QWidget *parent)
         applyResponseHighlighting(contentType, bodyText);
 
         raw_response_editor_->setPlainText(buildRawResponseText(resp));
+
+        const auto rawBytes = QByteArray::fromStdString(resp.body);
+        QStringList hexLines;
+        for (int offset = 0; offset < rawBytes.size(); offset += 16) {
+            QString line = QStringLiteral("%1  ").arg(offset, 8, 16, QLatin1Char('0'));
+            for (int col = 0; col < 16; ++col) {
+                if (offset + col < rawBytes.size()) {
+                    line += QStringLiteral("%1 ").arg(
+                        static_cast<uint8_t>(rawBytes[offset + col]), 2, 16, QLatin1Char('0'));
+                } else {
+                    line += QStringLiteral("   ");
+                }
+            }
+            line += QStringLiteral(" ");
+            for (int col = 0; col < 16 && offset + col < rawBytes.size(); ++col) {
+                uint8_t b = static_cast<uint8_t>(rawBytes[offset + col]);
+                line += (b >= 0x20 && b <= 0x7E) ? QChar(b) : QChar('.');
+            }
+            hexLines.append(line);
+        }
+        response_hex_->setPlainText(hexLines.join(QStringLiteral("\n")));
+
         updateHtmlPreview(contentType);
 
         response_headers_table_->setRowCount(0);
@@ -345,6 +367,7 @@ HttpViewPanel::HttpViewPanel(QWidget *parent)
         size_label_->clear();
         response_body_->clear();
         raw_response_editor_->clear();
+        response_hex_->clear();
         response_headers_table_->setRowCount(0);
 
         showErrorState(LOC("http.error_title"), error);
@@ -704,6 +727,12 @@ void HttpViewPanel::buildResponseArea()
 
     response_tabs_->addTab(response_body_, LOC("http.response_body"));
     response_tabs_->addTab(response_headers_table_, LOC("http.response_headers"));
+
+    response_hex_ = new QPlainTextEdit(response_tabs_);
+    response_hex_->setObjectName(QStringLiteral("httpResponseHex"));
+    response_hex_->setReadOnly(true);
+    response_hex_->setFont(QFont(QStringLiteral("SF Mono"), 11));
+    response_tabs_->addTab(response_hex_, LOC("http.response_hex"));
 
     html_preview_ = new QTextBrowser(response_tabs_);
     html_preview_->setObjectName(QStringLiteral("httpHtmlPreview"));
@@ -1174,6 +1203,8 @@ void HttpViewPanel::applyStyles()
         raw_request_editor_->setStyleSheet(ts.qss(QStringLiteral("style.http_body_editor")));
     if (raw_response_editor_)
         raw_response_editor_->setStyleSheet(ts.qss(QStringLiteral("style.http_response_body")));
+    if (response_hex_)
+        response_hex_->setStyleSheet(ts.qss(QStringLiteral("style.http_response_body")));
     if (html_preview_)
         html_preview_->setStyleSheet(ts.qss(QStringLiteral("style.http_response_body")));
     if (request_raw_highlighter_)

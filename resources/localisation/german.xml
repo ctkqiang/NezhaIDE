@@ -36,8 +36,8 @@
     <string key="editor.save_title">Ungespeicherte Änderungen</string>
     <string key="editor.save_prompt">Datei „%1" hat ungespeicherte Änderungen. Vor dem Schließen speichern?</string>
     <string key="git.refresh">Aktualisieren</string>
-    <string key="git.stage">Bühne</string>
-    <string key="git.unstage">Bühne aufheben</string>
+    <string key="git.stage">Stagen</string>
+    <string key="git.unstage">Staging entfernen</string>
     <string key="git.commit_placeholder">Commit-Nachricht...</string>
     <string key="git.commit_button">Commit</string>
     <string key="git.status_refreshing">Wird aktualisiert...</string>
@@ -72,6 +72,7 @@
     <string key="prefs.theme_xcode">Xcode</string>
     <string key="prefs.lang_chinese">Chinesisch</string>
     <string key="prefs.lang_english">Englisch</string>
+    <string key="prefs.lang_german">Deutsch</string>
     <string key="prefs.llm_provider">Anbieter</string>
     <string key="prefs.llm_token">API-Token</string>
     <string key="prefs.restart_hint">Die Sprachänderung wird nach dem Neustart wirksam.</string>
@@ -81,7 +82,7 @@
     <string key="menu.edit_copy">Kopieren</string>
     <string key="menu.edit_paste">Einfügen</string>
     <string key="menu.view_explorer">Explorer</string>
-    <string key="menu.view_git">Quellcodeverwaltung</string>
+    <string key="menu.view_git">Versionsverwaltung</string>
     <string key="menu.view_http">HTTP-Client</string>
     <string key="http.send">Senden</string>
     <string key="http.cancel">Abbrechen</string>
@@ -117,6 +118,10 @@
     <string key="http.url_empty_detail">Geben Sie eine URL für die Anfrage ein, z. B. https://api.example.com.</string>
     <string key="http.invalid_url_title">Ungültige URL</string>
     <string key="http.invalid_url_detail">Die URL konnte nicht analysiert werden: %1. Überprüfen Sie das Format oder beginnen Sie sie mit https:// oder http://.</string>
+    <string key="http.raw">Roh</string>
+    <string key="http.preview">Vorschau</string>
+    <string key="http.no_preview">Keine Vorschau verfügbar</string>
+    <string key="http.raw_parse_error">Ungültige Rohdaten-Anfrage: %1</string>
     <string key="hex.disassembly">Disassembly</string>
     <string key="hex.strings">Zeichenketten</string>
     <string key="hex.sections">Sektionen</string>

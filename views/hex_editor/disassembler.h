@@ -5,7 +5,14 @@
 #include <string>
 #include <vector>
 
+/**
+ * 反汇编服务命名空间。
+ */
 namespace NezhaIDE::Services {
+
+    /**
+     * 单条反汇编指令的展示数据。
+     */
     struct DisasmInstruction {
         uint64_t address{};
         uint64_t offset{};
@@ -15,8 +22,19 @@ namespace NezhaIDE::Services {
         int size{};
     };
 
+    /**
+     * Capstone 反汇编引擎单例。
+     *
+     * 支持 ARM64、ARM、Thumb、x86-64、x86 五种架构。
+     * 启用 SKIPDATA 模式以容忍无效指令区域。
+     */
     class Disassembler {
     public:
+        /**
+         * 获取全局反汇编器实例。
+         *
+         * @return 单例引用。
+         */
         static Disassembler &instance();
 
         Disassembler(const Disassembler &) = delete;

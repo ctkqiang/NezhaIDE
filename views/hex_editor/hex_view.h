@@ -4,8 +4,20 @@
 #include <cstdint>
 #include <vector>
 
+/**
+ * 十六进制编辑与分析 UI 组件命名空间。
+ */
 namespace NezhaIDE::Views {
 
+/**
+ * 十六进制数据视图组件，基于 QAbstractScrollArea 实现虚拟滚动。
+ *
+ * 每行显示 16 字节，分为三列：文件偏移量、十六进制数据、ASCII 表示。
+ * 支持鼠标拖拽选取字节范围，通过 ThemeService 获取主题颜色。
+ * 选中范围变化时发出 byteRangeSelected 信号以实现跨视图联动。
+ *
+ * @note 仅渲染可见行，支持大文件浏览（>100MB）。
+ */
 class HexView final : public QAbstractScrollArea {
     Q_OBJECT
 

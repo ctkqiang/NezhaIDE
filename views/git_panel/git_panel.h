@@ -10,13 +10,22 @@
 
 namespace NezhaIDE::Views {
 
+/**
+ * Git 文件状态条目。
+ */
 struct GitFileEntry {
     QString path;
     QString fullPath;
-    QChar status_x; // index status
-    QChar status_y; // working tree status
+    QChar status_x;
+    QChar status_y;
 };
 
+/**
+ * Git 版本控制面板，通过进程调用 git 命令。
+ *
+ * 显示工作区文件状态（modified/added/deleted/untracked），
+ * 支持 stage/unstage/commit 操作。使用 QProcess 异步执行 git 命令。
+ */
 class GitPanel : public QWidget {
     Q_OBJECT
 

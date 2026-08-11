@@ -68,6 +68,13 @@ add_executable(NezhaIDE main.cc
         views/hex_editor/hex_editor.cc
         views/hex_editor/hex_editor.h)
 
+set_target_properties(NezhaIDE PROPERTIES
+    MACOSX_BUNDLE TRUE
+    MACOSX_BUNDLE_GUI_IDENTIFIER "com.nezha-security.nezhaide"
+    MACOSX_BUNDLE_BUNDLE_VERSION "${PROJECT_VERSION}"
+    MACOSX_BUNDLE_SHORT_VERSION_STRING "${PROJECT_VERSION}"
+)
+
 target_include_directories(NezhaIDE PRIVATE ${CMAKE_SOURCE_DIR} ${CAPSTONE_INCLUDE_DIR})
 
 target_compile_definitions(NezhaIDE PRIVATE NEZHA_PROJECT_ROOT="${CMAKE_SOURCE_DIR}")

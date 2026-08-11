@@ -8,11 +8,24 @@
 #include <string>
 #include <vector>
 
+/**
+ * 二进制分析数据模型命名空间。
+ */
 namespace NezhaIDE::Model {
 
+/**
+ * 可执行文件/容器格式。
+ */
 enum class BinaryFormat { Unknown, ELF, PE, MachO, MachO_Universal, APK };
+
+/**
+ * 目标 CPU 架构。
+ */
 enum class BinaryArch { Unknown, X86, X86_64, ARM, ARM64, Thumb };
 
+/**
+ * 二进制文件中的段/节信息。
+ */
 struct BinarySection {
     std::string name;
     uint64_t virtual_address{};
@@ -23,6 +36,9 @@ struct BinarySection {
     bool is_readable{false};
 };
 
+/**
+ * 符号表条目（函数/对象符号）。
+ */
 struct BinarySymbol {
     std::string name;
     uint64_t address{};
@@ -30,17 +46,32 @@ struct BinarySymbol {
     bool exported{false};
 };
 
+/**
+ * 导入表条目。
+ */
 struct ImportEntry {
     std::string name;
     std::string library;
 };
 
+/**
+ * 反汇编目标区域（代码段的地址范围）。
+ */
 struct DisasmTarget {
     uint64_t address;
     uint64_t offset;
     uint64_t size;
 };
 
+/**
+ * 二进制文件解析器，基于 LIEF 库解析 ELF/PE/Mach-O/APK 格式。
+ *
+ * 提取段信息、符号表、导入表、可打印字符串和反汇编目标区域。
+ * 使用 PIMPL 模式隐藏 LIEF 实现细节。
+ * 反汇编通过独立的 Disassembler 服务执行。
+ *
+ * @see NezhaIDE::Services::Disassembler
+ */
 class BinaryParser {
 public:
     /**

@@ -16,19 +16,35 @@
 
 #include <array>
 
+/**
+ * 应用配置与常量命名空间。
+ *
+ * 包含 IDE 主题、语言、LLM 提供商等持久化配置项，
+ * 以及应用元数据常量（名称、版本、数据库表名等）。
+ */
 namespace NezhaIDE {
+
+/**
+ * 作者元数据，用于界面展示和文档生成。
+ */
     struct AuthorMetadata final {
         std::string_view name;
         std::string_view email;
         std::string_view wechat;
     };
 
+    /**
+     * 支持的 LLM 大模型提供商。
+     */
     enum class IDELLM {
         DeepSeek,
         Kimi,
         OpenRouter,
     };
 
+    /**
+     * IDE 主题枚举，支持自动跟随系统、浅色、深色及第三方风格。
+     */
     enum class IDETheme {
         Auto,
         Light,
@@ -37,12 +53,18 @@ namespace NezhaIDE {
         Xcode
     };
 
+    /**
+     * IDE 界面语言。
+     */
     enum class IDELanguage {
         Chinese,
         English,
         German
     };
 
+    /**
+     * 应用级编译期常量，包括名称、版本号、数据库名、文件扩展名等。
+     */
     class Constants {
     public:
         Constants() = delete;
@@ -78,8 +100,19 @@ namespace NezhaIDE {
         };
     };
 
+    /**
+     * 运行时配置单例，基于 QSettings 持久化用户偏好。
+     *
+     * 管理主题、语言、LLM 提供商、API token、项目根目录等设置。
+     * 禁止拷贝和移动，仅通过 instance() 访问。
+     */
     class Configuration {
     public:
+        /**
+         * 获取全局唯一配置实例。
+         *
+         * @return 单例引用。
+         */
         static Configuration &instance();
 
         Configuration(const Configuration &) = delete;
@@ -90,6 +123,9 @@ namespace NezhaIDE {
 
         Configuration &operator=(Configuration &&) = delete;
 
+        /**
+         * 将当前配置写入持久化存储。
+         */
         void save();
 
         [[nodiscard]]
@@ -105,6 +141,11 @@ namespace NezhaIDE {
         [[nodiscard]]
         IDELanguage language() const noexcept;
 
+        /**
+         * 设置界面语言并持久化。
+         *
+         * @param language 目标语言枚举值。
+         */
         void set_language(IDELanguage language);
 
         [[clang::annotate("security-sensitive")]]
@@ -119,6 +160,9 @@ namespace NezhaIDE {
         [[nodiscard]]
         QString llm_api_token() const;
 
+        /**
+         * 清除敏感数据（LLM token、用户名），不删除其他配置。
+         */
         void clear_memory();
 
         [[nodiscard]]

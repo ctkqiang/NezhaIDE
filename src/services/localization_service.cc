@@ -85,6 +85,8 @@ QString LocalizationService::xmlPath(IDELanguage language)
         return dir + QStringLiteral("/chinese.xml");
     case NezhaIDE::IDELanguage::English:
         return dir + QStringLiteral("/english.xml");
+    case NezhaIDE::IDELanguage::German:
+        return dir + QStringLiteral("/german.xml");
     }
     return {};
 }
