@@ -39,8 +39,10 @@ private:
     void setupStatusBar();
     void applyStyles();
     void updateProjectRoot(const QString &projectPath);
+    void updateEditActions();
 
     void onOpenProject();
+    void onSaveFile();
 
     Ui::MainWindow *ui{};
     ActivityBar *activity_bar_{};
@@ -49,7 +51,16 @@ private:
     NezhaIDE::Editor::EditorTabHost *editor_host_{};
 
     QAction *open_project_action_{};
+    QAction *save_action_{};
     QAction *quit_action_{};
+    QAction *undo_action_{};
+    QAction *redo_action_{};
+    QAction *cut_action_{};
+    QAction *copy_action_{};
+    QAction *paste_action_{};
+    QAction *toggle_explorer_{};
+    QAction *toggle_git_{};
+    QAction *toggle_http_{};
 };
 
 } // namespace NezhaIDE::Views

@@ -7,8 +7,15 @@
 #include "src/services/theme_service.h"
 #include "src/utilities/logger.h"
 #include "views/main_window.h"
+#include "views/editor/editor_tab_host.h"
+#include "views/http_view_panel/http_view_panel.h"
+
 #include <QApplication>
 #include <QDir>
+#include <QLabel>
+#include <QLineEdit>
+#include <QPushButton>
+#include <QTimer>
 
 static auto& logger = NezhaIDE::Utilities::Logger::instance();
 
@@ -79,10 +86,13 @@ int main(int argc, char* argv[]) {
     NezhaIDE::Repository::Repository<NezhaIDE::Model::ToolParameter> param_repo(db);
     NezhaIDE::Repository::Repository<NezhaIDE::Model::UserPreference> pref_repo(db);
 
-    init_schema(tool_repo, "tools");
-    init_schema(proc_repo, "tool_procedures");
-    init_schema(param_repo, "tool_parameters");
-    init_schema(pref_repo, "user_preferences");
+    const auto &tables = NezhaIDE::Constants::DatabaseTable;
+    const auto init_all_schemas = [&]<typename... T>(T &...repos) {
+        size_t i = 0;
+        (init_schema(repos, tables[i++]), ...);
+    };
+
+    init_all_schemas(tool_repo, proc_repo, param_repo, pref_repo);
 
     logger.log(
         NezhaIDE::Utilities::LogLevel::Info,
@@ -99,6 +109,106 @@ int main(int argc, char* argv[]) {
 
     NezhaIDE::Views::MainWindow window;
     window.show();
+
+    if (qEnvironmentVariableIsSet("NEZHA_SELFTEST")) {
+        struct Selftest : QObject {
+            NezhaIDE::Views::MainWindow &window;
+            NezhaIDE::Views::HttpViewPanel *panel{};
+            QLineEdit *urlInput{};
+            QPushButton *sendBtn{};
+
+            explicit Selftest(NezhaIDE::Views::MainWindow &w) : window(w) {}
+
+            void dump(QWidget *w, const char *name) {
+                if (!w) {
+                    std::printf("SELFTEST: geo %s NULL\n", name);
+                    return;
+                }
+                std::printf("SELFTEST: geo %s x=%d y=%d w=%d h=%d visible=%d\n",
+                    name, w->x(), w->y(), w->width(), w->height(), w->isVisible() ? 1 : 0);
+            }
+
+            void start() {
+                auto *editorHost = window.findChild<NezhaIDE::Editor::EditorTabHost *>();
+                if (!editorHost) {
+                    std::printf("SELFTEST: no editor host\n");
+                    QApplication::exit(2);
+                    return;
+                }
+                editorHost->openHttpClient();
+                panel = editorHost->findChild<NezhaIDE::Views::HttpViewPanel *>();
+                if (!panel) {
+                    std::printf("SELFTEST: no http panel\n");
+                    QApplication::exit(2);
+                    return;
+                }
+                urlInput = panel->findChild<QLineEdit *>(QStringLiteral("httpUrlInput"));
+                sendBtn = panel->findChild<QPushButton *>(QStringLiteral("httpSendButton"));
+
+                dump(panel, "panel");
+                dump(panel->findChild<QPushButton *>(QStringLiteral("httpMethodButton")), "methodBtn");
+                dump(urlInput, "urlInput");
+                dump(sendBtn, "sendBtn");
+                panel->grab().save(QStringLiteral("/tmp/nezha_01_initial.png"));
+
+                const auto url = qEnvironmentVariable("NEZHA_SELFTEST_URL");
+                urlInput->setText(url);
+                std::printf("SELFTEST: url=%s\n", url.toUtf8().constData());
+                sendBtn->click();
+
+                QTimer::singleShot(1500, this, [this] {
+                    panel->grab().save(QStringLiteral("/tmp/nezha_02_sending.png"));
+                });
+
+                QTimer::singleShot(10000, this, [this] {
+                    auto *pill = panel->findChild<QLabel *>(QStringLiteral("httpStatusPill"));
+                    auto *timeLabel = panel->findChild<QLabel *>(QStringLiteral("httpTimeLabel"));
+                    auto *sizeLabel = panel->findChild<QLabel *>(QStringLiteral("httpSizeLabel"));
+                    auto *body = panel->findChild<QPlainTextEdit *>(QStringLiteral("httpResponseBody"));
+                    auto *headers = panel->findChild<QTableWidget *>(QStringLiteral("httpHeadersTable"));
+
+                    std::printf("SELFTEST: status=%s\n", pill->text().toUtf8().constData());
+                    std::printf("SELFTEST: time=%s\n", timeLabel->text().toUtf8().constData());
+                    std::printf("SELFTEST: size=%s\n", sizeLabel->text().toUtf8().constData());
+                    std::printf("SELFTEST: bodyLen=%d\n", static_cast<int>(body->toPlainText().size()));
+                    std::printf("SELFTEST: headers=%d\n", headers->rowCount());
+                    dump(panel, "panel(resp)");
+                    dump(pill, "statusPill");
+                    dump(timeLabel, "timeLabel");
+                    dump(body, "respBody");
+                    panel->grab().save(QStringLiteral("/tmp/nezha_03_response.png"));
+
+                    window.resize(760, 560);
+                    QTimer::singleShot(400, this, [this] {
+                        std::printf("SELFTEST: resized window to 760x560\n");
+                        dump(panel, "panel(small)");
+                        dump(panel->findChild<QPushButton *>(QStringLiteral("httpMethodButton")), "methodBtn(small)");
+                        dump(urlInput, "urlInput(small)");
+                        dump(sendBtn, "sendBtn(small)");
+                        panel->grab().save(QStringLiteral("/tmp/nezha_04_small.png"));
+
+                        urlInput->setText(QStringLiteral("not a url"));
+                        sendBtn->click();
+                        QTimer::singleShot(400, this, [this] {
+                            panel->grab().save(QStringLiteral("/tmp/nezha_05_invalid.png"));
+                        });
+
+                        urlInput->setText(QStringLiteral("https://nonexistent-domain-zzz12345.com"));
+                        sendBtn->click();
+                        QTimer::singleShot(6000, this, [this] {
+                            auto *pill = panel->findChild<QLabel *>(QStringLiteral("httpStatusPill"));
+                            std::printf("SELFTEST: errorPill=%s\n", pill->text().toUtf8().constData());
+                            panel->grab().save(QStringLiteral("/tmp/nezha_06_error.png"));
+                            std::printf("SELFTEST: DONE\n");
+                            QApplication::exit(0);
+                        });
+                    });
+                });
+            }
+        };
+        auto *st = new Selftest(window);
+        QTimer::singleShot(500, st, [st] { st->start(); });
+    }
 
     return QApplication::exec();
 }

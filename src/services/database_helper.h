@@ -209,6 +209,7 @@ private:
     ) const;
 
 private:
+    [[ maybe_unused ]]
     std::string ExplicitDatabasePath;
 
     sqlite3 *Database{nullptr};

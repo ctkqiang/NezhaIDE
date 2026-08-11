@@ -1,6 +1,7 @@
 #include "sidebar_container.h"
 #include "explorer_panel.h"
-#include "git_panel.h"
+#include "views/git_panel/git_panel.h"
+#include "src/services/localization_service.h"
 #include "src/services/theme_service.h"
 #include <QDir>
 #include <QVBoxLayout>
@@ -54,11 +55,12 @@ void SidebarContainer::setupHeader()
     layout->addWidget(project_name_);
     layout->addStretch();
 
-    auto makeHeaderBtn = [](const QString &text, QWidget *parent) -> QPushButton * {
+    auto makeHeaderBtn = [](const QString &text, const QString &tooltip, QWidget *parent) -> QPushButton * {
         auto *btn = new QPushButton(text, parent);
         btn->setFixedSize(20, 20);
         btn->setFlat(true);
         btn->setCursor(Qt::PointingHandCursor);
+        btn->setToolTip(tooltip);
         btn->setStyleSheet(
             QStringLiteral("QPushButton { border: none; font-size: 13px;"
             "background: transparent; border-radius: 4px; }"
@@ -68,15 +70,15 @@ void SidebarContainer::setupHeader()
         return btn;
     };
 
-    auto *btn_new = makeHeaderBtn(QStringLiteral("+"), header_);
+    auto *btn_new = makeHeaderBtn(QStringLiteral("+"), LOC("explorer.new_file"), header_);
     connect(btn_new, &QPushButton::clicked, explorer_panel_, &ExplorerPanel::onNewFile);
     layout->addWidget(btn_new);
 
-    auto *btn_folder = makeHeaderBtn(QStringLiteral("D"), header_);
+    auto *btn_folder = makeHeaderBtn(QStringLiteral("▸▾"), LOC("explorer.new_folder"), header_);
     connect(btn_folder, &QPushButton::clicked, explorer_panel_, &ExplorerPanel::onNewFolder);
     layout->addWidget(btn_folder);
 
-    auto *btn_refresh = makeHeaderBtn(QStringLiteral("R"), header_);
+    auto *btn_refresh = makeHeaderBtn(QStringLiteral("⟳"), LOC("explorer.refresh"), header_);
     connect(btn_refresh, &QPushButton::clicked, this, [this] {
         explorer()->setRootPath(QDir::currentPath());
     });
@@ -89,17 +91,22 @@ GitPanel *SidebarContainer::gitPanel() const { return git_panel_; }
 void SidebarContainer::showExplorer()
 {
     stack_->setCurrentIndex(0);
-    project_name_->setText(QStringLiteral("EXPLORER"));
-    project_name_->setStyleSheet(
-        project_name_->styleSheet() +
-        QStringLiteral(" color: %1;").arg(
-            NezhaIDE::Services::ThemeService::instance().color(QStringLiteral("text.secondary"))));
+    setHeaderTitle(LOC("sidebar.explorer"));
 }
 
 void SidebarContainer::showGit()
 {
     stack_->setCurrentIndex(1);
-    project_name_->setText(QStringLiteral("GIT"));
+    setHeaderTitle(LOC("sidebar.git"));
+}
+
+void SidebarContainer::setHeaderTitle(const QString &title)
+{
+    project_name_->setText(title.toUpper());
+    project_name_->setStyleSheet(
+        project_name_->styleSheet() +
+        QStringLiteral(" color: %1;").arg(
+            NezhaIDE::Services::ThemeService::instance().color(QStringLiteral("text.secondary"))));
 }
 
 void SidebarContainer::applyStyles()

@@ -14,6 +14,8 @@
     #define HAS_QSETTINGS 0
 #endif
 
+#include <array>
+
 namespace NezhaIDE {
     struct AuthorMetadata final {
         std::string_view name;
@@ -64,6 +66,14 @@ namespace NezhaIDE {
             .name = "钟智强",
             .email = "johnmelodymel@qq.com",
             .wechat = "ctkqiang"
+        };
+
+        [[ maybe_unused ]]
+        static constexpr std::array<std::string_view, 4> DatabaseTable = {
+            "tools",
+            "tools_procedures",
+            "tool_parameters",
+            "user_preferences"
         };
     };
 
