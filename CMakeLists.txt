@@ -81,8 +81,11 @@ set_target_properties(NezhaIDE PROPERTIES
     MACOSX_BUNDLE_SHORT_VERSION_STRING "${PROJECT_VERSION}"
 )
 
-# 未签名 bundle 会让 macOS 无法归属进程，导致任务端口归属失败
-# (Unable to obtain a task name port right) 与 Gatekeeper 误报。
+# 未签名 bundle 会让 macOS 无法归属进程，导致 Gatekeeper 误报与
+# launchd 拒绝启动；ad-hoc 签名即可避免。注意：BaseBoard 的
+# "Unable to obtain a task name port right" 日志是 macOS 26 对所有
+# 非真签名进程的系统噪音（WindowServer 为受保护进程，按设计拒绝
+# task port），签名无法消除，与本应用代码无关。
 set(NEZHAIDE_CODESIGN_IDENTITY "-" CACHE STRING
     "代码签名身份；默认 '-' 表示 ad-hoc 签名，可用开发者证书替换")
 add_custom_command(TARGET NezhaIDE POST_BUILD
