@@ -49,7 +49,8 @@ add_executable(NezhaIDE main.cc
         src/model/user_preference.h
         src/repository/orm.h
         src/model/tool_registry.h
-        src/model/http_request.h)
+        src/services/http.cc
+        src/services/http.h)
 
 target_include_directories(NezhaIDE PRIVATE ${CMAKE_SOURCE_DIR})
 
