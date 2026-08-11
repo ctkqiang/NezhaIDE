@@ -1,5 +1,6 @@
 #include "hex_view.h"
 #include "src/services/theme_service.h"
+#include <QFontDatabase>
 #include <QMouseEvent>
 #include <QPainter>
 #include <QScrollBar>
@@ -9,7 +10,7 @@ namespace NezhaIDE::Views {
 HexView::HexView(QWidget *parent)
     : QAbstractScrollArea(parent)
 {
-    setFont(QFont(QStringLiteral("SF Mono"), 12));
+    setFont(QFontDatabase::systemFont(QFontDatabase::FixedFont));
     setMouseTracking(true);
     viewport()->setCursor(Qt::IBeamCursor);
 }

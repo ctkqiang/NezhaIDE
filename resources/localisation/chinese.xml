@@ -145,4 +145,7 @@
     <string key="hex.info">信息</string>
     <string key="hex.no_data">无可用数据</string>
     <string key="hex.stripped">已剥离符号 — 无符号表</string>
+    <string key="terminal.title">终端</string>
+    <string key="terminal.new">新建终端</string>
+    <string key="terminal.close">关闭终端</string>
 </localization>

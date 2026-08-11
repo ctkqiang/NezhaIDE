@@ -145,4 +145,7 @@
     <string key="hex.info">Info</string>
     <string key="hex.no_data">No data available</string>
     <string key="hex.stripped">Stripped binary — no symbol table</string>
+    <string key="terminal.title">Terminal</string>
+    <string key="terminal.new">New Terminal</string>
+    <string key="terminal.close">Close Terminal</string>
 </localization>

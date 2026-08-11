@@ -193,10 +193,10 @@ static const QHash<QString, QString> kStyleTemplates = {
     {"style.editor",
      "QPlainTextEdit { background: $syntax.editor.background; color: $syntax.editor.foreground;"
      "border: none; selection-background-color: $overlay.selection;"
-     "font-family: 'SF Mono', Menlo, 'Courier New', monospace; font-size: 13px;"
+     "font-family: Menlo, 'Courier New', monospace; font-size: 13px;"
      "padding: 8px; }"
      "QWidget#lineNumberArea { background: $bg.secondary; color: $text.tertiary;"
-     "font-family: 'SF Mono', Menlo, 'Courier New', monospace; font-size: 12px; }"},
+     "font-family: Menlo, 'Courier New', monospace; font-size: 12px; }"},
 
     {"style.http_panel",
      "QWidget#httpClientRoot { background: $bg.secondary; }"
@@ -226,7 +226,7 @@ static const QHash<QString, QString> kStyleTemplates = {
 
     {"style.http_body_editor",
      "QPlainTextEdit { border: 1px solid $border; border-radius: 6px; background: $bg.primary;"
-     "color: $text.primary; font-family: 'SF Mono', Menlo, monospace; font-size: 13px;"
+     "color: $text.primary; font-family: Menlo, monospace; font-size: 13px;"
      "selection-background-color: $overlay.selection; padding: 8px; }"
      "QPlainTextEdit:focus { border-color: $accent; }"},
 
@@ -251,7 +251,7 @@ static const QHash<QString, QString> kStyleTemplates = {
 
     {"style.http_response_body",
      "QPlainTextEdit { border: 1px solid $border; border-radius: 6px; background: $bg.primary;"
-     "color: $text.primary; font-family: 'SF Mono', Menlo, monospace; font-size: 12px;"
+     "color: $text.primary; font-family: Menlo, monospace; font-size: 12px;"
      "selection-background-color: $overlay.selection; padding: 8px; }"},
 
     {"style.http_meta_label",

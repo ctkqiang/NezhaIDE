@@ -1,6 +1,7 @@
 #include "hex_editor.h"
 #include "src/services/localization_service.h"
 #include "src/services/theme_service.h"
+#include <QFontDatabase>
 #include <QFileInfo>
 #include <QHeaderView>
 #include <QHBoxLayout>
@@ -49,7 +50,7 @@ void HexEditor::setupAnalysisTabs() {
     disasm_view_ = new QPlainTextEdit(analysis_tabs_);
     disasm_view_->setObjectName(QStringLiteral("hexDisasmView"));
     disasm_view_->setReadOnly(true);
-    disasm_view_->setFont(QFont(QStringLiteral("SF Mono"), 11));
+    disasm_view_->setFont(QFontDatabase::systemFont(QFontDatabase::FixedFont));
     analysis_tabs_->addTab(disasm_view_, LOC("hex.disassembly"));
 
     strings_table_ = new QTableWidget(0, 2, analysis_tabs_);

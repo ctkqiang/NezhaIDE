@@ -1,7 +1,7 @@
 #include "terminal_view.h"
 #include "src/services/theme_service.h"
+#include <QFontDatabase>
 #include <QKeyEvent>
-#include <QRegularExpression>
 #include <QScrollBar>
 #include <QTextCursor>
 #include <cstdlib>
@@ -9,66 +9,109 @@
 #include <util.h>
 #include <sys/ioctl.h>
 #include <signal.h>
-#include <termios.h>
 
 namespace NezhaIDE::Views {
 
 TerminalView::TerminalView(QWidget *parent)
     : QPlainTextEdit(parent)
 {
-    setFont(QFont(QStringLiteral("SF Mono"), 12));
+    setFont(QFontDatabase::systemFont(QFontDatabase::FixedFont));
     setReadOnly(false);
     setUndoRedoEnabled(false);
     setMaximumBlockCount(kMaxScrollback);
     setTabStopDistance(fontMetrics().horizontalAdvance(' ') * 8);
     setCursorWidth(2);
+    setFrameShape(QFrame::NoFrame);
+    setVerticalScrollBarPolicy(Qt::ScrollBarAsNeeded);
 
-    QPalette p = palette();
-    p.setColor(QPalette::Base, QColor(0x0D, 0x11, 0x17));
-    p.setColor(QPalette::Text, QColor(0xE6, 0xED, 0xF3));
+    setTextInteractionFlags(Qt::TextSelectableByKeyboard | Qt::TextSelectableByMouse);
+
+    connect(&Services::ThemeService::instance(), &Services::ThemeService::themeChanged,
+            this, [this] { applyTheme(); });
+
+    applyTheme();
+    resetFormat();
+}
+
+TerminalView::~TerminalView() { killShell(); }
+
+void TerminalView::applyTheme() {
+    auto &ts = Services::ThemeService::instance();
+    theme_bg_ = ts.qcolor(QStringLiteral("bg.primary"));
+    theme_fg_ = ts.qcolor(QStringLiteral("text.primary"));
+
+    QPalette p;
+    p.setColor(QPalette::Base, theme_bg_);
+    p.setColor(QPalette::Text, theme_fg_);
+    p.setColor(QPalette::PlaceholderText, ts.qcolor(QStringLiteral("text.tertiary")));
     setPalette(p);
 
-    current_fmt_.setForeground(QColor(0xE6, 0xED, 0xF3));
+    setStyleSheet(QStringLiteral(
+        "QPlainTextEdit { border: none; background: %1; color: %2; }"
+        "QScrollBar:vertical { background: %3; width: 10px; margin: 0; }"
+        "QScrollBar::handle:vertical { background: %4; border-radius: 4px; min-height: 20px; }"
+        "QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical { height: 0; }")
+        .arg(theme_bg_.name(), theme_fg_.name(),
+             ts.color(QStringLiteral("bg.secondary")),
+             ts.color(QStringLiteral("border"))));
+
+    fg_color_ = theme_fg_;
+    bg_color_ = theme_bg_;
+    resetFormat();
+    viewport()->update();
+}
+
+void TerminalView::resetFormat() {
+    bold_ = false; italic_ = false; underline_ = false; inverse_ = false;
+    fg_color_ = theme_fg_;
+    bg_color_ = theme_bg_;
+    current_fmt_.setForeground(theme_fg_);
+    current_fmt_.setBackground(theme_bg_);
     current_fmt_.setFontWeight(QFont::Normal);
     current_fmt_.setFontItalic(false);
     current_fmt_.setFontUnderline(false);
     setCurrentCharFormat(current_fmt_);
-
-    QTextCursor cursor = textCursor();
-    cursor.movePosition(QTextCursor::End);
-    setTextCursor(cursor);
-
-    connect(this, &QPlainTextEdit::cursorPositionChanged, this, [this] {
-        auto cursor = textCursor();
-        cursor.movePosition(QTextCursor::End);
-        setTextCursor(cursor);
-    });
 }
 
-TerminalView::~TerminalView() {
-    killShell();
+void TerminalView::resizeEvent(QResizeEvent *event) {
+    QPlainTextEdit::resizeEvent(event);
+    updatePtySize();
+}
+
+void TerminalView::updatePtySize() {
+    if (master_fd_ < 0) return;
+    auto fm = fontMetrics();
+    int cols = viewport()->width() / fm.horizontalAdvance(' ');
+    int rows = viewport()->height() / fm.height();
+    if (cols < 20) cols = 80;
+    if (rows < 8) rows = 24;
+
+    struct winsize ws{};
+    ws.ws_col = static_cast<unsigned short>(cols);
+    ws.ws_row = static_cast<unsigned short>(rows);
+    ws.ws_xpixel = 0;
+    ws.ws_ypixel = 0;
+    ioctl(master_fd_, TIOCSWINSZ, &ws);
 }
 
 bool TerminalView::startShell() {
     struct winsize ws{};
     ws.ws_col = 120;
     ws.ws_row = 40;
-    ws.ws_xpixel = 0;
-    ws.ws_ypixel = 0;
+
+    const char *shell = std::getenv("SHELL");
+    if (!shell || shell[0] == '\0') shell = "/bin/zsh";
+    shell_path_ = QString::fromUtf8(shell);
 
     shell_pid_ = forkpty(&master_fd_, nullptr, nullptr, &ws);
     if (shell_pid_ < 0) return false;
 
     if (shell_pid_ == 0) {
         setsid();
-
-        const char *shell = std::getenv("SHELL");
-        if (!shell || shell[0] == '\0') shell = "/bin/bash";
-
-        const char *argv[] = {shell, "-l", nullptr};
+        const char *args[] = {shell, "-l", nullptr};
         setenv("TERM", "xterm-256color", 1);
         setenv("COLORTERM", "truecolor", 1);
-        execvp(shell, const_cast<char *const *>(argv));
+        execvp(shell, const_cast<char *const *>(args));
         _exit(127);
     }
 
@@ -76,7 +119,7 @@ bool TerminalView::startShell() {
     connect(notifier_.get(), &QSocketNotifier::activated, this, &TerminalView::onPtyReadyRead);
 
     QTextCursor cursor = textCursor();
-    current_fmt_.setForeground(QColor(0xE6, 0xED, 0xF3));
+    cursor.movePosition(QTextCursor::End);
     cursor.insertText(QStringLiteral("\r\n"), current_fmt_);
     setTextCursor(cursor);
 
@@ -88,7 +131,6 @@ void TerminalView::killShell() {
         ::write(master_fd_, "\x03", 1);
         usleep(50000);
         ::write(master_fd_, "exit\n", 5);
-
         int status;
         pid_t result;
         for (int i = 0; i < 10; ++i) {
@@ -96,37 +138,34 @@ void TerminalView::killShell() {
             if (result > 0) break;
             usleep(100000);
         }
-        if (result <= 0) {
-            kill(shell_pid_, SIGKILL);
-            waitpid(shell_pid_, &status, 0);
-        }
+        if (result <= 0) { kill(shell_pid_, SIGKILL); waitpid(shell_pid_, &status, 0); }
         shell_pid_ = -1;
     }
-    if (master_fd_ >= 0) {
-        notifier_.reset();
-        ::close(master_fd_);
-        master_fd_ = -1;
-    }
+    if (master_fd_ >= 0) { notifier_.reset(); ::close(master_fd_); master_fd_ = -1; }
 }
 
-bool TerminalView::isRunning() const noexcept {
-    return shell_pid_ > 0 && master_fd_ >= 0;
+bool TerminalView::isRunning() const noexcept { return shell_pid_ > 0 && master_fd_ >= 0; }
+
+QString TerminalView::shellName() const {
+    if (shell_path_.isEmpty()) return QStringLiteral("shell");
+    int pos = shell_path_.lastIndexOf(QChar('/'));
+    return pos >= 0 ? shell_path_.mid(pos + 1) : shell_path_;
 }
 
 void TerminalView::sendText(const QString &text) {
     if (!isRunning()) return;
-    QByteArray data = text.toUtf8();
-    writeToPty(data);
+    writeToPty(text.toUtf8());
+}
+
+void TerminalView::writeToPty(const QByteArray &data) {
+    if (master_fd_ < 0) return;
+    ::write(master_fd_, data.constData(), static_cast<size_t>(data.size()));
 }
 
 void TerminalView::keyPressEvent(QKeyEvent *event) {
-    if (!isRunning()) {
-        QPlainTextEdit::keyPressEvent(event);
-        return;
-    }
+    if (!isRunning()) { QPlainTextEdit::keyPressEvent(event); return; }
 
     QByteArray data;
-
     switch (event->key()) {
     case Qt::Key_Backspace: data = "\x7f"; break;
     case Qt::Key_Return:
@@ -145,113 +184,89 @@ void TerminalView::keyPressEvent(QKeyEvent *event) {
     default:
         if (event->modifiers() & Qt::ControlModifier) {
             int key = event->key();
-            if (key >= Qt::Key_A && key <= Qt::Key_Z) {
+            if (key >= Qt::Key_A && key <= Qt::Key_Z)
                 data = QByteArray(1, static_cast<char>(key - Qt::Key_A + 1));
-            } else if (key == Qt::Key_C) {
-                killShell();
-                emit shellExited(0);
-                return;
-            }
         } else {
             QString text = event->text();
-            if (!text.isEmpty()) {
-                data = text.toUtf8();
-            }
+            if (!text.isEmpty()) data = text.toUtf8();
         }
         break;
     }
 
-    if (!data.isEmpty()) {
-        writeToPty(data);
-        event->accept();
-    } else {
-        event->ignore();
-    }
-}
-
-void TerminalView::writeToPty(const QByteArray &data) {
-    if (master_fd_ < 0) return;
-    ::write(master_fd_, data.constData(), static_cast<size_t>(data.size()));
+    if (!data.isEmpty()) { writeToPty(data); event->accept(); }
+    else event->ignore();
 }
 
 void TerminalView::onPtyReadyRead() {
     char buf[4096];
     ssize_t n = ::read(master_fd_, buf, sizeof(buf));
-    if (n <= 0) {
-        if (n < 0) killShell();
-        emit shellExited(0);
-        return;
-    }
-    QByteArray data(buf, static_cast<int>(n));
-    parseAnsiAndAppend(data);
+    if (n <= 0) { if (n < 0) killShell(); emit shellExited(0); return; }
+    parseAnsiAndAppend(QByteArray(buf, static_cast<int>(n)));
     ensureCursorVisible();
 }
 
-static int ansiColorToRgb(int code) {
+static QColor ansiToColor(int code, const QColor &themeFg, const QColor &themeBg) {
+    auto &ts = Services::ThemeService::instance();
     switch (code) {
-    case 30: return 0x1F2329;
-    case 31: return 0xE74C3C;
-    case 32: return 0x27AE60;
-    case 33: return 0xE67E22;
-    case 34: return 0x3370FF;
-    case 35: return 0xCF1F8B;
-    case 36: return 0x0E7A7A;
-    case 37: return 0xE6EDF3;
-    case 90: return 0x6E7681;
-    case 91: return 0xF0883E;
-    case 92: return 0x3FB950;
-    case 93: return 0xF0C000;
-    case 94: return 0x58A6FF;
-    case 95: return 0xD2A8FF;
-    case 96: return 0x79C0FF;
-    case 97: return 0xFFFFFF;
-    default: return -1;
+    case 30: return themeFg;
+    case 31: return ts.qcolor(QStringLiteral("git.deleted"));
+    case 32: return ts.qcolor(QStringLiteral("git.added"));
+    case 33: return ts.qcolor(QStringLiteral("git.modified"));
+    case 34: return ts.qcolor(QStringLiteral("accent"));
+    case 35: return QColor(0xD2, 0xA8, 0xFF);
+    case 36: return QColor(0x79, 0xC0, 0xFF);
+    case 37: return themeFg;
+    case 90: return ts.qcolor(QStringLiteral("text.tertiary"));
+    case 91: return QColor(0xF0, 0x88, 0x3E);
+    case 92: return QColor(0x3F, 0xB9, 0x50);
+    case 93: return QColor(0xF0, 0xC0, 0x00);
+    case 94: return QColor(0x58, 0xA6, 0xFF);
+    case 95: return QColor(0xD2, 0xA8, 0xFF);
+    case 96: return QColor(0x79, 0xC0, 0xFF);
+    case 97: return QColor(0xFF, 0xFF, 0xFF);
+    default: return QColor();
     }
 }
 
 void TerminalView::processSgr(const QStringList &params) {
-    if (params.isEmpty()) {
-        bold_ = false; italic_ = false; underline_ = false; inverse_ = false;
-        fg_color_ = QColor(ansiColorToRgb(37));
-        bg_color_ = QColor(0x0D, 0x11, 0x17);
-        current_fmt_.setForeground(fg_color_);
-        current_fmt_.setBackground(bg_color_);
-        current_fmt_.setFontWeight(QFont::Normal);
-        current_fmt_.setFontItalic(false);
-        current_fmt_.setFontUnderline(false);
-        setCurrentCharFormat(current_fmt_);
-        return;
-    }
+    if (params.isEmpty()) { resetFormat(); return; }
 
     for (const auto &p : params) {
         int code = p.toInt();
-        switch (code) {
-        case 0:
+        if (code == 0) {
             bold_ = false; italic_ = false; underline_ = false; inverse_ = false;
-            fg_color_ = QColor(0xE6, 0xED, 0xF3);
-            bg_color_ = QColor(0x0D, 0x11, 0x17);
-            break;
-        case 1: bold_ = true; break;
-        case 3: italic_ = true; break;
-        case 4: underline_ = true; break;
-        case 7: inverse_ = true; break;
-        case 22: bold_ = false; break;
-        case 23: italic_ = false; break;
-        case 24: underline_ = false; break;
-        case 27: inverse_ = false; break;
-        default:
-            if (code >= 30 && code <= 37) fg_color_ = QColor(ansiColorToRgb(code));
-            else if (code >= 40 && code <= 47) bg_color_ = QColor(ansiColorToRgb(code - 10));
-            else if (code >= 90 && code <= 97) fg_color_ = QColor(ansiColorToRgb(code));
-            else if (code >= 100 && code <= 107) bg_color_ = QColor(ansiColorToRgb(code - 10));
-            break;
+            fg_color_ = theme_fg_;
+            bg_color_ = theme_bg_;
+            continue;
+        }
+        if (code == 1) bold_ = true;
+        else if (code == 3) italic_ = true;
+        else if (code == 4) underline_ = true;
+        else if (code == 7) inverse_ = true;
+        else if (code == 22) bold_ = false;
+        else if (code == 23) italic_ = false;
+        else if (code == 24) underline_ = false;
+        else if (code == 27) inverse_ = false;
+        else if (code >= 30 && code <= 37) {
+            auto c = ansiToColor(code, theme_fg_, theme_bg_);
+            if (c.isValid()) fg_color_ = c;
+        } else if (code >= 40 && code <= 47) {
+            auto c = ansiToColor(code - 10, theme_fg_, theme_bg_);
+            if (c.isValid()) bg_color_ = c;
+        } else if (code >= 90 && code <= 97) {
+            auto c = ansiToColor(code, theme_fg_, theme_bg_);
+            if (c.isValid()) fg_color_ = c;
+        } else if (code >= 100 && code <= 107) {
+            auto c = ansiToColor(code - 10, theme_fg_, theme_bg_);
+            if (c.isValid()) bg_color_ = c;
         }
     }
 
-    if (inverse_) std::swap(fg_color_, bg_color_);
+    auto fg = inverse_ ? bg_color_ : fg_color_;
+    auto bg = inverse_ ? fg_color_ : bg_color_;
 
-    current_fmt_.setForeground(fg_color_);
-    current_fmt_.setBackground(bg_color_);
+    current_fmt_.setForeground(fg);
+    current_fmt_.setBackground(bg);
     current_fmt_.setFontWeight(bold_ ? QFont::Bold : QFont::Normal);
     current_fmt_.setFontItalic(italic_);
     current_fmt_.setFontUnderline(underline_);
@@ -271,32 +286,19 @@ void TerminalView::parseAnsiAndAppend(const QByteArray &data) {
         QChar ch = pending_ansi_[i];
 
         if (ch == QChar(0x1B) && i + 1 < pending_ansi_.size() && pending_ansi_[i + 1] == QChar('[')) {
-            if (!output.isEmpty()) {
-                cursor.insertText(output, current_fmt_);
-                output.clear();
-            }
+            if (!output.isEmpty()) { cursor.insertText(output, current_fmt_); output.clear(); }
             i += 2;
             QString codeStr;
             while (i < pending_ansi_.size() && pending_ansi_[i] != QChar('m')
                    && pending_ansi_[i] != QChar(';') && !pending_ansi_[i].isLetter()) {
-                codeStr += pending_ansi_[i];
-                ++i;
+                codeStr += pending_ansi_[i]; ++i;
             }
             if (i < pending_ansi_.size() && pending_ansi_[i] == QChar('m')) {
-                processSgr(codeStr.split(';', Qt::SkipEmptyParts));
-                ++i;
+                processSgr(codeStr.split(';', Qt::SkipEmptyParts)); ++i;
             } else if (i < pending_ansi_.size() && pending_ansi_[i].isLetter()) {
-                char cmd = pending_ansi_[i].toLatin1();
-                ++i;
-                if (cmd == 'K') {
-                    cursor.movePosition(QTextCursor::End);
-                    cursor.movePosition(QTextCursor::StartOfLine, QTextCursor::KeepAnchor);
-                    cursor.removeSelectedText();
-                } else if (cmd == 'J') {
-                    cursor.movePosition(QTextCursor::End);
-                    cursor.movePosition(QTextCursor::Start, QTextCursor::KeepAnchor);
-                } else if (cmd == 'H') {
-                }
+                char cmd = pending_ansi_[i].toLatin1(); ++i;
+                if (cmd == 'K') { cursor.movePosition(QTextCursor::End); cursor.movePosition(QTextCursor::StartOfLine, QTextCursor::KeepAnchor); cursor.removeSelectedText(); }
+                else if (cmd == 'J') { cursor.movePosition(QTextCursor::End); cursor.movePosition(QTextCursor::Start, QTextCursor::KeepAnchor); }
             }
             pending_ansi_ = pending_ansi_.mid(i);
             i = 0;
@@ -304,46 +306,24 @@ void TerminalView::parseAnsiAndAppend(const QByteArray &data) {
         }
 
         if (ch == QChar('\r')) {
-            if (!output.isEmpty()) {
-                cursor.insertText(output, current_fmt_);
-                output.clear();
-            }
+            if (!output.isEmpty()) { cursor.insertText(output, current_fmt_); output.clear(); }
             cursor.movePosition(QTextCursor::End);
             cursor.movePosition(QTextCursor::StartOfLine, QTextCursor::KeepAnchor);
             cursor.removeSelectedText();
-            ++i;
-            continue;
+            ++i; continue;
         }
-
         if (ch == QChar('\b') || ch == QChar(0x7F)) {
-            if (!output.isEmpty()) {
-                output.chop(1);
-            } else {
-                cursor.movePosition(QTextCursor::End);
-                cursor.deletePreviousChar();
-            }
-            ++i;
-            continue;
+            if (!output.isEmpty()) output.chop(1);
+            else { cursor.movePosition(QTextCursor::End); cursor.deletePreviousChar(); }
+            ++i; continue;
         }
-
         if (ch == QChar('\a')) { ++i; continue; }
+        if (ch == QChar('\t')) { output += QStringLiteral("        "); ++i; continue; }
 
-        if (ch == QChar('\t')) {
-            output += QStringLiteral("        ");
-            ++i;
-            continue;
-        }
-
-        output += ch;
-        ++i;
+        output += ch; ++i;
     }
-
     pending_ansi_ = pending_ansi_.mid(i);
-
-    if (!output.isEmpty()) {
-        cursor.insertText(output, current_fmt_);
-    }
-
+    if (!output.isEmpty()) cursor.insertText(output, current_fmt_);
     setTextCursor(cursor);
 }
 

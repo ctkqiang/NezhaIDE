@@ -84,6 +84,7 @@ private:
     QProcess *git_process_{};
     QPlainTextEdit *diff_view_{};
     QList<GitFileEntry> entries_;
+    bool has_working_dir_{false};
 };
 
 } // namespace NezhaIDE::Views

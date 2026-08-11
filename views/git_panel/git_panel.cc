@@ -1,6 +1,7 @@
 #include "git_panel.h"
 #include "src/services/localization_service.h"
 #include "src/services/theme_service.h"
+#include <QFontDatabase>
 #include "src/utilities/logger.h"
 #include <QVBoxLayout>
 #include <QHBoxLayout>
@@ -61,7 +62,7 @@ GitPanel::GitPanel(QWidget *parent)
 
     diff_view_ = new QPlainTextEdit(splitter_);
     diff_view_->setReadOnly(true);
-    diff_view_->setFont(QFont(QStringLiteral("SF Mono"), 11));
+    diff_view_->setFont(QFontDatabase::systemFont(QFontDatabase::FixedFont));
     diff_view_->setPlaceholderText(LOC("git.diff_hint"));
 
     splitter_->addWidget(file_list_);
@@ -105,8 +106,6 @@ GitPanel::GitPanel(QWidget *parent)
         applyStyles();
         applyGitColors();
     });
-
-    updateBranchDisplay();
 }
 
 GitPanel::~GitPanel()
@@ -151,6 +150,7 @@ void GitPanel::refresh()
 
 void GitPanel::setWorkingDirectory(const QString &path)
 {
+    has_working_dir_ = true;
     git_process_->setWorkingDirectory(path);
     diff_view_->clear();
     updateBranchDisplay();
@@ -428,8 +428,14 @@ QColor GitPanel::statusColor(QChar x, QChar y) const
     return ts.qcolor(QStringLiteral("text.primary"));
 }
 
+/**
+ * 更新分支显示。
+ *
+ * 未打开项目时直接返回，避免启动阶段在启动目录产生无意义的 git 进程。
+ */
 void GitPanel::updateBranchDisplay()
 {
+    if (!has_working_dir_) return;
     auto *proc = new QProcess(this);
     proc->setWorkingDirectory(git_process_->workingDirectory());
     connect(proc, QOverload<int, QProcess::ExitStatus>::of(&QProcess::finished),

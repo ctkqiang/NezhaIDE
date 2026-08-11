@@ -10,7 +10,11 @@ TerminalPanel::TerminalPanel(QWidget *parent)
     : QWidget(parent)
 {
     setupUI();
+    applyTheme();
     newTerminal();
+
+    connect(&Services::ThemeService::instance(), &Services::ThemeService::themeChanged,
+            this, [this] { applyTheme(); });
 }
 
 TerminalPanel::~TerminalPanel() = default;
@@ -47,7 +51,7 @@ void TerminalPanel::setupUI() {
 void TerminalPanel::newTerminal() {
     terminal_count_++;
     auto *term = new TerminalView(tab_widget_);
-    auto title = QStringLiteral("bash %1").arg(terminal_count_);
+    auto title = QStringLiteral("%1 %2").arg(term->shellName()).arg(terminal_count_);
     int idx = tab_widget_->addTab(term, title);
     tab_widget_->setCurrentIndex(idx);
 
@@ -77,13 +81,17 @@ void TerminalPanel::closeCurrentTerminal() {
     delete w;
 }
 
-TerminalView *TerminalPanel::currentTerminal() const {
-    return qobject_cast<TerminalView *>(tab_widget_->currentWidget());
-}
-
 void TerminalPanel::applyTheme() {
     auto &ts = Services::ThemeService::instance();
+    toolbar_->setStyleSheet(ts.qss(QStringLiteral("style.toolbar")));
     tab_widget_->setStyleSheet(ts.qss(QStringLiteral("style.http_tabs")));
+    setStyleSheet(
+        QStringLiteral("QWidget { background: %1; }").arg(ts.color(QStringLiteral("bg.primary"))));
+
+    for (int i = 0; i < tab_widget_->count(); ++i) {
+        auto *tv = qobject_cast<TerminalView *>(tab_widget_->widget(i));
+        if (tv) tv->applyTheme();
+    }
 }
 
 } // namespace NezhaIDE::Views

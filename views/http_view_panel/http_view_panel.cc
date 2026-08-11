@@ -1,6 +1,7 @@
 #include "http_view_panel.h"
 #include "src/configuration.h"
 #include "src/services/http.h"
+#include <QFontDatabase>
 #include "src/services/localization_service.h"
 #include "src/services/theme_service.h"
 #include "src/utilities/logger.h"
@@ -731,7 +732,7 @@ void HttpViewPanel::buildResponseArea()
     response_hex_ = new QPlainTextEdit(response_tabs_);
     response_hex_->setObjectName(QStringLiteral("httpResponseHex"));
     response_hex_->setReadOnly(true);
-    response_hex_->setFont(QFont(QStringLiteral("SF Mono"), 11));
+    response_hex_->setFont(QFontDatabase::systemFont(QFontDatabase::FixedFont));
     response_tabs_->addTab(response_hex_, LOC("http.response_hex"));
 
     html_preview_ = new QTextBrowser(response_tabs_);
