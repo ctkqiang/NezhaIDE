@@ -1,78 +1,37 @@
-//
-// Created by 钟智强 on 2026/8/11.
-//
-
 #pragma once
 
-#ifndef NEZHAIDE_HTTP_H
-#define NEZHAIDE_HTTP_H
-
-#if __has_include(<vector>)
-    #include <string>
-    #include <vector>
-
-    #define __HAS_VECTOR 1
-#else
-    $define __HAS_VECTOR 0
-#endif
+#include "src/model/http_request.h"
+#include <QObject>
+#include <QNetworkAccessManager>
+#include <QNetworkReply>
+#include <QElapsedTimer>
 
 namespace NezhaIDE::Services::HTTP {
-        using RequestId = std::uint64_t;
-        using HeaderId = std::uint64_t;
-        using ParameterId = std::uint64_t;
 
-        enum class HttpMethod {
-            Get,
-            Post,
-            Put,
-            Patch,
-            Delete,
-            Head,
-            Options
-        };
+class HttpClientService : public QObject {
+    Q_OBJECT
 
-        enum class BodyType {
-            None,
-            Raw,
-            Json,
-            Xml,
-            FormUrlEncoded,
-            Multipart,
-            Binary
-        };
+public:
+    static HttpClientService &instance();
 
-        struct HttpHeader {
-            HeaderId id{};
-            std::string name;
-            std::string value;
-            bool enabled{true};
-        };
+    HttpClientService(const HttpClientService &) = delete;
+    HttpClientService &operator=(const HttpClientService &) = delete;
 
-        struct HttpParameter {
-            ParameterId id{};
-            std::string name;
-            std::string value;
-            bool enabled{true};
-        };
+    void send(const Model::HTTP::HttpRequest &req);
+    void cancel(Model::HTTP::RequestId id);
 
-        struct HttpBody {
-            BodyType type{BodyType::None};
-            std::string content;
-            std::string filePath;
-        };
+signals:
+    void responseReceived(const Model::HTTP::HttpResponse &resp);
+    void requestError(Model::HTTP::RequestId id, const QString &error);
 
-        struct HttpRequest {
-            RequestId id{};
+private:
+    HttpClientService();
+    ~HttpClientService() override = default;
 
-            std::string name;
-            HttpMethod method{HttpMethod::Get};
-            std::string url;
+    QNetworkRequest buildRequest(const Model::HTTP::HttpRequest &req) const;
+    QByteArray buildBody(const Model::HTTP::HttpBody &body) const;
 
-            std::vector<HttpParameter> queryParameters;
-            std::vector<HttpHeader> headers;
+    QNetworkAccessManager *nam_{};
+};
 
-            HttpBody body;
-        };
-    }
-
-#endif //NEZHAIDE_HTTP_H
+} // namespace NezhaIDE::Services::HTTP
