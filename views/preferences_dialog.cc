@@ -21,7 +21,7 @@ PreferencesDialog::PreferencesDialog(QWidget *parent)
     setWindowTitle(QString::fromUtf8(
         NezhaIDE::Constants::ApplicationName.data(),
         static_cast<int>(NezhaIDE::Constants::ApplicationName.size())) +
-        QStringLiteral(" — Preferences"));
+        QStringLiteral(" — ") + LOC("prefs.title"));
     setMinimumWidth(420);
     setupUi();
     loadSettings();

@@ -115,12 +115,15 @@ void EditorTabHost::onTabCloseRequested(int index)
 
     if (auto *editor = qobject_cast<CodeEditor *>(w)) {
         if (editor->isModified()) {
-            const auto ret = QMessageBox::question(this, LOC("editor.save_title"),
+            QMessageBox box(QMessageBox::Question, LOC("editor.save_title"),
                 LOC("editor.save_prompt").arg(QFileInfo(editor->filePath()).fileName()),
-                QMessageBox::Save | QMessageBox::Discard | QMessageBox::Cancel,
-                QMessageBox::Save);
-            if (ret == QMessageBox::Cancel) return;
-            if (ret == QMessageBox::Save && !editor->save()) return;
+                QMessageBox::NoButton, this);
+            auto *saveBtn = box.addButton(LOC("editor.save"), QMessageBox::AcceptRole);
+            box.addButton(LOC("editor.discard"), QMessageBox::DestructiveRole);
+            auto *cancelBtn = box.addButton(LOC("editor.cancel"), QMessageBox::RejectRole);
+            box.exec();
+            if (box.clickedButton() == cancelBtn) return;
+            if (box.clickedButton() == saveBtn && !editor->save()) return;
         }
         editors_.remove(editor->filePath());
     }

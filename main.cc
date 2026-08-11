@@ -79,10 +79,13 @@ int main(int argc, char* argv[]) {
     NezhaIDE::Repository::Repository<NezhaIDE::Model::ToolParameter> param_repo(db);
     NezhaIDE::Repository::Repository<NezhaIDE::Model::UserPreference> pref_repo(db);
 
-    init_schema(tool_repo, "tools");
-    init_schema(proc_repo, "tool_procedures");
-    init_schema(param_repo, "tool_parameters");
-    init_schema(pref_repo, "user_preferences");
+    const auto &tables = NezhaIDE::Constants::DatabaseTable;
+    const auto init_all_schemas = [&]<typename... T>(T &...repos) {
+        size_t i = 0;
+        (init_schema(repos, tables[i++]), ...);
+    };
+
+    init_all_schemas(tool_repo, proc_repo, param_repo, pref_repo);
 
     logger.log(
         NezhaIDE::Utilities::LogLevel::Info,

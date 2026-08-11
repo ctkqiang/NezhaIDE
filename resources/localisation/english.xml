@@ -30,6 +30,11 @@
     <string key="editor.welcome">Welcome</string>
     <string key="editor.open_to_edit">Open a file to start editing</string>
     <string key="editor.file_read_error">Could not open file: %1</string>
+    <string key="editor.save">Save</string>
+    <string key="editor.discard">Discard</string>
+    <string key="editor.cancel">Cancel</string>
+    <string key="editor.save_title">Unsaved Changes</string>
+    <string key="editor.save_prompt">File "%1" has unsaved changes. Save before closing?</string>
     <string key="git.refresh">Refresh</string>
     <string key="git.stage">Stage</string>
     <string key="git.unstage">Unstage</string>
@@ -38,6 +43,7 @@
     <string key="git.status_refreshing">Refreshing...</string>
     <string key="git.working_clean">Working directory clean</string>
     <string key="git.files_changed">%1 file(s) changed</string>
+    <string key="git.branch">branch: %1</string>
     <string key="git.error_prefix">Git error: %1</string>
     <string key="git.error_commit_message">Please enter a commit message</string>
     <string key="git.error_commit_failed">Commit failed</string>
@@ -50,10 +56,12 @@
     <string key="git.status.unstaged_deleted">Unstaged (deleted)</string>
     <string key="git.status.changed">Changed</string>
     <string key="menu.open_project">Open Project...</string>
+    <string key="menu.save">Save</string>
     <string key="menu.quit">Quit</string>
     <string key="dialog.open_project_title">Open Project</string>
     <string key="error.project_not_found">Project directory not found: %1</string>
     <string key="menu.preferences">Preferences...</string>
+    <string key="prefs.title">Preferences</string>
     <string key="prefs.theme">Theme</string>
     <string key="prefs.language">Language</string>
     <string key="prefs.llm">LLM Model</string>
@@ -89,4 +97,5 @@
     <string key="http.param_name">Key</string>
     <string key="http.param_value">Value</string>
     <string key="http.response_headers">Headers</string>
+    <string key="http.tab_title">HTTP Client</string>
 </localization>

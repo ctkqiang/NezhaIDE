@@ -25,6 +25,7 @@ public:
 
 private:
     void setupHeader();
+    void setHeaderTitle(const QString &title);
     void applyStyles();
 
     QStackedWidget *stack_{};

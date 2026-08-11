@@ -98,7 +98,8 @@ void ExplorerPanel::onNewFile()
         current_dir = QFileInfo(path).isDir() ? path : QFileInfo(path).absolutePath();
     }
 
-    QFile file(current_dir + "/" + name);
+    const auto new_path = current_dir + "/" + name;
+    QFile file(new_path);
     if (file.exists()) {
         QMessageBox::warning(this, LOC("error.title"),
             LOC("error.file_exists"));
@@ -107,7 +108,11 @@ void ExplorerPanel::onNewFile()
     if (!file.open(QIODevice::WriteOnly)) {
         QMessageBox::warning(this, LOC("error.title"),
             LOC("error.cannot_create_file"));
+        return;
     }
+    file.close();
+
+    emit fileOpened(new_path);
 }
 
 void ExplorerPanel::onNewFolder()

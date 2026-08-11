@@ -12,6 +12,7 @@ namespace NezhaIDE::Views {
 
 struct GitFileEntry {
     QString path;
+    QString fullPath;
     QChar status_x; // index status
     QChar status_y; // working tree status
 };
@@ -31,6 +32,7 @@ signals:
     void fileUnstaged(const QString &path);
     void commitRequested(const QString &message);
     void branchChanged(const QString &branch);
+    void fileOpened(const QString &path);
 
 private slots:
     void onRefresh();
@@ -40,6 +42,7 @@ private slots:
     void onStatusFinished(int exit_code, QProcess::ExitStatus status);
     void onBranchFinished(int exit_code, QProcess::ExitStatus status);
     void onListItemClicked(QListWidgetItem *item);
+    void onListItemDoubleClicked(QListWidgetItem *item);
 
 private:
     void parseStatusOutput(const QString &output);
