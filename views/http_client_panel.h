@@ -5,7 +5,6 @@
 #include <QLineEdit>
 #include <QPushButton>
 #include <QPlainTextEdit>
-#include <QListWidget>
 #include <QSplitter>
 #include <QTabWidget>
 #include <QTableWidget>
@@ -23,11 +22,8 @@ public:
 private:
     void setupUI();
     void onSendClicked();
-    void onNewRequest();
-    void onDeleteRequest();
     void applyStyles();
 
-    QListWidget *request_list_{};
     QComboBox *method_combo_{};
     QLineEdit *url_input_{};
     QPushButton *send_btn_{};
@@ -38,8 +34,6 @@ private:
     QLabel *time_label_{};
     QPlainTextEdit *response_body_{};
     QLabel *response_size_label_{};
-    QPushButton *new_req_btn_{};
-    QPushButton *del_req_btn_{};
 };
 
 } // namespace NezhaIDE::Views

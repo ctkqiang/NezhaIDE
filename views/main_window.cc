@@ -177,7 +177,7 @@ void MainWindow::setupLayout()
         switch (item) {
         case ActivityBarItem::Explorer: sidebar_->showExplorer(); break;
         case ActivityBarItem::Git: sidebar_->showGit(); break;
-        case ActivityBarItem::HttpClient: sidebar_->showHttpClient(); break;
+        case ActivityBarItem::HttpClient: editor_host_->openHttpClient(); break;
         default: break;
         }
     });

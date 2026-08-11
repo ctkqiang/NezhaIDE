@@ -3,6 +3,10 @@
 #include <QTabWidget>
 #include <QHash>
 
+namespace NezhaIDE::Views {
+    class HttpClientPanel;
+}
+
 namespace NezhaIDE::Editor {
 
 class CodeEditor;
@@ -15,6 +19,7 @@ public:
 
 public slots:
     void openFile(const QString &path);
+    void openHttpClient();
 
 private:
     void onTabCloseRequested(int index);
@@ -22,6 +27,7 @@ private:
     void applyStyles();
 
     QHash<QString, CodeEditor *> editors_;
+    NezhaIDE::Views::HttpClientPanel *http_panel_{};
 };
 
 } // namespace NezhaIDE::Editor

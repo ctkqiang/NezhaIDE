@@ -1,5 +1,6 @@
 #include "editor_tab_host.h"
 #include "code_editor.h"
+#include "views/http_client_panel.h"
 #include "src/configuration.h"
 #include "src/services/localization_service.h"
 #include "src/services/theme_service.h"
@@ -75,6 +76,28 @@ void EditorTabHost::openFile(const QString &path)
     setCurrentIndex(index);
 }
 
+void EditorTabHost::openHttpClient()
+{
+    if (http_panel_) {
+        setCurrentWidget(http_panel_);
+        return;
+    }
+
+    http_panel_ = new NezhaIDE::Views::HttpClientPanel(this);
+    const auto idx = addTab(http_panel_, QStringLiteral("HTTP Client"));
+
+    if (count() == 2) {
+        const auto welcomeIdx = indexOf(findChild<QLabel *>());
+        if (welcomeIdx >= 0) {
+            QWidget *w = widget(welcomeIdx);
+            removeTab(welcomeIdx);
+            delete w;
+        }
+    }
+
+    setCurrentIndex(idx);
+}
+
 void EditorTabHost::onTabCloseRequested(int index)
 {
     auto *w = widget(index);
@@ -82,6 +105,10 @@ void EditorTabHost::onTabCloseRequested(int index)
 
     if (auto *editor = qobject_cast<CodeEditor *>(w)) {
         editors_.remove(editor->filePath());
+    }
+
+    if (w == http_panel_) {
+        http_panel_ = nullptr;
     }
 
     removeTab(index);
