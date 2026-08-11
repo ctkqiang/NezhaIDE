@@ -1,10 +1,12 @@
 #include "editor_tab_host.h"
 #include "code_editor.h"
+#include "views/http_view_panel/http_view_panel.h"
 #include "src/configuration.h"
 #include "src/services/localization_service.h"
 #include "src/services/theme_service.h"
 #include <QLabel>
 #include <QFileInfo>
+#include <QMessageBox>
 #include <QTabBar>
 #include <QVBoxLayout>
 
@@ -63,16 +65,47 @@ void EditorTabHost::openFile(const QString &path)
         }
     });
 
-    if (count() == 2) {
-        const auto welcomeIdx = indexOf(findChild<QLabel *>());
-        if (welcomeIdx >= 0) {
-            QWidget *w = widget(welcomeIdx);
-            removeTab(welcomeIdx);
-            delete w;
-        }
+    connect(editor->document(), &QTextDocument::undoAvailable,
+            this, &EditorTabHost::editActionsChanged);
+    connect(editor->document(), &QTextDocument::redoAvailable,
+            this, &EditorTabHost::editActionsChanged);
+    connect(editor, &CodeEditor::copyAvailable,
+            this, &EditorTabHost::editActionsChanged);
+    connect(editor, &CodeEditor::modificationChanged,
+            this, &EditorTabHost::editActionsChanged);
+
+    removeWelcomeTab();
+    setCurrentIndex(index);
+    emit editActionsChanged();
+}
+
+void EditorTabHost::openHttpClient()
+{
+    if (http_panel_) {
+        setCurrentWidget(http_panel_);
+        return;
     }
 
-    setCurrentIndex(index);
+    http_panel_ = new NezhaIDE::Views::HttpViewPanel(this);
+    const auto idx = addTab(http_panel_, LOC("http.tab_title"));
+
+    removeWelcomeTab();
+    setCurrentIndex(idx);
+}
+
+CodeEditor *EditorTabHost::currentEditor() const
+{
+    return qobject_cast<CodeEditor *>(currentWidget());
+}
+
+void EditorTabHost::removeWelcomeTab()
+{
+    if (!welcome_tab_) return;
+
+    const auto idx = indexOf(welcome_tab_);
+    if (idx >= 0) removeTab(idx);
+    delete welcome_tab_;
+    welcome_tab_ = nullptr;
 }
 
 void EditorTabHost::onTabCloseRequested(int index)
@@ -81,7 +114,22 @@ void EditorTabHost::onTabCloseRequested(int index)
     if (!w) return;
 
     if (auto *editor = qobject_cast<CodeEditor *>(w)) {
+        if (editor->isModified()) {
+            QMessageBox box(QMessageBox::Question, LOC("editor.save_title"),
+                LOC("editor.save_prompt").arg(QFileInfo(editor->filePath()).fileName()),
+                QMessageBox::NoButton, this);
+            auto *saveBtn = box.addButton(LOC("editor.save"), QMessageBox::AcceptRole);
+            box.addButton(LOC("editor.discard"), QMessageBox::DestructiveRole);
+            auto *cancelBtn = box.addButton(LOC("editor.cancel"), QMessageBox::RejectRole);
+            box.exec();
+            if (box.clickedButton() == cancelBtn) return;
+            if (box.clickedButton() == saveBtn && !editor->save()) return;
+        }
         editors_.remove(editor->filePath());
+    }
+
+    if (w == http_panel_) {
+        http_panel_ = nullptr;
     }
 
     removeTab(index);
@@ -89,16 +137,16 @@ void EditorTabHost::onTabCloseRequested(int index)
 
     if (count() == 0) {
         ensureWelcomeTab();
+    } else {
+        emit editActionsChanged();
     }
 }
 
 void EditorTabHost::ensureWelcomeTab()
 {
-    const auto welcomeTitle = LOC("editor.welcome");
-    for (int i = 0; i < count(); ++i) {
-        if (tabText(i) == welcomeTitle) return;
-    }
+    if (welcome_tab_) return;
 
+    const auto welcomeTitle = LOC("editor.welcome");
     auto *welcome = new QWidget();
     auto *wl = new QVBoxLayout(welcome);
     wl->setAlignment(Qt::AlignCenter);
@@ -131,8 +179,10 @@ void EditorTabHost::ensureWelcomeTab()
         NezhaIDE::Services::ThemeService::instance().color(QStringLiteral("text.secondary"))));
     wl->addWidget(hint);
 
+    welcome_tab_ = welcome;
     const auto idx = addTab(welcome, welcomeTitle);
     tabBar()->setTabButton(idx, QTabBar::RightSide, nullptr);
+    emit editActionsChanged();
 }
 
 void EditorTabHost::applyStyles()

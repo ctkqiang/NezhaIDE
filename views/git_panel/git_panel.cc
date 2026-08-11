@@ -44,6 +44,7 @@ GitPanel::GitPanel(QWidget *parent)
     file_list_->setContextMenuPolicy(Qt::CustomContextMenu);
     file_list_->setSelectionMode(QAbstractItemView::ExtendedSelection);
     connect(file_list_, &QListWidget::itemClicked, this, &GitPanel::onListItemClicked);
+    connect(file_list_, &QListWidget::itemDoubleClicked, this, &GitPanel::onListItemDoubleClicked);
     layout->addWidget(file_list_, 1);
 
     auto *commit_frame = new QWidget(this);
@@ -181,7 +182,7 @@ void GitPanel::onBranchFinished(int exit_code, QProcess::ExitStatus status)
 {
     if (status == QProcess::NormalExit && exit_code == 0) {
         const auto branch = QString::fromUtf8(git_process_->readAllStandardOutput()).trimmed();
-        branch_label_->setText(QStringLiteral("branch: %1").arg(branch));
+        branch_label_->setText(LOC("git.branch").arg(branch));
         emit branchChanged(branch);
     }
 }
@@ -194,6 +195,14 @@ void GitPanel::onListItemClicked(QListWidgetItem *item)
         status_label_->setText(
             QStringLiteral("%1 — %2")
                 .arg(entry.path, statusCharToText(entry.status_x, entry.status_y)));
+    }
+}
+
+void GitPanel::onListItemDoubleClicked(QListWidgetItem *item)
+{
+    const int idx = file_list_->row(item);
+    if (idx < entries_.size() && !entries_[idx].fullPath.isEmpty()) {
+        emit fileOpened(entries_[idx].fullPath);
     }
 }
 
@@ -216,11 +225,10 @@ void GitPanel::parseStatusOutput(const QString &output)
             if (arrow_pos > 0) entry.path = entry.path.mid(arrow_pos + 4);
         }
 
+        entry.fullPath = QDir(git_process_->workingDirectory()).filePath(entry.path);
         entries_.append(entry);
 
-        const auto prefix = QString("%1%2 ").arg(entry.status_x == '?' ? '?' : entry.status_x)
-                                             .arg(entry.status_y == '?' ? '?' : entry.status_y);
-        auto *item = new QListWidgetItem(prefix + entry.path);
+        auto *item = new QListWidgetItem(entry.path);
 
         if (entry.status_x == 'M' || entry.status_y == 'M') {
             item->setForeground(NezhaIDE::Services::ThemeService::instance().qcolor(QStringLiteral("git.modified")));
@@ -239,7 +247,7 @@ void GitPanel::parseStatusOutput(const QString &output)
 void GitPanel::updateBranchDisplay()
 {
     auto *proc = new QProcess(this);
-    proc->setWorkingDirectory(QDir::currentPath());
+    proc->setWorkingDirectory(git_process_->workingDirectory());
     connect(proc, QOverload<int, QProcess::ExitStatus>::of(&QProcess::finished),
             this, &GitPanel::onBranchFinished);
     connect(proc, QOverload<int, QProcess::ExitStatus>::of(&QProcess::finished),
