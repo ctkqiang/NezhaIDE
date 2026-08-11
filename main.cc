@@ -38,6 +38,15 @@ static QString ensure_data_directory() {
 }
 
 int main(int argc, char* argv[]) {
+#ifdef Q_OS_MACOS
+    // macOS 26 的 BaseBoard 会对受保护进程(WindowServer/launchd)发起必然失败的
+    // task_name_for_pid 查询(kern failure 0x5)却打成 Error 级 os_log，污染统一
+    // 日志与控制台；禁用本进程的 os_log 发送以消除该噪音。Logger 走 iostream
+    // 不受影响；WindowServer 进程侧打印的对应行不归本进程控制。
+    if (!getenv("OS_ACTIVITY_MODE")) {
+        setenv("OS_ACTIVITY_MODE", "disable", 1);
+    }
+#endif
     QApplication app(argc, argv);
 
     QApplication::setApplicationName(NezhaIDE::Constants::ApplicationName.data());
