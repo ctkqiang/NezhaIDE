@@ -66,6 +66,7 @@ struct HttpResponse {
     std::string statusText;
     std::vector<HttpHeader> headers;
     std::string body;
+    std::string contentType;
     int64_t elapsedMs{};
 };
 

@@ -30,9 +30,9 @@ int main(int argc, char *argv[])
 
     QObject::connect(&NezhaIDE::Services::HTTP::HttpClientService::instance(),
         &NezhaIDE::Services::HTTP::HttpClientService::requestError,
-        [&app](RequestId id, const QString &error) {
-            std::printf("=== ERROR ===\nrequestId: %llu\nerror: %s\n",
-                static_cast<unsigned long long>(id), error.toUtf8().constData());
+        [&app](RequestId id, int statusCode, const QString &error) {
+            std::printf("=== ERROR ===\nrequestId: %llu\nstatusCode: %d\nerror: %s\n",
+                static_cast<unsigned long long>(id), statusCode, error.toUtf8().constData());
             app.exit(1);
         });
 

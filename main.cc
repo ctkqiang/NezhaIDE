@@ -7,8 +7,14 @@
 #include "src/services/theme_service.h"
 #include "src/utilities/logger.h"
 #include "views/main_window.h"
+#include "views/editor/editor_tab_host.h"
+#include "views/http_client_panel.h"
 #include <QApplication>
 #include <QDir>
+#include <QLabel>
+#include <QLineEdit>
+#include <QPushButton>
+#include <QTimer>
 
 static auto& logger = NezhaIDE::Utilities::Logger::instance();
 
@@ -102,6 +108,69 @@ int main(int argc, char* argv[]) {
 
     NezhaIDE::Views::MainWindow window;
     window.show();
+
+    if (qEnvironmentVariableIsSet("NEZHA_SELFTEST")) {
+        QTimer::singleShot(500, [&window] {
+            auto *editorHost = window.findChild<NezhaIDE::Editor::EditorTabHost *>();
+            if (!editorHost) {
+                std::printf("SELFTEST: no editor host\n");
+                QApplication::exit(2);
+                return;
+            }
+            editorHost->openHttpClient();
+
+            auto *panel = editorHost->findChild<NezhaIDE::Views::HttpClientPanel *>();
+            if (!panel) {
+                std::printf("SELFTEST: no http panel\n");
+                QApplication::exit(2);
+                return;
+            }
+            panel->grab().save(QStringLiteral("/tmp/nezha_01_initial.png"));
+
+            auto *urlInput = panel->findChild<QLineEdit *>(QStringLiteral("httpUrlInput"));
+            auto *sendBtn = panel->findChild<QPushButton *>(QStringLiteral("httpSendButton"));
+
+            const auto url = qEnvironmentVariable("NEZHA_SELFTEST_URL");
+            urlInput->setText(url);
+            std::printf("SELFTEST: url=%s\n", url.toUtf8().constData());
+            sendBtn->click();
+
+            QTimer::singleShot(1200, [panel] {
+                panel->grab().save(QStringLiteral("/tmp/nezha_02_sending.png"));
+            });
+
+            QTimer::singleShot(10000, [&window, panel, urlInput, sendBtn] {
+                auto *pill = panel->findChild<QLabel *>(QStringLiteral("httpStatusPill"));
+                auto *timeLabel = panel->findChild<QLabel *>(QStringLiteral("httpTimeLabel"));
+                auto *sizeLabel = panel->findChild<QLabel *>(QStringLiteral("httpSizeLabel"));
+                auto *body = panel->findChild<QPlainTextEdit *>(QStringLiteral("httpResponseBody"));
+                auto *headers = panel->findChild<QTableWidget *>(QStringLiteral("httpHeadersTable"));
+
+                std::printf("SELFTEST: status=%s\n", pill->text().toUtf8().constData());
+                std::printf("SELFTEST: time=%s\n", timeLabel->text().toUtf8().constData());
+                std::printf("SELFTEST: size=%s\n", sizeLabel->text().toUtf8().constData());
+                std::printf("SELFTEST: bodyLen=%d\n", static_cast<int>(body->toPlainText().size()));
+                std::printf("SELFTEST: headers=%d\n", headers->rowCount());
+                panel->grab().save(QStringLiteral("/tmp/nezha_03_response.png"));
+
+                urlInput->setText(QStringLiteral("not a url"));
+                sendBtn->click();
+                QTimer::singleShot(500, [panel] {
+                    panel->grab().save(QStringLiteral("/tmp/nezha_04_invalid.png"));
+                });
+
+                urlInput->setText(QStringLiteral("https://nonexistent-domain-zzz12345.com"));
+                sendBtn->click();
+                QTimer::singleShot(6000, [&window, panel] {
+                    auto *pill = panel->findChild<QLabel *>(QStringLiteral("httpStatusPill"));
+                    std::printf("SELFTEST: errorPill=%s\n", pill->text().toUtf8().constData());
+                    panel->grab().save(QStringLiteral("/tmp/nezha_05_error.png"));
+                    std::printf("SELFTEST: DONE\n");
+                    QApplication::exit(0);
+                });
+            });
+        });
+    }
 
     return QApplication::exec();
 }

@@ -167,50 +167,80 @@ static const QHash<QString, QString> kStyleTemplates = {
      "QWidget#httpClientRoot { background: $bg.secondary; }"},
 
     {"style.http_url_input",
-     "QLineEdit { border: 1px solid $border; border-radius: 4px; padding: 4px 8px;"
-     "background: $bg.tertiary; color: $text.primary; font-size: 12px; }"
+     "QLineEdit { border: 1px solid $border; border-radius: 6px; padding: 0 12px;"
+     "background: $bg.primary; color: $text.primary; font-size: 13px; }"
+     "QLineEdit:hover { border-color: $text.tertiary; }"
      "QLineEdit:focus { border-color: $accent; }"},
 
-    {"style.http_input",
-     "QPlainTextEdit { border: none; background: $bg.tertiary; color: $text.primary;"
-     "font-family: 'SF Mono', Menlo, monospace; font-size: 12px; }"
-     "QComboBox { border: 1px solid $border; border-radius: 4px; padding: 4px 8px;"
-     "background: $bg.tertiary; color: $text.primary; font-size: 12px; }"
-     "QComboBox::drop-down { border: none; }"
-     "QComboBox QAbstractItemView { background: $bg.tertiary; color: $text.primary;"
-     "selection-background-color: $overlay.selection; }"
-     "QTableWidget { border: 1px solid $border; gridline-color: $border;"
-     "background: $bg.tertiary; color: $text.primary; font-size: 12px; }"
-     "QHeaderView::section { background: $bg.secondary; color: $text.primary;"
-     "border: none; padding: 4px 8px; font-size: 11px; font-weight: bold; }"},
+    {"style.http_kv_table",
+     "QTableWidget { border: 1px solid $border; border-radius: 6px; background: $bg.primary;"
+     "color: $text.primary; font-size: 13px; outline: none; }"
+     "QTableWidget::item { padding: 0 8px; border: none; }"
+     "QTableWidget::item:selected { background: $overlay.selection; color: $text.primary; }"
+     "QTableWidget::item:hover { background: $overlay.hover.subtle; }"
+     "QHeaderView::section { background: $bg.secondary; color: $text.secondary;"
+     "border: none; border-bottom: 1px solid $border; padding: 5px 8px;"
+     "font-size: 11px; font-weight: 600; }"
+     "QPushButton#httpRemoveRow { border: none; border-radius: 4px; background: transparent;"
+     "color: $text.tertiary; font-size: 11px; }"
+     "QPushButton#httpRemoveRow:hover { background: $overlay.hover; color: $git.deleted; }"
+     "QPushButton#httpRemoveRow:pressed { background: $overlay.selection; }"},
 
-    {"style.http_response",
-     "QPlainTextEdit { border: none; background: $bg.tertiary; color: $text.primary;"
-     "font-family: 'SF Mono', Menlo, monospace; font-size: 12px; }"},
+    {"style.http_body_editor",
+     "QPlainTextEdit { border: 1px solid $border; border-radius: 6px; background: $bg.primary;"
+     "color: $text.primary; font-family: 'SF Mono', Menlo, monospace; font-size: 13px;"
+     "selection-background-color: $overlay.selection; padding: 8px; }"
+     "QPlainTextEdit:focus { border-color: $accent; }"},
 
-    {"style.http_request_list",
-     "QListWidget { border: none; background: transparent; font-size: 11px; }"
-     "QListWidget::item { padding: 3px 6px; color: $text.secondary; }"
-     "QListWidget::item:hover { background: $overlay.hover; }"
-     "QListWidget::item:selected { background: $overlay.selection; color: $text.primary; }"},
+    {"style.http_combo",
+     "QComboBox { border: 1px solid $border; border-radius: 6px; padding: 0 8px;"
+     "background: $bg.primary; color: $text.primary; font-size: 12px; min-width: 130px; }"
+     "QComboBox:hover { border-color: $text.tertiary; }"
+     "QComboBox:focus { border-color: $accent; }"
+     "QComboBox::drop-down { border: none; width: 22px; }"
+     "QComboBox QAbstractItemView { background: $bg.primary; color: $text.primary;"
+     "selection-background-color: $overlay.selection; border: 1px solid $border;"
+     "outline: none; }"},
 
-    {"style.http_tab",
-     "QTabWidget::pane { border: 1px solid $border; background: $bg.tertiary; }"
-     "QTabBar::tab { background: transparent; color: $text.tertiary; padding: 4px 12px;"
-     "border: none; border-bottom: 2px solid transparent; font-size: 11px; }"
+    {"style.http_tabs",
+     "QTabWidget::pane { border: none; background: transparent; }"
+     "QTabBar { background: transparent; }"
+     "QTabBar::tab { background: transparent; color: $text.secondary;"
+     "padding: 6px 14px; border: none; border-bottom: 2px solid transparent;"
+     "font-size: 13px; font-weight: 500; }"
      "QTabBar::tab:selected { color: $accent; border-bottom: 2px solid $accent; }"
      "QTabBar::tab:hover { color: $text.primary; }"},
 
-    {"style.http_status_label",
-     "QLabel { font-size: 13px; font-weight: bold; color: $accent; padding: 2px 0; }"},
+    {"style.http_response_body",
+     "QPlainTextEdit { border: 1px solid $border; border-radius: 6px; background: $bg.primary;"
+     "color: $text.primary; font-family: 'SF Mono', Menlo, monospace; font-size: 12px;"
+     "selection-background-color: $overlay.selection; padding: 8px; }"},
 
-    {"style.http_method_button",
-     "QPushButton { border: none; border-radius: 4px; padding: 5px 12px;"
-     "font-size: 12px; font-weight: bold; color: #FFFFFF; }"
-     "QPushButton:hover { opacity: 0.85; }"},
+    {"style.http_meta_label",
+     "QLabel { font-size: 12px; color: $text.secondary; padding: 2px 0; }"},
+
+    {"style.http_state_title",
+     "QLabel { font-size: 16px; font-weight: 600; color: $text.secondary; }"},
+
+    {"style.http_state_detail",
+     "QLabel { font-size: 13px; color: $text.tertiary; }"},
+
+    {"style.http_cancel_button",
+     "QPushButton { background: transparent; color: $git.deleted;"
+     "border: 1px solid $git.deleted; border-radius: 5px; padding: 5px 14px;"
+     "font-size: 12px; font-weight: bold; }"
+     "QPushButton:hover { background: $overlay.selection; }"
+     "QPushButton:pressed { background: $overlay.hover; }"},
+
+    {"style.http_ghost_button",
+     "QPushButton { background: transparent; color: $text.secondary;"
+     "border: 1px solid $border; border-radius: 5px; padding: 3px 10px;"
+     "font-size: 12px; }"
+     "QPushButton:hover { border-color: $accent; color: $accent; }"
+     "QPushButton:pressed { background: $overlay.selection; }"},
 
     {"style.http_section_label",
-     "QLabel { font-size: 11px; font-weight: bold;"
+     "QLabel { font-size: 11px; font-weight: 600;"
      "text-transform: uppercase; letter-spacing: 0.5px; color: $text.secondary; }"},
 };
 

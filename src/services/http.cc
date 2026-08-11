@@ -1,160 +1,198 @@
-//
-// Created by 钟智强 on 2026/8/10.
-//
-
-#if __has_include("http.h")
-    #include "http.h"
-    #define __HAS_HTTP_SERVICE 1
-#else
-    #define __HAS_HTTP_SERVICE 0
-    #error "http.h 不存在"
-#endif
-
-#if __has_include(<QNetworkAccessManager>) && \
-    __has_include(<QFile>) && \
-    __has_include(<QUrl>) && \
-    __has_include(<QUrlQuery>)
-
-    #include <QFile>
-    #include <QUrl>
-    #include <QUrlQuery>
-
-    #define __HAS_QOBJECT 1
-#else
-    #define __HAS_QOBJECT 0
-    #error "缺少必要的 Qt 模块：QNetworkAccessManager, QFile, QUrl, QUrlQuery"
-#endif
+#include "http.h"
+#include "src/configuration.h"
+#include <QFile>
+#include <QUrl>
+#include <QUrlQuery>
+#include <atomic>
 
 namespace NezhaIDE::Services::HTTP {
-    HttpClientService &HttpClientService::instance() {
-        static HttpClientService svc;
-        return svc;
+
+namespace {
+
+constexpr int kTransferTimeoutMs = 30'000;
+
+Model::HTTP::RequestId nextRequestId()
+{
+    static std::atomic<Model::HTTP::RequestId> next{1};
+    return next.fetch_add(1);
+}
+
+}
+
+HttpClientService &HttpClientService::instance()
+{
+    static HttpClientService svc;
+    return svc;
+}
+
+HttpClientService::HttpClientService()
+    : QObject(nullptr)
+{
+    nam_ = new QNetworkAccessManager(this);
+    nam_->setRedirectPolicy(QNetworkRequest::NoLessSafeRedirectPolicy);
+    nam_->setTransferTimeout(kTransferTimeoutMs);
+}
+
+void HttpClientService::send(const Model::HTTP::HttpRequest &req)
+{
+    auto &self = instance();
+
+    QNetworkRequest request = buildRequest(req);
+    const QByteArray body = buildBody(req.body);
+
+    QNetworkReply *reply = nullptr;
+    switch (req.method) {
+        case Model::HTTP::HttpMethod::Get:
+            reply = self.nam_->get(request);
+            break;
+        case Model::HTTP::HttpMethod::Post:
+            reply = self.nam_->post(request, body);
+            break;
+        case Model::HTTP::HttpMethod::Put:
+            reply = self.nam_->put(request, body);
+            break;
+        case Model::HTTP::HttpMethod::Patch:
+            reply = self.nam_->sendCustomRequest(request, "PATCH", body);
+            break;
+        case Model::HTTP::HttpMethod::Delete:
+            reply = self.nam_->deleteResource(request);
+            break;
+        case Model::HTTP::HttpMethod::Head:
+            reply = self.nam_->head(request);
+            break;
+        case Model::HTTP::HttpMethod::Options:
+            reply = self.nam_->sendCustomRequest(request, "OPTIONS");
+            break;
     }
 
-    HttpClientService::HttpClientService()
-        : QObject(nullptr) {
-        nam_ = new QNetworkAccessManager(this);
+    if (!reply) {
+        emit self.requestError(req.id, 0, QStringLiteral("Failed to create network request"));
+        return;
     }
 
-    void HttpClientService::send(const Model::HTTP::HttpRequest &req) {
-        auto &self = instance();
+    auto *timer = new QElapsedTimer();
+    timer->start();
+    self.replies_.insert(req.id, reply);
 
-        const auto *request = new QNetworkRequest(NezhaIDE::Services::HTTP::HttpClientService::buildRequest(req));
-        const auto body = NezhaIDE::Services::HTTP::HttpClientService::buildBody(req.body);
+    connect(reply, &QNetworkReply::finished, &self, [&self, reply, requestId = req.id, timer] {
+        self.replies_.remove(requestId);
 
-        QNetworkReply *reply = nullptr;
-
-        switch (req.method) {
-            case Model::HTTP::HttpMethod::Get:
-                reply = self.nam_->get(*request);
-                break;
-            case Model::HTTP::HttpMethod::Post:
-                reply = self.nam_->post(*request, body);
-                break;
-            case Model::HTTP::HttpMethod::Put:
-                reply = self.nam_->put(*request, body);
-                break;
-            case Model::HTTP::HttpMethod::Patch:
-                reply = self.nam_->sendCustomRequest(*request, "PATCH", body);
-                break;
-            case Model::HTTP::HttpMethod::Delete:
-                reply = self.nam_->deleteResource(*request);
-                break;
-            case Model::HTTP::HttpMethod::Head:
-                reply = self.nam_->head(*request);
-                break;
-            case Model::HTTP::HttpMethod::Options:
-                reply = self.nam_->sendCustomRequest(*request, "OPTIONS");
-                break;
-        }
-
-        delete request;
-
-        if (!reply) {
-            emit self.requestError(req.id, QStringLiteral("Failed to create network request"));
+        if (reply->error() == QNetworkReply::OperationCanceledError) {
+            delete timer;
+            reply->deleteLater();
             return;
         }
 
-        const auto requestId = req.id;
-        auto *timer = new QElapsedTimer();
-        timer->start();
+        const int statusCode = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
 
-        connect(reply, &QNetworkReply::finished, &self, [&self, reply, requestId, timer] {
-            timer->invalidate();
-
-            Model::HTTP::HttpResponse resp;
-            resp.requestId = requestId;
-            resp.elapsedMs = timer->elapsed();
-            resp.statusCode = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
-            resp.statusText = reply->attribute(QNetworkRequest::HttpReasonPhraseAttribute).toString().toStdString();
-
-            for (const auto &header: reply->rawHeaderPairs()) {
-                Model::HTTP::HttpHeader h;
-                h.name = header.first.toStdString();
-                h.value = header.second.toStdString();
-                resp.headers.push_back(std::move(h));
+        if (reply->error() != QNetworkReply::NoError) {
+            auto message = reply->errorString();
+            if (message.isEmpty()) {
+                message = QStringLiteral("Network error (%1)")
+                    .arg(static_cast<int>(reply->error()));
             }
-
-            resp.body = reply->readAll().toStdString();
-            emit self.responseReceived(resp);
-
+            emit self.requestError(requestId, statusCode, message);
             delete timer;
             reply->deleteLater();
-        });
-    }
-
-    void HttpClientService::cancel(Model::HTTP::RequestId id) {
-        Q_UNUSED(id);
-    }
-
-    QNetworkRequest HttpClientService::buildRequest(const Model::HTTP::HttpRequest &req) {
-        QUrl url(QString::fromStdString(req.url));
-        if (!req.queryParameters.empty()) {
-            QUrlQuery query;
-            for (const auto &p: req.queryParameters) {
-                if (p.enabled) {
-                    query.addQueryItem(
-                        QString::fromStdString(p.name),
-                        QString::fromStdString(p.value)
-                    );
-                }
-            }
-            url.setQuery(query);
+            return;
         }
 
-        QNetworkRequest request(url);
-        for (const auto &h: req.headers) {
-            if (h.enabled) {
-                request.setRawHeader(
-                    QByteArray::fromStdString(h.name),
-                    QByteArray::fromStdString(h.value)
+        Model::HTTP::HttpResponse resp;
+        resp.requestId = requestId;
+        resp.elapsedMs = timer->elapsed();
+        resp.statusCode = statusCode;
+        resp.statusText = reply->attribute(QNetworkRequest::HttpReasonPhraseAttribute)
+                              .toString()
+                              .toStdString();
+
+        const auto rawHeaders = reply->rawHeaderPairs();
+        resp.headers.reserve(static_cast<size_t>(rawHeaders.size()));
+        for (const auto &header : rawHeaders) {
+            Model::HTTP::HttpHeader h;
+            h.name = header.first.toStdString();
+            h.value = header.second.toStdString();
+            if (header.first.compare("Content-Type", Qt::CaseInsensitive) == 0) {
+                resp.contentType = header.second.toStdString();
+            }
+            resp.headers.push_back(std::move(h));
+        }
+
+        const auto bytes = reply->readAll();
+        resp.body.assign(bytes.constData(), static_cast<size_t>(bytes.size()));
+
+        emit self.responseReceived(resp);
+
+        delete timer;
+        reply->deleteLater();
+    });
+}
+
+void HttpClientService::cancel(Model::HTTP::RequestId id)
+{
+    auto &self = instance();
+    if (auto it = self.replies_.find(id); it != self.replies_.end()) {
+        auto *reply = it.value();
+        self.replies_.erase(it);
+        reply->abort();
+    }
+}
+
+QNetworkRequest HttpClientService::buildRequest(const Model::HTTP::HttpRequest &req)
+{
+    QUrl url(QString::fromStdString(req.url));
+    if (!req.queryParameters.empty()) {
+        QUrlQuery query;
+        for (const auto &p : req.queryParameters) {
+            if (p.enabled && !p.name.empty()) {
+                query.addQueryItem(
+                    QString::fromStdString(p.name),
+                    QString::fromStdString(p.value)
                 );
             }
         }
-
-        return request;
+        url.setQuery(query);
     }
 
-    QByteArray HttpClientService::buildBody(const Model::HTTP::HttpBody &body) {
-        switch (body.type) {
-            case Model::HTTP::BodyType::Json:
-            case Model::HTTP::BodyType::Raw:
-            case Model::HTTP::BodyType::Xml:
-            case Model::HTTP::BodyType::FormUrlEncoded:
-                return QByteArray::fromStdString(body.content);
-            case Model::HTTP::BodyType::Multipart:
-            case Model::HTTP::BodyType::Binary: {
-                if (!body.filePath.empty()) {
-                    QFile file(QString::fromStdString(body.filePath));
-                    if (file.open(QIODevice::ReadOnly)) {
-                        return file.readAll();
-                    }
-                }
-                return {};
-            }
-            case Model::HTTP::BodyType::None:
-            default:
-                return {};
+    QNetworkRequest request(url);
+    request.setHeader(QNetworkRequest::UserAgentHeader, QStringLiteral("NezhaIDE/%1")
+        .arg(QString::fromUtf8(
+            NezhaIDE::Constants::ApplicationVersion.data(),
+            static_cast<int>(NezhaIDE::Constants::ApplicationVersion.size()))));
+
+    for (const auto &h : req.headers) {
+        if (h.enabled && !h.name.empty()) {
+            request.setRawHeader(
+                QByteArray::fromStdString(h.name),
+                QByteArray::fromStdString(h.value)
+            );
         }
     }
+
+    return request;
+}
+
+QByteArray HttpClientService::buildBody(const Model::HTTP::HttpBody &body)
+{
+    switch (body.type) {
+        case Model::HTTP::BodyType::Json:
+        case Model::HTTP::BodyType::Raw:
+        case Model::HTTP::BodyType::Xml:
+        case Model::HTTP::BodyType::FormUrlEncoded:
+            return QByteArray::fromStdString(body.content);
+        case Model::HTTP::BodyType::Multipart:
+        case Model::HTTP::BodyType::Binary: {
+            if (!body.filePath.empty()) {
+                QFile file(QString::fromStdString(body.filePath));
+                if (file.open(QIODevice::ReadOnly)) {
+                    return file.readAll();
+                }
+            }
+            return {};
+        }
+        case Model::HTTP::BodyType::None:
+        default:
+            return {};
+    }
+}
+
 }
