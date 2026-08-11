@@ -1,9 +1,10 @@
-#include "http_client_panel.h"
+#include "http_view_panel.h"
 #include "src/services/http.h"
 #include "src/services/localization_service.h"
 #include "src/services/theme_service.h"
 #include <QAction>
 #include <QByteArray>
+#include <QFrame>
 #include <QHeaderView>
 #include <QHBoxLayout>
 #include <QJsonDocument>
@@ -82,7 +83,7 @@ QString prettyPrintBody(const QString &raw)
 
 }
 
-HttpClientPanel::HttpClientPanel(QWidget *parent)
+HttpViewPanel::HttpViewPanel(QWidget *parent)
     : QWidget(parent)
 {
     setObjectName(QStringLiteral("httpClientRoot"));
@@ -112,6 +113,7 @@ HttpClientPanel::HttpClientPanel(QWidget *parent)
         const auto bodyText = prettyPrintBody(
             decodeBody(QByteArray::fromStdString(resp.body), contentType));
         response_body_->setPlainText(bodyText);
+        applyResponseHighlighting(contentType, bodyText);
 
         response_headers_table_->setRowCount(0);
         for (const auto &h : resp.headers) {
@@ -150,9 +152,9 @@ HttpClientPanel::HttpClientPanel(QWidget *parent)
     });
 }
 
-HttpClientPanel::~HttpClientPanel() = default;
+HttpViewPanel::~HttpViewPanel() = default;
 
-void HttpClientPanel::setupUI()
+void HttpViewPanel::setupUI()
 {
     auto *mainLayout = new QVBoxLayout(this);
     mainLayout->setContentsMargins(0, 0, 0, 0);
@@ -169,12 +171,15 @@ void HttpClientPanel::setupUI()
 
     buildRequestBar();
 
-    auto *urlBar = new QHBoxLayout();
+    auto *requestBarFrame = new QFrame(editorContainer);
+    requestBarFrame->setObjectName(QStringLiteral("httpRequestBar"));
+    auto *urlBar = new QHBoxLayout(requestBarFrame);
+    urlBar->setContentsMargins(8, 6, 8, 6);
     urlBar->setSpacing(6);
     urlBar->addWidget(method_btn_);
     urlBar->addWidget(url_input_, 1);
     urlBar->addWidget(send_btn_);
-    editorLayout->addLayout(urlBar);
+    editorLayout->addWidget(requestBarFrame);
 
     buildRequestTabs();
     editorLayout->addWidget(request_tabs_, 1);
@@ -199,30 +204,31 @@ void HttpClientPanel::setupUI()
     setResponseState(ResponseState::Empty);
 }
 
-void HttpClientPanel::buildRequestBar()
+void HttpViewPanel::buildRequestBar()
 {
     method_btn_ = new QPushButton(this);
     method_btn_->setObjectName(QStringLiteral("httpMethodButton"));
     method_btn_->setCursor(Qt::PointingHandCursor);
     method_btn_->setMinimumWidth(88);
-    connect(method_btn_, &QPushButton::clicked, this, &HttpClientPanel::onMethodClicked);
+    method_btn_->setMinimumHeight(34);
+    connect(method_btn_, &QPushButton::clicked, this, &HttpViewPanel::onMethodClicked);
     setMethodStyle(method_);
 
     url_input_ = new QLineEdit(this);
     url_input_->setObjectName(QStringLiteral("httpUrlInput"));
     url_input_->setPlaceholderText(LOC("http.url_placeholder"));
-    url_input_->setMinimumHeight(30);
-    connect(url_input_, &QLineEdit::returnPressed, this, &HttpClientPanel::onSendClicked);
+    url_input_->setMinimumHeight(34);
+    connect(url_input_, &QLineEdit::returnPressed, this, &HttpViewPanel::onSendClicked);
 
     send_btn_ = new QPushButton(LOC("http.send"), this);
     send_btn_->setObjectName(QStringLiteral("httpSendButton"));
     send_btn_->setCursor(Qt::PointingHandCursor);
     send_btn_->setMinimumWidth(88);
-    send_btn_->setMinimumHeight(30);
-    connect(send_btn_, &QPushButton::clicked, this, &HttpClientPanel::onSendClicked);
+    send_btn_->setMinimumHeight(34);
+    connect(send_btn_, &QPushButton::clicked, this, &HttpViewPanel::onSendClicked);
 }
 
-void HttpClientPanel::buildRequestTabs()
+void HttpViewPanel::buildRequestTabs()
 {
     request_tabs_ = new QTabWidget(this);
     request_tabs_->setObjectName(QStringLiteral("httpRequestTabs"));
@@ -271,7 +277,7 @@ void HttpClientPanel::buildRequestTabs()
     request_tabs_->addTab(bodyContainer, LOC("http.body"));
 }
 
-QWidget *HttpClientPanel::buildKeyValueTab()
+QWidget *HttpViewPanel::buildKeyValueTab()
 {
     auto *container = new QWidget(this);
     auto *layout = new QVBoxLayout(container);
@@ -321,7 +327,7 @@ QWidget *HttpClientPanel::buildKeyValueTab()
     return container;
 }
 
-void HttpClientPanel::appendKeyValueRow(QTableWidget *table)
+void HttpViewPanel::appendKeyValueRow(QTableWidget *table)
 {
     const auto row = table->rowCount();
     table->insertRow(row);
@@ -345,7 +351,7 @@ void HttpClientPanel::appendKeyValueRow(QTableWidget *table)
     table->setCellWidget(row, 2, removeBtn);
 }
 
-void HttpClientPanel::buildResponseArea()
+void HttpViewPanel::buildResponseArea()
 {
     response_stack_ = new QStackedWidget(this);
     response_stack_->setObjectName(QStringLiteral("httpResponseStack"));
@@ -404,20 +410,23 @@ void HttpClientPanel::buildResponseArea()
     doneLayout->setContentsMargins(0, 0, 0, 0);
     doneLayout->setSpacing(8);
 
-    auto *infoBar = new QHBoxLayout();
+    auto *responseBar = new QFrame(donePage);
+    responseBar->setObjectName(QStringLiteral("httpResponseBar"));
+    auto *infoBar = new QHBoxLayout(responseBar);
+    infoBar->setContentsMargins(10, 5, 10, 5);
     infoBar->setSpacing(10);
 
-    auto *responseLabel = new QLabel(LOC("http.response"), donePage);
+    auto *responseLabel = new QLabel(LOC("http.response"), responseBar);
     responseLabel->setObjectName(QStringLiteral("httpSectionLabel"));
 
-    status_pill_ = new QLabel(donePage);
+    status_pill_ = new QLabel(responseBar);
     status_pill_->setObjectName(QStringLiteral("httpStatusPill"));
     status_pill_->setAlignment(Qt::AlignCenter);
 
-    time_label_ = new QLabel(donePage);
+    time_label_ = new QLabel(responseBar);
     time_label_->setObjectName(QStringLiteral("httpTimeLabel"));
 
-    size_label_ = new QLabel(donePage);
+    size_label_ = new QLabel(responseBar);
     size_label_->setObjectName(QStringLiteral("httpSizeLabel"));
 
     infoBar->addWidget(responseLabel);
@@ -427,7 +436,7 @@ void HttpClientPanel::buildResponseArea()
     infoBar->addWidget(time_label_);
     infoBar->addWidget(size_label_);
     infoBar->addStretch();
-    doneLayout->addLayout(infoBar);
+    doneLayout->addWidget(responseBar);
 
     response_tabs_ = new QTabWidget(donePage);
     response_tabs_->setObjectName(QStringLiteral("httpResponseTabs"));
@@ -436,6 +445,9 @@ void HttpClientPanel::buildResponseArea()
     response_body_->setObjectName(QStringLiteral("httpResponseBody"));
     response_body_->setReadOnly(true);
     response_body_->setTabStopDistance(28.0);
+
+    response_highlighter_ = new NezhaIDE::Editor::SimpleHighlighter(
+        NezhaIDE::Editor::languageJson(), response_body_->document(), this);
 
     response_headers_table_ = new QTableWidget(0, 2, response_tabs_);
     response_headers_table_->setObjectName(QStringLiteral("httpHeadersTable"));
@@ -458,7 +470,7 @@ void HttpClientPanel::buildResponseArea()
     response_stack_->addWidget(donePage);
 }
 
-void HttpClientPanel::onMethodClicked()
+void HttpViewPanel::onMethodClicked()
 {
     QMenu menu(this);
     menu.setStyleSheet(NezhaIDE::Services::ThemeService::instance().qss(QStringLiteral("style.menu")));
@@ -479,7 +491,7 @@ void HttpClientPanel::onMethodClicked()
     menu.exec(method_btn_->mapToGlobal(QPoint(0, method_btn_->height())));
 }
 
-void HttpClientPanel::setMethodStyle(const QString &method)
+void HttpViewPanel::setMethodStyle(const QString &method)
 {
     auto &ts = NezhaIDE::Services::ThemeService::instance();
     auto color = [&](const QString &key) { return ts.color(key); };
@@ -499,7 +511,7 @@ void HttpClientPanel::setMethodStyle(const QString &method)
             .arg(bg, bg));
 }
 
-void HttpClientPanel::setStatusPill(int statusCode, const QString &text)
+void HttpViewPanel::setStatusPill(int statusCode, const QString &text)
 {
     auto &ts = NezhaIDE::Services::ThemeService::instance();
     QString color;
@@ -517,24 +529,52 @@ void HttpClientPanel::setStatusPill(int statusCode, const QString &text)
 
     status_pill_->setStyleSheet(
         QStringLiteral("QLabel#httpStatusPill { background: %1; color: #FFFFFF;"
-                       "border-radius: 10px; padding: 3px 12px;"
-                       "font-size: 12px; font-weight: bold; }")
+                       "border-radius: 11px; padding: 4px 14px;"
+                       "font-size: 13px; font-weight: bold; }")
             .arg(color));
     status_pill_->setText(text);
 }
 
-void HttpClientPanel::setResponseState(ResponseState state)
+void HttpViewPanel::setResponseState(ResponseState state)
 {
     response_stack_->setCurrentIndex(static_cast<int>(state));
 }
 
-void HttpClientPanel::showErrorState(const QString &title, const QString &detail)
+void HttpViewPanel::showErrorState(const QString &title, const QString &detail)
 {
     error_title_->setText(title);
     error_detail_->setText(detail);
 }
 
-void HttpClientPanel::onSendClicked()
+void HttpViewPanel::applyResponseHighlighting(const QString &contentType, const QString &body)
+{
+    const auto trimmed = body.trimmed();
+    const auto looksLikeJson = !trimmed.isEmpty()
+        && (trimmed.front() == QChar('{') || trimmed.front() == QChar('['));
+
+    NezhaIDE::Editor::LanguageDefinition def;
+    bool useHighlighting = false;
+    if (contentType.contains(QStringLiteral("json"), Qt::CaseInsensitive) || looksLikeJson) {
+        def = NezhaIDE::Editor::languageJson();
+        useHighlighting = true;
+    } else if (contentType.contains(QStringLiteral("xml"), Qt::CaseInsensitive)) {
+        def = NezhaIDE::Editor::languageXml();
+        useHighlighting = true;
+    }
+
+    if (useHighlighting) {
+        delete response_highlighter_;
+        response_highlighter_ = new NezhaIDE::Editor::SimpleHighlighter(
+            def, response_body_->document(), this);
+        response_highlighter_->setTokenColors(
+            NezhaIDE::Services::ThemeService::instance().syntaxColors());
+    } else if (response_highlighter_) {
+        delete response_highlighter_;
+        response_highlighter_ = nullptr;
+    }
+}
+
+void HttpViewPanel::onSendClicked()
 {
     if (sending_) {
         onCancelClicked();
@@ -575,7 +615,7 @@ void HttpClientPanel::onSendClicked()
     NezhaIDE::Services::HTTP::HttpClientService::send(req);
 }
 
-void HttpClientPanel::onCancelClicked()
+void HttpViewPanel::onCancelClicked()
 {
     if (current_request_id_ != 0) {
         NezhaIDE::Services::HTTP::HttpClientService::cancel(current_request_id_);
@@ -588,7 +628,7 @@ void HttpClientPanel::onCancelClicked()
     setResponseState(ResponseState::Empty);
 }
 
-void HttpClientPanel::applySendButtonStyle()
+void HttpViewPanel::applySendButtonStyle()
 {
     auto &ts = NezhaIDE::Services::ThemeService::instance();
     if (send_btn_->objectName() == QStringLiteral("httpCancelButton")) {
@@ -598,7 +638,7 @@ void HttpClientPanel::applySendButtonStyle()
     }
 }
 
-NezhaIDE::Model::HTTP::HttpRequest HttpClientPanel::collectRequest() const
+NezhaIDE::Model::HTTP::HttpRequest HttpViewPanel::collectRequest() const
 {
     using namespace NezhaIDE::Model::HTTP;
 
@@ -696,7 +736,7 @@ NezhaIDE::Model::HTTP::HttpRequest HttpClientPanel::collectRequest() const
     return req;
 }
 
-QString HttpClientPanel::normalizeUrl(QString url) const
+QString HttpViewPanel::normalizeUrl(QString url) const
 {
     url = url.trimmed();
     if (!url.contains(QStringLiteral("://"))) {
@@ -705,7 +745,7 @@ QString HttpClientPanel::normalizeUrl(QString url) const
     return url;
 }
 
-void HttpClientPanel::applyStyles()
+void HttpViewPanel::applyStyles()
 {
     auto &ts = NezhaIDE::Services::ThemeService::instance();
     setStyleSheet(ts.qss(QStringLiteral("style.http_panel")));
@@ -724,6 +764,9 @@ void HttpClientPanel::applyStyles()
     empty_detail_->setStyleSheet(ts.qss(QStringLiteral("style.http_state_detail")));
     error_title_->setStyleSheet(ts.qss(QStringLiteral("style.http_state_title")));
     error_detail_->setStyleSheet(ts.qss(QStringLiteral("style.http_state_detail")));
+    if (response_highlighter_) {
+        response_highlighter_->setTokenColors(ts.syntaxColors());
+    }
     applySendButtonStyle();
     setMethodStyle(method_);
 }

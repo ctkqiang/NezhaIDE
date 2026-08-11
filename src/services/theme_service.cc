@@ -164,12 +164,15 @@ static const QHash<QString, QString> kStyleTemplates = {
      "font-family: 'SF Mono', Menlo, 'Courier New', monospace; font-size: 12px; }"},
 
     {"style.http_panel",
-     "QWidget#httpClientRoot { background: $bg.secondary; }"},
+     "QWidget#httpClientRoot { background: $bg.secondary; }"
+     "QFrame#httpRequestBar { background: $bg.primary;"
+     "border: 1px solid $border; border-radius: 8px; }"
+     "QFrame#httpResponseBar { background: $bg.tertiary;"
+     "border: 1px solid $border; border-radius: 6px; }"},
 
     {"style.http_url_input",
      "QLineEdit { border: 1px solid $border; border-radius: 6px; padding: 0 12px;"
      "background: $bg.primary; color: $text.primary; font-size: 13px; }"
-     "QLineEdit:hover { border-color: $text.tertiary; }"
      "QLineEdit:focus { border-color: $accent; }"},
 
     {"style.http_kv_table",
@@ -204,9 +207,9 @@ static const QHash<QString, QString> kStyleTemplates = {
 
     {"style.http_tabs",
      "QTabWidget::pane { border: none; background: transparent; }"
-     "QTabBar { background: transparent; }"
+     "QTabBar { background: transparent; border-bottom: 1px solid $border; }"
      "QTabBar::tab { background: transparent; color: $text.secondary;"
-     "padding: 6px 14px; border: none; border-bottom: 2px solid transparent;"
+     "padding: 7px 14px; border: none; border-bottom: 2px solid transparent;"
      "font-size: 13px; font-weight: 500; }"
      "QTabBar::tab:selected { color: $accent; border-bottom: 2px solid $accent; }"
      "QTabBar::tab:hover { color: $text.primary; }"},

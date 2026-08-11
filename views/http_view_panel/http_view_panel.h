@@ -11,15 +11,16 @@
 #include <QLabel>
 #include <QComboBox>
 #include "src/model/http_request.h"
+#include "views/editor/simple_highlighter.h"
 
 namespace NezhaIDE::Views {
 
-class HttpClientPanel : public QWidget {
+class HttpViewPanel : public QWidget {
     Q_OBJECT
 
 public:
-    explicit HttpClientPanel(QWidget *parent = nullptr);
-    ~HttpClientPanel() override;
+    explicit HttpViewPanel(QWidget *parent = nullptr);
+    ~HttpViewPanel() override;
 
 private:
     enum class ResponseState { Empty, Sending, Error, Done };
@@ -41,6 +42,7 @@ private:
     void setStatusPill(int statusCode, const QString &text);
     void setResponseState(ResponseState state);
     void applySendButtonStyle();
+    void applyResponseHighlighting(const QString &contentType, const QString &body);
 
     NezhaIDE::Model::HTTP::HttpRequest collectRequest() const;
     QString normalizeUrl(QString url) const;
@@ -65,6 +67,7 @@ private:
     QLabel *empty_detail_{};
     QLabel *error_title_{};
     QLabel *error_detail_{};
+    NezhaIDE::Editor::SimpleHighlighter *response_highlighter_{};
 
     QString method_{QStringLiteral("GET")};
     bool sending_{false};

@@ -42,9 +42,9 @@ add_executable(NezhaIDE main.cc
         views/preferences_dialog.h
         views/activity_bar.cc
         views/activity_bar.h
-        views/git_panel.cc
-        views/git_panel.h
-        views/git_panel.ui
+        views/git_panel/git_panel.cc
+        views/git_panel/git_panel.h
+        views/git_panel/git_panel.ui
         src/model/column_def.h
         src/model/user_preference.h
         src/model/http_request.h
@@ -52,8 +52,9 @@ add_executable(NezhaIDE main.cc
         src/model/tool_registry.h
         src/services/http.cc
         src/services/http.h
-        views/http_client_panel.cc
-        views/http_client_panel.h)
+        views/http_view_panel/http_view_panel.cc
+        views/http_view_panel/http_view_panel.h
+        src/model/tools.h)
 
 target_include_directories(NezhaIDE PRIVATE ${CMAKE_SOURCE_DIR})
 

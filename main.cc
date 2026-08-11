@@ -8,7 +8,7 @@
 #include "src/utilities/logger.h"
 #include "views/main_window.h"
 #include "views/editor/editor_tab_host.h"
-#include "views/http_client_panel.h"
+#include "views/http_view_panel/http_view_panel.h"
 #include <QApplication>
 #include <QDir>
 #include <QLabel>
@@ -112,7 +112,7 @@ int main(int argc, char* argv[]) {
     if (qEnvironmentVariableIsSet("NEZHA_SELFTEST")) {
         struct Selftest : QObject {
             NezhaIDE::Views::MainWindow &window;
-            NezhaIDE::Views::HttpClientPanel *panel{};
+            NezhaIDE::Views::HttpViewPanel *panel{};
             QLineEdit *urlInput{};
             QPushButton *sendBtn{};
 
@@ -135,7 +135,7 @@ int main(int argc, char* argv[]) {
                     return;
                 }
                 editorHost->openHttpClient();
-                panel = editorHost->findChild<NezhaIDE::Views::HttpClientPanel *>();
+                panel = editorHost->findChild<NezhaIDE::Views::HttpViewPanel *>();
                 if (!panel) {
                     std::printf("SELFTEST: no http panel\n");
                     QApplication::exit(2);

@@ -1,6 +1,6 @@
 #include "editor_tab_host.h"
 #include "code_editor.h"
-#include "views/http_client_panel.h"
+#include "views/http_view_panel/http_view_panel.h"
 #include "src/configuration.h"
 #include "src/services/localization_service.h"
 #include "src/services/theme_service.h"
@@ -86,7 +86,7 @@ void EditorTabHost::openHttpClient()
         return;
     }
 
-    http_panel_ = new NezhaIDE::Views::HttpClientPanel(this);
+    http_panel_ = new NezhaIDE::Views::HttpViewPanel(this);
     const auto idx = addTab(http_panel_, LOC("http.tab_title"));
 
     removeWelcomeTab();

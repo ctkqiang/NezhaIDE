@@ -3,7 +3,7 @@
 #include "preferences_dialog.h"
 #include "sidebar_container.h"
 #include "explorer_panel.h"
-#include "git_panel.h"
+#include "views/git_panel/git_panel.h"
 #include "src/configuration.h"
 #include "views/editor/editor_tab_host.h"
 #include "views/editor/code_editor.h"

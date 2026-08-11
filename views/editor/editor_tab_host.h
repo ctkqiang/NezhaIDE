@@ -4,7 +4,7 @@
 #include <QHash>
 
 namespace NezhaIDE::Views {
-    class HttpClientPanel;
+    class HttpViewPanel;
 }
 
 namespace NezhaIDE::Editor {
@@ -33,7 +33,7 @@ private:
     void applyStyles();
 
     QHash<QString, CodeEditor *> editors_;
-    NezhaIDE::Views::HttpClientPanel *http_panel_{};
+    NezhaIDE::Views::HttpViewPanel *http_panel_{};
     QWidget *welcome_tab_{};
 };
 

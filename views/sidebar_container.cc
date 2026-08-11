@@ -1,6 +1,6 @@
 #include "sidebar_container.h"
 #include "explorer_panel.h"
-#include "git_panel.h"
+#include "views/git_panel/git_panel.h"
 #include "src/services/localization_service.h"
 #include "src/services/theme_service.h"
 #include <QDir>
