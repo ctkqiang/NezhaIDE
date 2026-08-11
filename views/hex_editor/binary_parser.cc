@@ -102,7 +102,7 @@ std::expected<BinaryParser, std::string> BinaryParser::open(const QString &path)
     try {
         auto binary = LIEF::Parser::parse(path.toStdString());
         if (!binary) {
-            return p;
+            return std::unexpected("not a supported binary format: " + path.toStdString());
         }
 
         impl.entry_point = binary->entrypoint();

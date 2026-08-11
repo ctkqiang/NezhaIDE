@@ -25,6 +25,8 @@
     <string key="confirm.delete_title">Löschen bestätigen</string>
     <string key="confirm.delete_folder">Ordner „%1" und gesamten Inhalt löschen?</string>
     <string key="confirm.delete_file">Datei „%1" löschen?</string>
+    <string key="confirm.discard_title">Änderungen verwerfen</string>
+    <string key="confirm.discard_changes">Lokale Änderungen an %1 Datei(en) verwerfen?</string>
     <string key="sidebar.explorer">Explorer</string>
     <string key="sidebar.git">Git</string>
     <string key="editor.welcome">Willkommen</string>
@@ -47,6 +49,13 @@
     <string key="git.error_prefix">Git-Fehler: %1</string>
     <string key="git.error_commit_message">Bitte geben Sie eine Commit-Nachricht ein</string>
     <string key="git.error_commit_failed">Commit fehlgeschlagen</string>
+    <string key="git.not_repo">Kein Git-Repository</string>
+    <string key="git.stage_all">Alle stagen</string>
+    <string key="git.unstage_all">Alle unstagen</string>
+    <string key="git.discard">Änderungen verwerfen</string>
+    <string key="git.show_diff">Diff anzeigen</string>
+    <string key="git.open_file">Datei öffnen</string>
+    <string key="git.diff_hint">Datei auswählen um Diff anzuzeigen</string>
     <string key="git.status.untracked">Nicht verfolgt</string>
     <string key="git.status.staged_modified">Gestaged (geändert)</string>
     <string key="git.status.staged_added">Gestaged (hinzugefügt)</string>
@@ -55,6 +64,10 @@
     <string key="git.status.unstaged_modified">Nicht gestaged (geändert)</string>
     <string key="git.status.unstaged_deleted">Nicht gestaged (gelöscht)</string>
     <string key="git.status.changed">Geändert</string>
+    <string key="git.status.both_modified">Beide geändert</string>
+    <string key="git.status.conflict">Konflikt / nicht zusammengeführt</string>
+    <string key="git.status.staged_copied">Gestaged (kopiert)</string>
+    <string key="git.status.typechange">Typänderung</string>
     <string key="menu.open_project">Projekt öffnen...</string>
     <string key="menu.save">Speichern</string>
     <string key="menu.quit">Beenden</string>
@@ -105,6 +118,7 @@
     <string key="http.kv_hint">Deaktivierte Zeilen werden nicht gesendet</string>
     <string key="http.response_body">Body</string>
     <string key="http.response_headers">Header</string>
+    <string key="http.response_hex">Hex</string>
     <string key="http.unknown_status">Unbekannt</string>
     <string key="http.err">Fehler</string>
     <string key="http.elapsed_ms">%1 ms</string>

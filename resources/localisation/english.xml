@@ -25,6 +25,8 @@
     <string key="confirm.delete_title">Confirm Delete</string>
     <string key="confirm.delete_folder">Delete folder "%1" and all its contents?</string>
     <string key="confirm.delete_file">Delete file "%1"?</string>
+    <string key="confirm.discard_title">Discard changes</string>
+    <string key="confirm.discard_changes">Discard local changes to %1 file(s)?</string>
     <string key="sidebar.explorer">Explorer</string>
     <string key="sidebar.git">Git</string>
     <string key="editor.welcome">Welcome</string>
@@ -47,6 +49,13 @@
     <string key="git.error_prefix">Git error: %1</string>
     <string key="git.error_commit_message">Please enter a commit message</string>
     <string key="git.error_commit_failed">Commit failed</string>
+    <string key="git.not_repo">Not a git repository</string>
+    <string key="git.stage_all">Stage All</string>
+    <string key="git.unstage_all">Unstage All</string>
+    <string key="git.discard">Discard Changes</string>
+    <string key="git.show_diff">Show Diff</string>
+    <string key="git.open_file">Open File</string>
+    <string key="git.diff_hint">Select a file to view diff</string>
     <string key="git.status.untracked">Untracked</string>
     <string key="git.status.staged_modified">Staged (modified)</string>
     <string key="git.status.staged_added">Staged (added)</string>
@@ -55,6 +64,10 @@
     <string key="git.status.unstaged_modified">Unstaged (modified)</string>
     <string key="git.status.unstaged_deleted">Unstaged (deleted)</string>
     <string key="git.status.changed">Changed</string>
+    <string key="git.status.both_modified">Both modified</string>
+    <string key="git.status.conflict">Conflict / unmerged</string>
+    <string key="git.status.staged_copied">Staged (copied)</string>
+    <string key="git.status.typechange">Type change</string>
     <string key="menu.open_project">Open Project...</string>
     <string key="menu.save">Save</string>
     <string key="menu.quit">Quit</string>
@@ -105,6 +118,7 @@
     <string key="http.kv_hint">Disabled rows are not sent</string>
     <string key="http.response_body">Body</string>
     <string key="http.response_headers">Headers</string>
+    <string key="http.response_hex">Hex</string>
     <string key="http.unknown_status">Unknown</string>
     <string key="http.err">Error</string>
     <string key="http.elapsed_ms">%1 ms</string>
