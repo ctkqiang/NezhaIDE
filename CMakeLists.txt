@@ -7,6 +7,9 @@ set(CMAKE_AUTOUIC ON)
 
 find_package(Qt6 REQUIRED COMPONENTS Core Widgets Network)
 find_package(SQLite3 REQUIRED)
+find_package(LIEF REQUIRED)
+find_library(CAPSTONE_LIBRARY capstone REQUIRED)
+find_path(CAPSTONE_INCLUDE_DIR capstone/capstone.h REQUIRED)
 
 add_executable(NezhaIDE main.cc
         src/utilities/logger.cc
@@ -54,10 +57,18 @@ add_executable(NezhaIDE main.cc
         src/services/http.h
         views/http_view_panel/http_view_panel.cc
         views/http_view_panel/http_view_panel.h
-        src/model/tools.h)
+        src/model/tools.h
+        views/hex_editor/binary_parser.cc
+        views/hex_editor/binary_parser.h
+        views/hex_editor/disassembler.cc
+        views/hex_editor/disassembler.h
+        views/hex_editor/hex_view.cc
+        views/hex_editor/hex_view.h
+        views/hex_editor/hex_editor.cc
+        views/hex_editor/hex_editor.h)
 
-target_include_directories(NezhaIDE PRIVATE ${CMAKE_SOURCE_DIR})
+target_include_directories(NezhaIDE PRIVATE ${CMAKE_SOURCE_DIR} ${CAPSTONE_INCLUDE_DIR})
 
 target_compile_definitions(NezhaIDE PRIVATE NEZHA_PROJECT_ROOT="${CMAKE_SOURCE_DIR}")
 
-target_link_libraries(NezhaIDE PRIVATE Qt6::Core Qt6::Widgets Qt6::Network SQLite3::SQLite3)
+target_link_libraries(NezhaIDE PRIVATE Qt6::Core Qt6::Widgets Qt6::Network SQLite3::SQLite3 LIEF::LIEF ${CAPSTONE_LIBRARY})
