@@ -1,10 +1,29 @@
+//
+// Created by 钟智强 on 2026/8/10.
+//
+//
 #pragma once
 
-#include "src/model/http_request.h"
-#include <QObject>
-#include <QNetworkAccessManager>
-#include <QNetworkReply>
-#include <QElapsedTimer>
+#if __has_include("src/model/http_request.h") && \
+     __has_include(<QObject>) && \
+       __has_include(<QNetworkAccessManager>) && \
+       __has_include(<QNetworkReply>) && \
+       __has_include(<QElapsedTimer>)
+
+    #include "src/model/http_request.h"
+    #include <QObject>
+    #include <QNetworkAccessManager>
+    #include <QNetworkReply>
+    #include <QElapsedTimer>
+
+    #define __HAS_QOBJECT 1
+    #define __HAS_HTTP_REQUEST_OOBJ 1
+#else
+    #define __HAS_QOBJECT 0
+    #define __HAS_HTTP_REQUEST_OOBJ 0
+
+    #error "NezhaIDE::Services::HTTP 缺少必要的依赖项"
+#endif
 
 namespace NezhaIDE::Services::HTTP {
 
@@ -17,8 +36,9 @@ public:
     HttpClientService(const HttpClientService &) = delete;
     HttpClientService &operator=(const HttpClientService &) = delete;
 
-    void send(const Model::HTTP::HttpRequest &req);
-    void cancel(Model::HTTP::RequestId id);
+    static void send(const Model::HTTP::HttpRequest &req);
+
+    static void cancel(Model::HTTP::RequestId id);
 
 signals:
     void responseReceived(const Model::HTTP::HttpResponse &resp);
@@ -28,10 +48,11 @@ private:
     HttpClientService();
     ~HttpClientService() override = default;
 
-    QNetworkRequest buildRequest(const Model::HTTP::HttpRequest &req) const;
-    QByteArray buildBody(const Model::HTTP::HttpBody &body) const;
+    static QNetworkRequest buildRequest(const Model::HTTP::HttpRequest &req);
+
+    static QByteArray buildBody(const Model::HTTP::HttpBody &body);
 
     QNetworkAccessManager *nam_{};
 };
 
-} // namespace NezhaIDE::Services::HTTP
+}

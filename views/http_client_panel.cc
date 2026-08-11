@@ -201,7 +201,7 @@ void HttpClientPanel::onSendClicked()
         req.body.content = bodyText.toStdString();
     }
 
-    NezhaIDE::Services::HTTP::HttpClientService::instance().send(req);
+    NezhaIDE::Services::HTTP::HttpClientService::send(req);
 }
 
 void HttpClientPanel::onNewRequest()
