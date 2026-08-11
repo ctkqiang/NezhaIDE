@@ -97,6 +97,7 @@
     <string key="menu.view_explorer">Explorer</string>
     <string key="menu.view_git">Source Control</string>
     <string key="menu.view_http">HTTP Client</string>
+    <string key="menu.view_terminal">Terminal</string>
     <string key="http.send">Send</string>
     <string key="http.cancel">Cancel</string>
     <string key="http.headers">Headers</string>

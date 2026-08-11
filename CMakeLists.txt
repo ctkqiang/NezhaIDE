@@ -66,7 +66,11 @@ add_executable(NezhaIDE main.cc
         views/hex_editor/hex_view.cc
         views/hex_editor/hex_view.h
         views/hex_editor/hex_editor.cc
-        views/hex_editor/hex_editor.h)
+        views/hex_editor/hex_editor.h
+        views/terminal/terminal_view.cc
+        views/terminal/terminal_view.h
+        views/terminal/terminal_panel.cc
+        views/terminal/terminal_panel.h)
 
 set_target_properties(NezhaIDE PROPERTIES
     MACOSX_BUNDLE TRUE
