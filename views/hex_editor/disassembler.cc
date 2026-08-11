@@ -68,16 +68,11 @@ Disassembler::disassemble(const uint8_t *data, size_t size, uint64_t offset_in_f
     cs_option(handle, CS_OPT_DETAIL, CS_OPT_ON);
     cs_option(handle, CS_OPT_SKIPDATA, CS_OPT_ON);
 
-    auto count = cs_disasm(handle, data, size, base_address, 0, nullptr);
-    if (count == 0) {
+    cs_insn *insns = nullptr;
+    auto count = cs_disasm(handle, data, size, base_address, 0, &insns);
+    if (count == 0 || !insns) {
         cs_close(&handle);
         return std::unexpected("no instructions disassembled");
-    }
-
-    auto *insns = cs_disasm(handle, data, size, base_address, count, nullptr);
-    if (!insns) {
-        cs_close(&handle);
-        return std::unexpected(std::string("capstone disasm error: ") + cs_strerror(cs_errno(handle)));
     }
 
     std::vector<DisasmInstruction> result;
@@ -91,7 +86,7 @@ Disassembler::disassemble(const uint8_t *data, size_t size, uint64_t offset_in_f
         di.address = insn.address;
         di.offset = offset_in_file + (insn.address - base_address);
         di.mnemonic = insn.mnemonic;
-        di.operands = insn.op_str ? insn.op_str : "";
+        di.operands = insn.op_str[0] ? std::string(insn.op_str) : std::string();
         di.size = insn.size;
         di.bytes_hex = bytes_to_hex(insn.bytes, insn.size);
         result.push_back(std::move(di));
