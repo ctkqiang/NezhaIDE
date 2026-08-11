@@ -125,6 +125,17 @@ int main(int argc, char* argv[]) {
                 QApplication::exit(2);
                 return;
             }
+
+            const auto dumpGeometry = [](QWidget *w, const char *name) {
+                std::printf("SELFTEST: geo %s x=%d y=%d w=%d h=%d visible=%d\n",
+                    name, w->x(), w->y(), w->width(), w->height(), w->isVisible() ? 1 : 0);
+            };
+            dumpGeometry(panel, "panel");
+            dumpGeometry(panel->findChild<QPushButton *>(QStringLiteral("httpMethodButton")), "methodBtn");
+            dumpGeometry(panel->findChild<QLineEdit *>(QStringLiteral("httpUrlInput")), "urlInput");
+            dumpGeometry(panel->findChild<QPushButton *>(QStringLiteral("httpSendButton")), "sendBtn");
+            dumpGeometry(panel->findChild<QTableWidget *>(QStringLiteral("kvTable")), "paramsTable");
+            dumpGeometry(panel->findChild<QPlainTextEdit *>(QStringLiteral("httpBodyEditor")), "bodyEditor");
             panel->grab().save(QStringLiteral("/tmp/nezha_01_initial.png"));
 
             auto *urlInput = panel->findChild<QLineEdit *>(QStringLiteral("httpUrlInput"));
@@ -139,7 +150,7 @@ int main(int argc, char* argv[]) {
                 panel->grab().save(QStringLiteral("/tmp/nezha_02_sending.png"));
             });
 
-            QTimer::singleShot(10000, [&window, panel, urlInput, sendBtn] {
+            QTimer::singleShot(10000, [&window, panel, urlInput, sendBtn, &dumpGeometry] {
                 auto *pill = panel->findChild<QLabel *>(QStringLiteral("httpStatusPill"));
                 auto *timeLabel = panel->findChild<QLabel *>(QStringLiteral("httpTimeLabel"));
                 auto *sizeLabel = panel->findChild<QLabel *>(QStringLiteral("httpSizeLabel"));
@@ -151,22 +162,36 @@ int main(int argc, char* argv[]) {
                 std::printf("SELFTEST: size=%s\n", sizeLabel->text().toUtf8().constData());
                 std::printf("SELFTEST: bodyLen=%d\n", static_cast<int>(body->toPlainText().size()));
                 std::printf("SELFTEST: headers=%d\n", headers->rowCount());
+                dumpGeometry(panel, "panel(resp)");
+                dumpGeometry(pill, "statusPill");
+                dumpGeometry(timeLabel, "timeLabel");
+                dumpGeometry(body, "respBody");
                 panel->grab().save(QStringLiteral("/tmp/nezha_03_response.png"));
 
-                urlInput->setText(QStringLiteral("not a url"));
-                sendBtn->click();
-                QTimer::singleShot(500, [panel] {
-                    panel->grab().save(QStringLiteral("/tmp/nezha_04_invalid.png"));
-                });
+                window.resize(760, 560);
+                QTimer::singleShot(300, [&window, panel, urlInput, sendBtn, &dumpGeometry] {
+                    std::printf("SELFTEST: resized window to 760x560\n");
+                    dumpGeometry(panel, "panel(small)");
+                    dumpGeometry(panel->findChild<QPushButton *>(QStringLiteral("httpMethodButton")), "methodBtn(small)");
+                    dumpGeometry(panel->findChild<QLineEdit *>(QStringLiteral("httpUrlInput")), "urlInput(small)");
+                    dumpGeometry(panel->findChild<QPushButton *>(QStringLiteral("httpSendButton")), "sendBtn(small)");
+                    panel->grab().save(QStringLiteral("/tmp/nezha_04_small.png"));
 
-                urlInput->setText(QStringLiteral("https://nonexistent-domain-zzz12345.com"));
-                sendBtn->click();
-                QTimer::singleShot(6000, [&window, panel] {
-                    auto *pill = panel->findChild<QLabel *>(QStringLiteral("httpStatusPill"));
-                    std::printf("SELFTEST: errorPill=%s\n", pill->text().toUtf8().constData());
-                    panel->grab().save(QStringLiteral("/tmp/nezha_05_error.png"));
-                    std::printf("SELFTEST: DONE\n");
-                    QApplication::exit(0);
+                    urlInput->setText(QStringLiteral("not a url"));
+                    sendBtn->click();
+                    QTimer::singleShot(400, [panel] {
+                        panel->grab().save(QStringLiteral("/tmp/nezha_05_invalid.png"));
+                    });
+
+                    urlInput->setText(QStringLiteral("https://nonexistent-domain-zzz12345.com"));
+                    sendBtn->click();
+                    QTimer::singleShot(6000, [panel] {
+                        auto *pill = panel->findChild<QLabel *>(QStringLiteral("httpStatusPill"));
+                        std::printf("SELFTEST: errorPill=%s\n", pill->text().toUtf8().constData());
+                        panel->grab().save(QStringLiteral("/tmp/nezha_06_error.png"));
+                        std::printf("SELFTEST: DONE\n");
+                        QApplication::exit(0);
+                    });
                 });
             });
         });
