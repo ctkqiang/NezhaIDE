@@ -5,10 +5,25 @@
 #include <QAction>
 #include <QHBoxLayout>
 #include <QHeaderView>
+#include <QJsonDocument>
 #include <QMenu>
 #include <QVBoxLayout>
 
 namespace NezhaIDE::Views {
+
+static QString prettyPrintBody(const QString &raw)
+{
+    const auto trimmed = raw.trimmed();
+    if (trimmed.isEmpty() || (trimmed.front() != QChar('{') && trimmed.front() != QChar('['))) {
+        return raw;
+    }
+
+    QJsonParseError err;
+    const auto doc = QJsonDocument::fromJson(trimmed.toUtf8(), &err);
+    return err.error == QJsonParseError::NoError
+        ? QString::fromUtf8(doc.toJson(QJsonDocument::Indented))
+        : raw;
+}
 
 HttpClientPanel::HttpClientPanel(QWidget *parent)
     : QWidget(parent)
@@ -33,7 +48,7 @@ HttpClientPanel::HttpClientPanel(QWidget *parent)
             ? QStringLiteral("%1 B").arg(bodySize)
             : QStringLiteral("%1 KB").arg(bodySize / 1024.0, 0, 'f', 1));
 
-        response_body_->setPlainText(QString::fromStdString(resp.body));
+        response_body_->setPlainText(prettyPrintBody(QString::fromStdString(resp.body)));
 
         response_headers_table_->setRowCount(0);
         for (const auto &h : resp.headers) {
@@ -54,6 +69,8 @@ HttpClientPanel::HttpClientPanel(QWidget *parent)
             this, [this](NezhaIDE::Model::HTTP::RequestId, const QString &error) {
         response_body_->setPlainText(error);
         status_label_->setText(QStringLiteral("Error"));
+        status_label_->setStyleSheet(
+            NezhaIDE::Services::ThemeService::instance().qss(QStringLiteral("style.http_status_label")));
         send_btn_->setEnabled(true);
         send_btn_->setText(LOC("http.send"));
     });
@@ -87,6 +104,7 @@ void HttpClientPanel::setupUI()
 
     url_input_ = new QLineEdit(this);
     url_input_->setPlaceholderText(LOC("http.url_placeholder"));
+    connect(url_input_, &QLineEdit::returnPressed, this, &HttpClientPanel::onSendClicked);
 
     send_btn_ = new QPushButton(LOC("http.send"), this);
     send_btn_->setFixedWidth(72);
@@ -99,23 +117,45 @@ void HttpClientPanel::setupUI()
     request_tabs_ = new QTabWidget(this);
     request_tabs_->setObjectName(QStringLiteral("httpRequestTabs"));
 
-    params_table_ = new QTableWidget(0, 2);
-    params_table_->setHorizontalHeaderLabels({LOC("http.param_name"), LOC("http.param_value")});
-    params_table_->horizontalHeader()->setStretchLastSection(true);
-    params_table_->horizontalHeader()->setSectionResizeMode(0, QHeaderView::Interactive);
-    params_table_->setColumnWidth(0, 180);
+    auto makeKeyValueTab = [this](const QString &title, const QStringList &labels) -> QTableWidget * {
+        auto *container = new QWidget(this);
+        auto *layout = new QVBoxLayout(container);
+        layout->setContentsMargins(4, 4, 4, 4);
+        layout->setSpacing(4);
 
-    headers_table_ = new QTableWidget(0, 2);
-    headers_table_->setHorizontalHeaderLabels({LOC("http.header_name"), LOC("http.header_value")});
-    headers_table_->horizontalHeader()->setStretchLastSection(true);
-    headers_table_->horizontalHeader()->setSectionResizeMode(0, QHeaderView::Interactive);
-    headers_table_->setColumnWidth(0, 180);
+        auto *addBtn = new QPushButton(QStringLiteral("+"), container);
+        addBtn->setFixedSize(22, 22);
+        addBtn->setCursor(Qt::PointingHandCursor);
+        addBtn->setToolTip(LOC("http.add_row"));
+
+        auto *btnRow = new QHBoxLayout();
+        btnRow->addWidget(addBtn);
+        btnRow->addStretch();
+        layout->addLayout(btnRow);
+
+        auto *table = new QTableWidget(0, 2, container);
+        table->setHorizontalHeaderLabels(labels);
+        table->horizontalHeader()->setStretchLastSection(true);
+        table->horizontalHeader()->setSectionResizeMode(0, QHeaderView::Interactive);
+        table->setColumnWidth(0, 180);
+        layout->addWidget(table, 1);
+
+        connect(addBtn, &QPushButton::clicked, table, [table] {
+            table->insertRow(table->rowCount());
+        });
+
+        request_tabs_->addTab(container, title);
+        return table;
+    };
+
+    params_table_ = makeKeyValueTab(LOC("http.params"),
+        {LOC("http.param_name"), LOC("http.param_value")});
+    headers_table_ = makeKeyValueTab(LOC("http.headers"),
+        {LOC("http.header_name"), LOC("http.header_value")});
 
     body_editor_ = new QPlainTextEdit();
     body_editor_->setPlaceholderText(QStringLiteral("{\n  \"key\": \"value\"\n}"));
 
-    request_tabs_->addTab(params_table_, LOC("http.params"));
-    request_tabs_->addTab(headers_table_, LOC("http.headers"));
     request_tabs_->addTab(body_editor_, LOC("http.body"));
 
     editorLayout->addLayout(urlBar);
@@ -181,7 +221,8 @@ void HttpClientPanel::onMethodClicked()
     const QStringList methods = {"GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS"};
     for (const auto &m : methods) {
         auto *action = menu.addAction(m);
-        if (m == method_) action->setCheckable(true);
+        action->setCheckable(true);
+        action->setChecked(m == method_);
     }
     connect(&menu, &QMenu::triggered, this, [this](QAction *action) {
         method_ = action->text();

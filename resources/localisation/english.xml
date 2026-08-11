@@ -76,6 +76,7 @@
     <string key="menu.view_git">Source Control</string>
     <string key="menu.view_http">HTTP Client</string>
     <string key="http.send">Send</string>
+    <string key="http.add_row">Add Row</string>
     <string key="http.headers">Headers</string>
     <string key="http.body">Body</string>
     <string key="http.response">Response</string>

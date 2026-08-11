@@ -76,6 +76,7 @@
     <string key="menu.view_git">源代码管理</string>
     <string key="menu.view_http">HTTP 客户端</string>
     <string key="http.send">发送</string>
+    <string key="http.add_row">添加行</string>
     <string key="http.headers">请求头</string>
     <string key="http.body">请求体</string>
     <string key="http.response">响应</string>
