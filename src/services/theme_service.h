@@ -43,6 +43,7 @@ private:
 
     void loadXml(const QString &path);
     void rebuildStyles();
+    void applyGlobalPalette();
     static IDETheme resolveTheme(IDETheme theme);
 
     QHash<QString, QString> colors_;

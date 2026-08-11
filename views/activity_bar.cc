@@ -23,6 +23,13 @@ ActivityBar::ActivityBar(QWidget *parent)
 
     setActive(ActivityBarItem::Explorer);
     applyStyles();
+
+    connect(&NezhaIDE::Services::ThemeService::instance(),
+            &NezhaIDE::Services::ThemeService::themeChanged,
+            this, [this](NezhaIDE::IDETheme) {
+                applyStyles();
+                setActive(active_);
+            });
 }
 
 QPushButton *ActivityBar::addButton(const QString &text, const QString &tooltip, ActivityBarItem id)

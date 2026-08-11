@@ -104,7 +104,6 @@ namespace NezhaIDE {
         [[nodiscard]]
         IDELanguage language() const noexcept;
 
-        [[ noreturn ]]
         void set_language(IDELanguage language);
 
         [[clang::annotate("security-sensitive")]]

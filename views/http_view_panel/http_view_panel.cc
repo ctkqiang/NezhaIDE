@@ -506,9 +506,11 @@ void HttpViewPanel::setMethodStyle(const QString &method)
     method_btn_->setText(method + QStringLiteral(" ▾"));
     method_btn_->setStyleSheet(
         QStringLiteral("QPushButton { background: %1; border: none; border-radius: 5px;"
-                       "padding: 5px 12px; font-size: 12px; font-weight: bold; color: #FFFFFF; }"
-                       "QPushButton:hover { background: %2; }")
-            .arg(bg, bg));
+                       "padding: 5px 12px; font-size: 12px; font-weight: bold; color: %2; }"
+                       "QPushButton:hover { background: %3; }")
+            .arg(bg,
+                 NezhaIDE::Services::ThemeService::instance().color(QStringLiteral("button.text")),
+                 bg));
 }
 
 void HttpViewPanel::setStatusPill(int statusCode, const QString &text)
@@ -528,10 +530,10 @@ void HttpViewPanel::setStatusPill(int statusCode, const QString &text)
     }
 
     status_pill_->setStyleSheet(
-        QStringLiteral("QLabel#httpStatusPill { background: %1; color: #FFFFFF;"
+        QStringLiteral("QLabel#httpStatusPill { background: %1; color: %2;"
                        "border-radius: 11px; padding: 4px 14px;"
                        "font-size: 13px; font-weight: bold; }")
-            .arg(color));
+            .arg(color, ts.color(QStringLiteral("button.text")));
     status_pill_->setText(text);
 }
 

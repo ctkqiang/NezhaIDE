@@ -9,6 +9,7 @@
 #include "views/main_window.h"
 #include "views/editor/editor_tab_host.h"
 #include "views/http_view_panel/http_view_panel.h"
+
 #include <QApplication>
 #include <QDir>
 #include <QLabel>

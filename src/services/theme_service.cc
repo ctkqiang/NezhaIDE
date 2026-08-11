@@ -5,6 +5,10 @@
 #include <QCoreApplication>
 #include <QFile>
 #include <QPalette>
+#include <QScrollBar>
+#include <QStyle>
+#include <QStyleFactory>
+#include <QToolTip>
 #include <QXmlStreamReader>
 
 namespace NezhaIDE::Services {
@@ -38,6 +42,37 @@ static const QHash<QString, QString> kFallbackColors = {
     {"syntax.number",      "#C06014"},
     {"syntax.operator",    "#1A1A1A"},
     {"syntax.preprocessor","#7C3AED"},
+};
+
+static const QHash<QString, QString> kFallbackColorsDark = {
+    {"bg.primary",         "#0D1117"},
+    {"bg.secondary",       "#161B22"},
+    {"bg.tertiary",        "#1C2128"},
+    {"border",             "#30363D"},
+    {"accent",             "#58A6FF"},
+    {"accent.hover",       "#79C0FF"},
+    {"accent.pressed",     "#388BFD"},
+    {"button.text",        "#FFFFFF"},
+    {"text.primary",       "#E6EDF3"},
+    {"text.secondary",     "#8B949E"},
+    {"text.tertiary",      "#6E7681"},
+    {"overlay.hover",      "rgba(255,255,255,0.08)"},
+    {"overlay.hover.subtle","rgba(255,255,255,0.04)"},
+    {"overlay.selection",  "rgba(88,166,255,0.20)"},
+    {"git.modified",       "#F0883E"},
+    {"git.added",          "#3FB950"},
+    {"git.deleted",        "#F85149"},
+    {"git.untracked",      "#6E7681"},
+    {"syntax.editor.background", "#0D1117"},
+    {"syntax.editor.foreground", "#E6EDF3"},
+    {"syntax.keyword",     "#FF7B72"},
+    {"syntax.type",        "#FFA657"},
+    {"syntax.function",    "#D2A8FF"},
+    {"syntax.string",      "#A5D6FF"},
+    {"syntax.comment",     "#8B949E"},
+    {"syntax.number",      "#79C0FF"},
+    {"syntax.operator",    "#E6EDF3"},
+    {"syntax.preprocessor","#F0883E"},
 };
 
 static const QHash<QString, QString> kStyleTemplates = {
@@ -259,6 +294,7 @@ void ThemeService::initialize(IDETheme theme)
     current_theme_ = resolved;
     loadXml(xmlPath(resolved));
     rebuildStyles();
+    applyGlobalPalette();
 }
 
 void ThemeService::applyTheme(IDETheme theme)
@@ -269,6 +305,7 @@ void ThemeService::applyTheme(IDETheme theme)
     current_theme_ = resolved;
     loadXml(xmlPath(resolved));
     rebuildStyles();
+    applyGlobalPalette();
 
     NezhaIDE::Configuration::instance().set_theme(resolved);
     NezhaIDE::Configuration::instance().save();
@@ -347,6 +384,8 @@ void ThemeService::loadXml(const QString &path)
 {
     colors_.clear();
 
+    const auto &fallback = (current_theme_ == IDETheme::Dark) ? kFallbackColorsDark : kFallbackColors;
+
     QFile file(path);
     if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
         Utilities::Logger::instance().log(
@@ -355,7 +394,7 @@ void ThemeService::loadXml(const QString &path)
             "无法打开主题文件: {}，使用回退调色板",
             path.toStdString()
         );
-        for (auto it = kFallbackColors.cbegin(); it != kFallbackColors.cend(); ++it) {
+        for (auto it = fallback.cbegin(); it != fallback.cend(); ++it) {
             colors_[it.key()] = it.value();
         }
         return;
@@ -402,7 +441,8 @@ void ThemeService::loadXml(const QString &path)
             "主题文件为空: {}，使用回退调色板",
             path.toStdString()
         );
-        for (auto it = kFallbackColors.cbegin(); it != kFallbackColors.cend(); ++it) {
+        const auto &fb = (current_theme_ == IDETheme::Dark) ? kFallbackColorsDark : kFallbackColors;
+        for (auto it = fb.cbegin(); it != fb.cend(); ++it) {
             colors_[it.key()] = it.value();
         }
     }
@@ -419,6 +459,63 @@ void ThemeService::rebuildStyles()
         }
         styles_[it.key()] = qss;
     }
+}
+
+void ThemeService::applyGlobalPalette()
+{
+    auto *app = qApp;
+    if (!app) return;
+
+    const auto bgPrimary = qcolor("bg.primary");
+    const auto bgSecondary = qcolor("bg.secondary");
+    const auto bgTertiary = qcolor("bg.tertiary");
+    const auto textPrimary = qcolor("text.primary");
+    const auto textSecondary = qcolor("text.secondary");
+    const auto textTertiary = qcolor("text.tertiary");
+    const auto accent = qcolor("accent");
+    const auto border = qcolor("border");
+    const auto buttonText = qcolor("button.text");
+
+    if (!bgPrimary.isValid()) return;
+
+    QPalette p;
+    p.setColor(QPalette::Window, bgPrimary);
+    p.setColor(QPalette::WindowText, textPrimary);
+    p.setColor(QPalette::Base, bgPrimary);
+    p.setColor(QPalette::AlternateBase, bgSecondary);
+    p.setColor(QPalette::ToolTipBase, bgTertiary);
+    p.setColor(QPalette::ToolTipText, textPrimary);
+    p.setColor(QPalette::Text, textPrimary);
+    p.setColor(QPalette::Button, bgSecondary);
+    p.setColor(QPalette::ButtonText, textPrimary);
+    p.setColor(QPalette::BrightText, accent);
+    p.setColor(QPalette::Link, accent);
+    p.setColor(QPalette::LinkVisited, accent);
+    p.setColor(QPalette::Highlight, accent);
+    p.setColor(QPalette::HighlightedText, buttonText.isValid() ? buttonText : QColor("#FFFFFF"));
+    p.setColor(QPalette::PlaceholderText, textTertiary);
+    p.setColor(QPalette::Mid, border);
+    p.setColor(QPalette::Dark, border);
+    p.setColor(QPalette::Shadow, QColor(0, 0, 0, 60));
+
+    p.setColor(QPalette::Disabled, QPalette::WindowText, textTertiary);
+    p.setColor(QPalette::Disabled, QPalette::Text, textTertiary);
+    p.setColor(QPalette::Disabled, QPalette::ButtonText, textTertiary);
+
+    app->setPalette(p);
+
+    const auto menuQss = styles_.value(QStringLiteral("style.menu"));
+
+    QString globalQss;
+    if (!menuQss.isEmpty()) globalQss += menuQss + QStringLiteral("\n");
+
+    globalQss += QStringLiteral(
+        "QToolTip {"
+        "  background: %1; color: %2; border: 1px solid %3;"
+        "  border-radius: 4px; padding: 4px 8px; font-size: 12px; }"
+    ).arg(bgTertiary.name(), textPrimary.name(), border.name());
+
+    app->setStyleSheet(globalQss);
 }
 
 } // namespace NezhaIDE::Services
