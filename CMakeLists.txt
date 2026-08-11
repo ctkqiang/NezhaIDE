@@ -17,38 +17,39 @@ add_executable(NezhaIDE main.cc
         src/services/localization_service.h
         src/services/theme_service.cc
         src/services/theme_service.h
-        src/editor/code_editor.cc
-        src/editor/code_editor.h
-        src/editor/cpp_highlighter.cc
-        src/editor/cpp_highlighter.h
-        src/editor/simple_highlighter.cc
-        src/editor/simple_highlighter.h
-        src/editor/language_registry.cc
-        src/editor/language_registry.h
-        src/editor/editor_tab_host.cc
-        src/editor/editor_tab_host.h
+        views/editor/code_editor.cc
+        views/editor/code_editor.h
+        views/editor/cpp_highlighter.cc
+        views/editor/cpp_highlighter.h
+        views/editor/simple_highlighter.cc
+        views/editor/simple_highlighter.h
+        views/editor/language_registry.cc
+        views/editor/language_registry.h
+        views/editor/editor_tab_host.cc
+        views/editor/editor_tab_host.h
         src/configuration.h
         src/configuration.cc
-        src/views/main_window.cc
-        src/views/main_window.h
-        src/views/main_window.ui
-        src/views/sidebar_container.cc
-        src/views/sidebar_container.h
-        src/views/sidebar_container.ui
-        src/views/explorer_panel.cc
-        src/views/explorer_panel.h
-        src/views/explorer_panel.ui
-        src/views/preferences_dialog.cc
-        src/views/preferences_dialog.h
-        src/views/activity_bar.cc
-        src/views/activity_bar.h
-        src/views/git_panel.cc
-        src/views/git_panel.h
-        src/views/git_panel.ui
+        views/main_window.cc
+        views/main_window.h
+        views/main_window.ui
+        views/sidebar_container.cc
+        views/sidebar_container.h
+        views/sidebar_container.ui
+        views/explorer_panel.cc
+        views/explorer_panel.h
+        views/explorer_panel.ui
+        views/preferences_dialog.cc
+        views/preferences_dialog.h
+        views/activity_bar.cc
+        views/activity_bar.h
+        views/git_panel.cc
+        views/git_panel.h
+        views/git_panel.ui
         src/model/column_def.h
         src/model/user_preference.h
         src/repository/orm.h
-        src/model/tool_registry.h)
+        src/model/tool_registry.h
+        src/model/http_request.h)
 
 target_include_directories(NezhaIDE PRIVATE ${CMAKE_SOURCE_DIR})
 

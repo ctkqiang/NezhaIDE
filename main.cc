@@ -6,7 +6,7 @@
 #include "src/services/localization_service.h"
 #include "src/services/theme_service.h"
 #include "src/utilities/logger.h"
-#include "src/views/main_window.h"
+#include "views/main_window.h"
 #include <QApplication>
 #include <QDir>
 
