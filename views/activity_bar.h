@@ -3,6 +3,7 @@
 #include <QWidget>
 #include <QVBoxLayout>
 #include <QPushButton>
+#include <QLabel>
 
 namespace NezhaIDE::Views {
 
@@ -23,20 +24,27 @@ public:
 
     void setActive(ActivityBarItem item);
     void applyStyles();
+    void setBadge(ActivityBarItem item, int count);
 
 signals:
     void itemSelected(ActivityBarItem item);
 
 private:
-    QPushButton *addButton(const QString &iconPath, const QString &tooltip, ActivityBarItem id);
+    struct ActivityButton {
+        QPushButton *button;
+        QLabel *badge;
+    };
 
-    QPushButton *btn_explorer_{};
-    QPushButton *btn_git_{};
-    QPushButton *btn_http_{};
-    QPushButton *btn_hydra_{};
-    QPushButton *btn_terminal_{};
-    QPushButton *btn_prefs_{};
-    ActivityBarItem active_ = ActivityBarItem::Explorer;
+    ActivityButton addButton(const QString &iconPath, const QString &tooltip, ActivityBarItem id);
+
+    ActivityButton btn_explorer_;
+    ActivityButton btn_git_;
+    ActivityButton btn_http_;
+    ActivityButton btn_hydra_;
+    ActivityButton btn_terminal_;
+    ActivityButton btn_prefs_;
+    ActivityBarItem active_{ActivityBarItem::Explorer};
+    QList<ActivityButton> buttons_;
 };
 
 } // namespace NezhaIDE::Views

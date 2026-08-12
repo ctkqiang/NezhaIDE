@@ -173,7 +173,8 @@ void GitGraphView::paintEvent(QPaintEvent *event)
     Q_UNUSED(event);
     auto &ts = NezhaIDE::Services::ThemeService::instance();
     QPainter p(viewport());
-    p.fillRect(viewport()->rect(), ts.qcolor(QStringLiteral("bg.primary")));
+    p.setRenderHint(QPainter::Antialiasing, true);
+    p.fillRect(viewport()->rect(), ts.qcolor(QStringLiteral("bg.tertiary")));
 
     if (commits_.isEmpty()) {
         p.setPen(ts.qcolor(QStringLiteral("text.secondary")));
@@ -213,11 +214,9 @@ void GitGraphView::paintEvent(QPaintEvent *event)
         }
     }
 
-    QFont subjectFont = font();
-    subjectFont.setPixelSize(13);
+    QFont subjectFont(QStringLiteral("Menlo"), 12);
     subjectFont.setBold(true);
-    QFont metaFont = font();
-    metaFont.setPixelSize(11);
+    QFont metaFont(QStringLiteral("Menlo"), 10);
     const QFontMetrics metaFm(metaFont);
     const QFontMetrics subjFm(subjectFont);
 

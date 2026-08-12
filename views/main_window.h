@@ -20,6 +20,7 @@ namespace NezhaIDE::Views {
     class ActivityBar;
     class SidebarContainer;
     class TerminalPanel;
+    class BottomPanel;
 }
 
 namespace Ui {
@@ -66,6 +67,7 @@ private:
     QAction *toggle_hydra_{};
     QAction *toggle_terminal_{};
     TerminalPanel *terminal_panel_{};
+    BottomPanel *bottom_panel_{};
 
     // 状态栏组件
     QLabel *cur_pos_label_{};

@@ -13,12 +13,15 @@
 #include <QProcess>
 #include <QShortcut>
 #include <QTimer>
+#include <QFileInfo>
 
 namespace NezhaIDE::Views {
 
 GitPanel::GitPanel(QWidget *parent)
     : QWidget(parent)
 {
+    setObjectName(QStringLiteral("gitPanelRoot"));
+
     auto *layout = new QVBoxLayout(this);
     layout->setContentsMargins(0, 0, 0, 0);
     layout->setSpacing(0);
@@ -51,8 +54,7 @@ GitPanel::GitPanel(QWidget *parent)
     layout->addWidget(toolbar_);
 
     branch_label_ = new QLabel(this);
-    branch_label_->setStyleSheet(
-        QStringLiteral("QLabel { padding: 6px 12px; font-size: 12px; font-weight: bold; }"));
+    branch_label_->setObjectName(QStringLiteral("gitBranchLabel"));
     layout->addWidget(branch_label_);
 
     splitter_ = new QSplitter(Qt::Vertical, this);
@@ -60,6 +62,7 @@ GitPanel::GitPanel(QWidget *parent)
     splitter_->setChildrenCollapsible(false);
 
     file_list_ = new QListWidget(splitter_);
+    file_list_->setObjectName(QStringLiteral("gitFileList"));
     file_list_->setContextMenuPolicy(Qt::CustomContextMenu);
     file_list_->setSelectionMode(QAbstractItemView::ExtendedSelection);
     connect(file_list_, &QListWidget::itemClicked, this, &GitPanel::onListItemClicked);
@@ -79,8 +82,10 @@ GitPanel::GitPanel(QWidget *parent)
     file_tabs_->addTab(graph_view_, LOC("git.history"));
 
     diff_view_ = new QPlainTextEdit(splitter_);
+    diff_view_->setObjectName(QStringLiteral("gitDiffView"));
     diff_view_->setReadOnly(true);
-    diff_view_->setFont(QFontDatabase::systemFont(QFontDatabase::FixedFont));
+    QFont diffFont(QStringLiteral("Menlo"), 12);
+    diff_view_->setFont(diffFont);
     diff_view_->setPlaceholderText(LOC("git.diff_hint"));
 
     splitter_->addWidget(file_tabs_);
@@ -91,11 +96,13 @@ GitPanel::GitPanel(QWidget *parent)
     layout->addWidget(splitter_, 1);
 
     auto *commit_frame = new QWidget(this);
+    commit_frame->setObjectName(QStringLiteral("gitCommitFrame"));
     auto *commit_layout = new QVBoxLayout(commit_frame);
     commit_layout->setContentsMargins(8, 8, 8, 8);
     commit_layout->setSpacing(6);
 
     commit_message_ = new QTextEdit(this);
+    commit_message_->setObjectName(QStringLiteral("gitCommitMsg"));
     commit_message_->setPlaceholderText(LOC("git.commit_placeholder"));
     commit_message_->setMaximumHeight(64);
     commit_layout->addWidget(commit_message_);
@@ -104,12 +111,14 @@ GitPanel::GitPanel(QWidget *parent)
     connect(ctrlEnter, &QShortcut::activated, this, &GitPanel::onCommit);
 
     commit_button_ = new QPushButton(LOC("git.commit_button"), this);
+    commit_button_->setObjectName(QStringLiteral("gitCommitBtn"));
     connect(commit_button_, &QPushButton::clicked, this, &GitPanel::onCommit);
     commit_layout->addWidget(commit_button_, 0, Qt::AlignRight);
 
     layout->addWidget(commit_frame);
 
     status_label_ = new QLabel(this);
+    status_label_->setObjectName(QStringLiteral("gitStatusLabel"));
     layout->addWidget(status_label_);
 
     git_process_ = new QProcess(this);
@@ -562,17 +571,7 @@ QString GitPanel::statusCharToText(QChar x, QChar y) const
 void GitPanel::applyStyles()
 {
     auto &ts = NezhaIDE::Services::ThemeService::instance();
-    toolbar_->setStyleSheet(ts.qss(QStringLiteral("style.git_toolbar")));
-    branch_label_->setStyleSheet(ts.qss(QStringLiteral("style.branch_label")));
-    file_list_->setStyleSheet(ts.qss(QStringLiteral("style.list_widget")));
-    file_tabs_->setStyleSheet(ts.qss(QStringLiteral("style.tab_widget")));
-    commit_message_->setStyleSheet(ts.qss(QStringLiteral("style.commit_input")));
-    commit_button_->setStyleSheet(ts.qss(QStringLiteral("style.primary_button")));
-    status_label_->setStyleSheet(ts.qss(QStringLiteral("style.status_label")));
-    if (auto *cf = commit_message_->parentWidget()) {
-        cf->setStyleSheet(ts.qss(QStringLiteral("style.commit_frame")));
-    }
-    diff_view_->setStyleSheet(ts.qss(QStringLiteral("style.git_diff")));
+    setStyleSheet(ts.qss(QStringLiteral("style.git_panel")));
     graph_view_->refresh();
 }
 

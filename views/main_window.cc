@@ -5,6 +5,7 @@
 #include "explorer_panel.h"
 #include "views/git_panel/git_panel.h"
 #include "views/terminal/terminal_panel.h"
+#include "views/bottom_panel/bottom_panel.h"
 #include "src/configuration.h"
 #include "src/utilities/logger.h"
 #include "views/editor/editor_tab_host.h"
@@ -13,7 +14,6 @@
 #include "src/services/theme_service.h"
 #include "ui_main_window.h"
 #include <QAction>
-#include <QDockWidget>
 #include <QDir>
 #include <QFileDialog>
 #include <QFileInfo>
@@ -147,9 +147,7 @@ void MainWindow::setupMenuBar()
     toggle_terminal_->setChecked(true);
     toggle_terminal_->setShortcut(QKeySequence(Qt::CTRL | Qt::Key_QuoteLeft));
     connect(toggle_terminal_, &QAction::triggered, this, [this](bool checked) {
-        if (auto *dock = findChild<QDockWidget *>(QStringLiteral("terminalDock"))) {
-            dock->setVisible(checked);
-        }
+        bottom_panel_->setVisible(checked);
     });
 }
 
@@ -160,27 +158,32 @@ void MainWindow::setupStatusBar()
 
     auto *branch_label = new QLabel(this);
     branch_label->setObjectName(QStringLiteral("statusBranch"));
+    branch_label->setCursor(Qt::PointingHandCursor);
     connect(sidebar_->gitPanel(), &GitPanel::branchChanged, this,
             [branch_label](const QString &branch) {
-        branch_label->setText(QStringLiteral("  ⎇ ") + branch + QStringLiteral("  "));
+        branch_label->setText(QStringLiteral("  \\u23C7 ") + branch + QStringLiteral("  "));
     });
     sb->addWidget(branch_label);
 
+    sb->addPermanentWidget(new QLabel(QStringLiteral(""), this));
+
     cur_pos_label_ = new QLabel(QStringLiteral("  Ln 1, Col 1  "), this);
     cur_pos_label_->setObjectName(QStringLiteral("statusCursor"));
-    sb->addWidget(cur_pos_label_);
+    cur_pos_label_->setCursor(Qt::PointingHandCursor);
+    sb->addPermanentWidget(cur_pos_label_);
 
     lang_label_ = new QLabel(QStringLiteral("  Plain Text  "), this);
     lang_label_->setObjectName(QStringLiteral("statusLang"));
-    sb->addWidget(lang_label_);
+    lang_label_->setCursor(Qt::PointingHandCursor);
+    sb->addPermanentWidget(lang_label_);
 
     encoding_label_ = new QLabel(QStringLiteral("  UTF-8  "), this);
     encoding_label_->setObjectName(QStringLiteral("statusEncoding"));
-    sb->addWidget(encoding_label_);
+    encoding_label_->setCursor(Qt::PointingHandCursor);
+    sb->addPermanentWidget(encoding_label_);
 
-    auto *info_label = new QLabel(QStringLiteral("  Ready  "), this);
-    info_label->setObjectName(QStringLiteral("statusInfo"));
-    sb->addPermanentWidget(info_label);
+    auto *spacer = new QLabel(QStringLiteral("  "), this);
+    sb->addPermanentWidget(spacer);
 }
 
 void MainWindow::onOpenProject()
@@ -271,15 +274,16 @@ void MainWindow::setupLayout()
 
     ui->centralwidget->layout()->addWidget(splitter_);
 
-    auto *dock = new QDockWidget(LOC("terminal.title"), this);
-    dock->setObjectName(QStringLiteral("terminalDock"));
-    dock->setAllowedAreas(Qt::BottomDockWidgetArea);
-    terminal_panel_ = new TerminalPanel(dock);
-    dock->setWidget(terminal_panel_);
-    addDockWidget(Qt::BottomDockWidgetArea, dock);
-    dock->setVisible(false);
+    bottom_panel_ = new BottomPanel(this);
+    ui->centralwidget->layout()->addWidget(bottom_panel_);
+    terminal_panel_ = bottom_panel_->terminalPanel();
 
     applyStyles();
+
+    // Connect BottomPanel visibility toggles
+    connect(bottom_panel_, &BottomPanel::panelVisibilityChanged, this, [this](bool visible) {
+        toggle_terminal_->setChecked(visible);
+    });
 
     connect(activity_bar_, &ActivityBar::itemSelected, this, [this](ActivityBarItem item) {
         switch (item) {
@@ -300,10 +304,7 @@ void MainWindow::setupLayout()
             editor_host_->openHydra();
             break;
         case ActivityBarItem::Terminal:
-            if (auto *dock = findChild<QDockWidget *>(QStringLiteral("terminalDock"))) {
-                dock->setVisible(!dock->isVisible());
-                toggle_terminal_->setChecked(dock->isVisible());
-            }
+            bottom_panel_->togglePanel();
             break;
         default: break;
         }
@@ -366,9 +367,7 @@ void MainWindow::applyStyles()
     menuBar()->setStyleSheet(ts.qss(QStringLiteral("style.menubar")));
     statusBar()->setStyleSheet(ts.qss(QStringLiteral("style.statusbar")));
     splitter_->setStyleSheet(ts.qss(QStringLiteral("style.splitter")));
-    if (auto *dock = findChild<QDockWidget *>(QStringLiteral("terminalDock"))) {
-        dock->setStyleSheet(ts.qss(QStringLiteral("style.dock_widget")));
-    }
+    bottom_panel_->setStyleSheet(ts.qss(QStringLiteral("style.panel_container")));
     activity_bar_->applyStyles();
 }
 
