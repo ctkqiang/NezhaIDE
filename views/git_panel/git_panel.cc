@@ -61,12 +61,23 @@ GitPanel::GitPanel(QWidget *parent)
     connect(file_list_, &QListWidget::customContextMenuRequested,
             this, &GitPanel::onCustomContextMenu);
 
+    file_tabs_ = new QTabWidget(splitter_);
+    file_tabs_->setObjectName(QStringLiteral("gitFileTabs"));
+    file_tabs_->setDocumentMode(true);
+    file_tabs_->addTab(file_list_, LOC("git.changes"));
+
+    graph_view_ = new GitGraphView(file_tabs_);
+    graph_view_->setObjectName(QStringLiteral("gitGraphView"));
+    graph_view_->setEmptyText(LOC("git.graph_empty"));
+    connect(graph_view_, &GitGraphView::commitSelected, this, &GitPanel::onCommitSelected);
+    file_tabs_->addTab(graph_view_, LOC("git.history"));
+
     diff_view_ = new QPlainTextEdit(splitter_);
     diff_view_->setReadOnly(true);
     diff_view_->setFont(QFontDatabase::systemFont(QFontDatabase::FixedFont));
     diff_view_->setPlaceholderText(LOC("git.diff_hint"));
 
-    splitter_->addWidget(file_list_);
+    splitter_->addWidget(file_tabs_);
     splitter_->addWidget(diff_view_);
     splitter_->setStretchFactor(0, 3);
     splitter_->setStretchFactor(1, 2);
@@ -147,6 +158,7 @@ void GitPanel::refresh()
     git_process_->terminate();
     git_process_->waitForFinished(500);
     git_process_->start("git", {"status", "--porcelain", "-u"});
+    loadGraph();
 }
 
 void GitPanel::setWorkingDirectory(const QString &path)
@@ -333,6 +345,83 @@ void GitPanel::onListItemDoubleClicked(QListWidgetItem *item)
     }
 }
 
+void GitPanel::onCommitSelected(const QString &hash, const QString &subject)
+{
+    status_label_->setText(
+        QStringLiteral("%1 · %2").arg(hash.left(7), subject));
+    auto *proc = new QProcess(this);
+    proc->setWorkingDirectory(git_process_->workingDirectory());
+    connect(proc, QOverload<int, QProcess::ExitStatus>::of(&QProcess::finished),
+            this, [this, proc](int exitCode, QProcess::ExitStatus) {
+        if (exitCode == 0) {
+            diff_view_->setPlainText(QString::fromUtf8(proc->readAllStandardOutput()));
+        } else {
+            diff_view_->setPlainText(
+                QString::fromUtf8(proc->readAllStandardError()));
+        }
+        proc->deleteLater();
+    });
+    proc->start("git", {"show", "--stat", "--format=medium", "--no-color", hash});
+}
+
+/**
+ * 异步加载提交图：git log 输出 commit 列表，for-each-ref 输出 refs 映射，
+ * 两者分别到达后交给 GitGraphView 合并渲染。
+ */
+void GitPanel::loadGraph()
+{
+    if (!has_working_dir_) return;
+    auto *proc = new QProcess(this);
+    proc->setWorkingDirectory(git_process_->workingDirectory());
+    connect(proc, QOverload<int, QProcess::ExitStatus>::of(&QProcess::finished),
+            this, [this, proc](int exitCode, QProcess::ExitStatus) {
+        if (exitCode == 0) {
+            QList<GitGraphCommit> commits;
+            const auto records = QString::fromUtf8(proc->readAllStandardOutput())
+                                     .split(QChar(0x1e), Qt::SkipEmptyParts);
+            commits.reserve(records.size());
+            for (const auto &rec : records) {
+                const auto f = rec.split(QChar(0x1f));
+                if (f.size() < 5) continue;
+                GitGraphCommit c;
+                c.hash = f[0];
+                c.parents = f[1].isEmpty()
+                                ? QStringList{}
+                                : f[1].split(' ', Qt::SkipEmptyParts);
+                c.author = f[2];
+                c.date = f[3];
+                c.subject = f[4];
+                commits.append(c);
+            }
+            graph_view_->setCommits(commits);
+
+            auto *refProc = new QProcess(this);
+            refProc->setWorkingDirectory(git_process_->workingDirectory());
+            connect(refProc, QOverload<int, QProcess::ExitStatus>::of(&QProcess::finished),
+                    this, [this, refProc](int refCode, QProcess::ExitStatus) {
+                if (refCode == 0) {
+                    QHash<QString, QStringList> refs;
+                    const auto lines = QString::fromUtf8(refProc->readAllStandardOutput())
+                                           .split('\n', Qt::SkipEmptyParts);
+                    for (const auto &line : lines) {
+                        const auto parts = line.split(QChar(0x1f));
+                        if (parts.size() < 2) continue;
+                        refs[parts[1]].append(parts[0]);
+                    }
+                    graph_view_->setRefs(refs);
+                }
+                refProc->deleteLater();
+            });
+            refProc->start("git",
+                           {"for-each-ref", "--format=%(refname:short)%x1f%(objectname)"});
+        }
+        proc->deleteLater();
+    });
+    proc->start("git", {"log", "--all", "--date-order",
+                        "--pretty=format:%H%x1f%P%x1f%an%x1f%ai%x1f%s%x1e",
+                        "--max-count=500"});
+}
+
 void GitPanel::onCustomContextMenu(const QPoint &pos)
 {
     const auto selected = file_list_->selectedItems();
@@ -468,6 +557,7 @@ void GitPanel::applyStyles()
     toolbar_->setStyleSheet(ts.qss(QStringLiteral("style.toolbar")));
     branch_label_->setStyleSheet(ts.qss(QStringLiteral("style.branch_label")));
     file_list_->setStyleSheet(ts.qss(QStringLiteral("style.list_widget")));
+    file_tabs_->setStyleSheet(ts.qss(QStringLiteral("style.tab_widget")));
     commit_message_->setStyleSheet(ts.qss(QStringLiteral("style.commit_input")));
     commit_button_->setStyleSheet(ts.qss(QStringLiteral("style.primary_button")));
     status_label_->setStyleSheet(ts.qss(QStringLiteral("style.status_label")));
@@ -475,6 +565,7 @@ void GitPanel::applyStyles()
         cf->setStyleSheet(ts.qss(QStringLiteral("style.commit_frame")));
     }
     diff_view_->setStyleSheet(ts.qss(QStringLiteral("style.http_response_body")));
+    graph_view_->refresh();
 }
 
 void GitPanel::applyGitColors()

@@ -56,6 +56,9 @@
     <string key="git.show_diff">查看差异</string>
     <string key="git.open_file">打开文件</string>
     <string key="git.diff_hint">选择文件查看差异</string>
+    <string key="git.changes">变更</string>
+    <string key="git.history">历史</string>
+    <string key="git.graph_empty">暂无提交记录</string>
     <string key="git.status.untracked">未跟踪</string>
     <string key="git.status.staged_modified">已暂存 (修改)</string>
     <string key="git.status.staged_added">已暂存 (新增)</string>

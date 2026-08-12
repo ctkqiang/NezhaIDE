@@ -84,12 +84,14 @@ namespace NezhaIDE::Services {
         for (size_t i = 0; i < count; ++i) {
             const auto &insn = insns[i];
             DisasmInstruction di;
+
             di.address = insn.address;
             di.offset = offset_in_file + (insn.address - base_address);
             di.mnemonic = insn.mnemonic;
             di.operands = insn.op_str[0] ? std::string(insn.op_str) : std::string();
             di.size = insn.size;
             di.bytes_hex = bytes_to_hex(insn.bytes, insn.size);
+
             result.push_back(std::move(di));
         }
 

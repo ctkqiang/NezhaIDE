@@ -56,6 +56,9 @@
     <string key="git.show_diff">Diff anzeigen</string>
     <string key="git.open_file">Datei öffnen</string>
     <string key="git.diff_hint">Datei auswählen um Diff anzuzeigen</string>
+    <string key="git.changes">Änderungen</string>
+    <string key="git.history">Verlauf</string>
+    <string key="git.graph_empty">Noch keine Commits</string>
     <string key="git.status.untracked">Nicht verfolgt</string>
     <string key="git.status.staged_modified">Gestaged (geändert)</string>
     <string key="git.status.staged_added">Gestaged (hinzugefügt)</string>

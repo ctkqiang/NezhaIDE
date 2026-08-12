@@ -16,6 +16,8 @@
 #include "views/hex_editor/hex_view.h"
 #include "views/http_view_panel/http_view_panel.h"
 #include "views/hydra/hydra_view_panel.h"
+#include "views/git_panel/git_panel.h"
+#include "views/git_panel/git_graph.h"
 
 #include <QApplication>
 #include <QComboBox>
@@ -399,8 +401,33 @@ int main(int argc, char* argv[]) {
                                                 QTimer::singleShot(3500, this, [=] {
                                                     std::printf("SELFTEST: hydra status(stopped)=%s\n", status->text().toUtf8().constData());
                                                     hpanel->grab().save(QStringLiteral("/tmp/nezha_11_hydra_stopped.png"));
-                                                    std::printf("SELFTEST: DONE\n");
-                                                    QApplication::exit(0);
+
+                                                    auto *gitPanel = window.findChild<NezhaIDE::Views::GitPanel *>();
+                                                    if (!gitPanel) {
+                                                        std::printf("SELFTEST: no git panel\n");
+                                                        QApplication::exit(2);
+                                                        return;
+                                                    }
+                                                    gitPanel->setWorkingDirectory(QStringLiteral(NEZHA_PROJECT_ROOT));
+                                                    auto *gitTabs = gitPanel->findChild<QTabWidget *>(QStringLiteral("gitFileTabs"));
+                                                    auto *graph = gitPanel->findChild<NezhaIDE::Views::GitGraphView *>(QStringLiteral("gitGraphView"));
+                                                    gitTabs->setCurrentIndex(1);
+                                                    QTimer::singleShot(1500, this, [=] {
+                                                        QMouseEvent press(QEvent::MouseButtonPress, QPointF(20, 23),
+                                                                          Qt::LeftButton, Qt::LeftButton, Qt::NoModifier);
+                                                        QApplication::sendEvent(graph->viewport(), &press);
+                                                        std::printf("SELFTEST: git graph selected=%s\n",
+                                                                    graph->selectedHash().toUtf8().constData());
+                                                        graph->grab().save(QStringLiteral("/tmp/nezha_12_git_graph.png"));
+                                                        QTimer::singleShot(600, this, [=] {
+                                                            auto *gitDiff = gitPanel->findChild<QPlainTextEdit *>();
+                                                            std::printf("SELFTEST: git tab0=%s diffLen=%d\n",
+                                                                        gitTabs->tabText(0).toUtf8().constData(),
+                                                                        static_cast<int>(gitDiff->toPlainText().size()));
+                                                            std::printf("SELFTEST: DONE\n");
+                                                            QApplication::exit(0);
+                                                        });
+                                                    });
                                                 });
                                             } else {
                                                 std::printf("SELFTEST: hydra finished before stop\n");

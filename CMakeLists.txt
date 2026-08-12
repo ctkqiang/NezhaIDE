@@ -50,6 +50,8 @@ add_executable(NezhaIDE main.cc
         views/git_panel/git_panel.cc
         views/git_panel/git_panel.h
         views/git_panel/git_panel.ui
+        views/git_panel/git_graph.cc
+        views/git_panel/git_graph.h
         src/model/column_def.h
         src/model/user_preference.h
         src/model/http_request.h
