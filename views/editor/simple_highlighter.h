@@ -6,8 +6,17 @@
 #include <QTextCharFormat>
 #include <QStringList>
 
+/**
+ * 通用语法高亮器组件。
+ */
 namespace NezhaIDE::Editor {
 
+/**
+ * 语言定义结构体，描述一种编程语言的词法规则。
+ *
+ * 用于 SimpleHighlighter 的构造。支持关键词、类型、
+ * 行注释、块注释、数字高亮和 HTTP header 高亮的配置。
+ */
 struct LanguageDefinition {
     QString name;
     QStringList keywords;
@@ -16,8 +25,15 @@ struct LanguageDefinition {
     QString blockCommentStart;   // "/*" or "\"\"\"" or empty
     QString blockCommentEnd;     // "*/" or "\"\"\"" or empty
     bool hasNumberHighlight = true;
+    bool hasHeaderHighlight = false;
 };
 
+/**
+ * 基于正则表达式的通用语法高亮器。
+ *
+ * 根据 LanguageDefinition 配置规则集，通过 ThemeService::syntaxColors()
+ * 获取主题颜色。支持关键词、类型名称、字符串、注释、数字和 HTTP header 的高亮。
+ */
 class SimpleHighlighter final : public QSyntaxHighlighter {
     Q_OBJECT
 
@@ -48,6 +64,7 @@ private:
     QRegularExpression commentLine_;
     QRegularExpression commentBlockStart_;
     QRegularExpression commentBlockEnd_;
+    QRegularExpression headerRx_;
 };
 
 LanguageDefinition languageJson();
@@ -71,5 +88,6 @@ LanguageDefinition languageSql();
 LanguageDefinition languageLua();
 LanguageDefinition languageKotlin();
 LanguageDefinition languageSwift();
+LanguageDefinition languageHttp();
 
 } // namespace NezhaIDE::Editor

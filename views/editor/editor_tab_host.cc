@@ -1,9 +1,12 @@
 #include "editor_tab_host.h"
 #include "code_editor.h"
+#include "views/hex_editor/hex_editor.h"
 #include "views/http_view_panel/http_view_panel.h"
+#include "views/hydra/hydra_view_panel.h"
 #include "src/configuration.h"
 #include "src/services/localization_service.h"
 #include "src/services/theme_service.h"
+#include "src/utilities/logger.h"
 #include <QLabel>
 #include <QFileInfo>
 #include <QMessageBox>
@@ -41,10 +44,30 @@ void EditorTabHost::openFile(const QString &path)
     const auto canonical = QFileInfo(path).canonicalFilePath();
     if (canonical.isEmpty()) return;
 
+    // .hydra 后缀作为 Hydra 工具入口，从 Explorer 双击即打开工具面板
+    if (QFileInfo(canonical).suffix().compare(QStringLiteral("hydra"), Qt::CaseInsensitive) == 0) {
+        openHydra();
+        return;
+    }
+
     if (auto it = editors_.find(canonical); it != editors_.end()) {
         setCurrentWidget(it.value());
         return;
     }
+    if (auto it = hex_editors_.find(canonical); it != hex_editors_.end()) {
+        setCurrentWidget(it.value());
+        return;
+    }
+
+    auto binaryCheck = Model::BinaryParser::open(canonical);
+    if (binaryCheck.has_value()) {
+        openBinaryFile(canonical);
+        return;
+    }
+
+    NezhaIDE::Utilities::Logger::instance().log(
+        NezhaIDE::Utilities::LogLevel::Info, __FILE__, __LINE__, __func__,
+        "打开文件: {}", canonical.toStdString());
 
     auto *editor = new CodeEditor(canonical, this);
     if (!editor->load()) {
@@ -79,6 +102,42 @@ void EditorTabHost::openFile(const QString &path)
     emit editActionsChanged();
 }
 
+void EditorTabHost::openBinaryFile(const QString &path)
+{
+    const auto canonical = QFileInfo(path).canonicalFilePath();
+    if (canonical.isEmpty()) return;
+
+    if (auto it = hex_editors_.find(canonical); it != hex_editors_.end()) {
+        setCurrentWidget(it.value());
+        return;
+    }
+
+    auto *hexEditor = new NezhaIDE::Views::HexEditor(canonical, this);
+    if (!hexEditor->load()) {
+        delete hexEditor;
+        openFile(path);
+        return;
+    }
+
+    hex_editors_[canonical] = hexEditor;
+
+    const auto title = QStringLiteral("Hex: ") + QFileInfo(canonical).fileName();
+    const auto idx = addTab(hexEditor, title);
+
+    connect(hexEditor, &NezhaIDE::Views::HexEditor::titleChanged, this,
+            [this](const QString &t) {
+        auto *he = qobject_cast<NezhaIDE::Views::HexEditor *>(sender());
+        if (he) {
+            const int i = indexOf(he);
+            if (i >= 0) setTabText(i, t);
+        }
+    });
+
+    removeWelcomeTab();
+    setCurrentIndex(idx);
+    emit editActionsChanged();
+}
+
 void EditorTabHost::openHttpClient()
 {
     if (http_panel_) {
@@ -88,6 +147,20 @@ void EditorTabHost::openHttpClient()
 
     http_panel_ = new NezhaIDE::Views::HttpViewPanel(this);
     const auto idx = addTab(http_panel_, LOC("http.tab_title"));
+
+    removeWelcomeTab();
+    setCurrentIndex(idx);
+}
+
+void EditorTabHost::openHydra()
+{
+    if (hydra_panel_) {
+        setCurrentWidget(hydra_panel_);
+        return;
+    }
+
+    hydra_panel_ = new NezhaIDE::Views::HydraViewPanel(this);
+    const auto idx = addTab(hydra_panel_, LOC("hydra.tab_title"));
 
     removeWelcomeTab();
     setCurrentIndex(idx);
@@ -130,6 +203,14 @@ void EditorTabHost::onTabCloseRequested(int index)
 
     if (w == http_panel_) {
         http_panel_ = nullptr;
+    }
+
+    if (w == hydra_panel_) {
+        hydra_panel_ = nullptr;
+    }
+
+    if (auto *hex = qobject_cast<NezhaIDE::Views::HexEditor *>(w)) {
+        hex_editors_.remove(hex->filePath());
     }
 
     removeTab(index);
@@ -191,6 +272,9 @@ void EditorTabHost::applyStyles()
     setStyleSheet(ts.qss(QStringLiteral("style.tab_widget")));
     for (auto *editor : editors_) {
         editor->applyTheme();
+    }
+    for (auto *hex : hex_editors_) {
+        hex->applyTheme();
     }
 }
 

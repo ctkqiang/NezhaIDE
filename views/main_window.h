@@ -18,6 +18,7 @@ namespace NezhaIDE::Editor {
 namespace NezhaIDE::Views {
     class ActivityBar;
     class SidebarContainer;
+    class TerminalPanel;
 }
 
 namespace Ui {
@@ -61,6 +62,9 @@ private:
     QAction *toggle_explorer_{};
     QAction *toggle_git_{};
     QAction *toggle_http_{};
+    QAction *toggle_hydra_{};
+    QAction *toggle_terminal_{};
+    TerminalPanel *terminal_panel_{};
 };
 
 } // namespace NezhaIDE::Views

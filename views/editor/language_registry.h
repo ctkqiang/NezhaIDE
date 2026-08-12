@@ -12,8 +12,19 @@ namespace NezhaIDE::Editor {
 
 struct LanguageDefinition;
 
+/**
+ * 文件扩展名 → 语法高亮器工厂注册表。
+ *
+ * 根据文件后缀分配对应的 QSyntaxHighlighter 实现。
+ * 未知扩展名返回 nullptr（不高亮）。
+ */
 class LanguageRegistry final {
 public:
+    /**
+     * 获取全局注册表实例。
+     *
+     * @return 单例引用。
+     */
     static LanguageRegistry &instance();
 
     LanguageRegistry(const LanguageRegistry &) = delete;

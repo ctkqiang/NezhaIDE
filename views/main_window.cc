@@ -4,13 +4,16 @@
 #include "sidebar_container.h"
 #include "explorer_panel.h"
 #include "views/git_panel/git_panel.h"
+#include "views/terminal/terminal_panel.h"
 #include "src/configuration.h"
+#include "src/utilities/logger.h"
 #include "views/editor/editor_tab_host.h"
 #include "views/editor/code_editor.h"
 #include "src/services/localization_service.h"
 #include "src/services/theme_service.h"
 #include "ui_main_window.h"
 #include <QAction>
+#include <QDockWidget>
 #include <QDir>
 #include <QFileDialog>
 #include <QFileInfo>
@@ -130,6 +133,23 @@ void MainWindow::setupMenuBar()
     connect(toggle_http_, &QAction::triggered, this, [this] {
         editor_host_->openHttpClient();
     });
+
+    toggle_hydra_ = view_menu->addAction(LOC("menu.view_hydra"));
+    toggle_hydra_->setCheckable(true);
+    toggle_hydra_->setChecked(true);
+    connect(toggle_hydra_, &QAction::triggered, this, [this] {
+        editor_host_->openHydra();
+    });
+
+    toggle_terminal_ = view_menu->addAction(LOC("menu.view_terminal"));
+    toggle_terminal_->setCheckable(true);
+    toggle_terminal_->setChecked(true);
+    toggle_terminal_->setShortcut(QKeySequence(Qt::CTRL | Qt::Key_QuoteLeft));
+    connect(toggle_terminal_, &QAction::triggered, this, [this](bool checked) {
+        if (auto *dock = findChild<QDockWidget *>(QStringLiteral("terminalDock"))) {
+            dock->setVisible(checked);
+        }
+    });
 }
 
 void MainWindow::setupStatusBar()
@@ -195,10 +215,17 @@ void MainWindow::updateProjectRoot(const QString &projectPath)
 {
     const QDir dir(projectPath);
     if (!dir.exists()) {
+        NezhaIDE::Utilities::Logger::instance().log(
+            NezhaIDE::Utilities::LogLevel::Warn, __FILE__, __LINE__, __func__,
+            "项目目录不存在: {}", projectPath.toStdString());
         QMessageBox::warning(this, LOC("error.title"),
                              LOC("error.project_not_found").arg(projectPath));
         return;
     }
+
+    NezhaIDE::Utilities::Logger::instance().log(
+        NezhaIDE::Utilities::LogLevel::Info, __FILE__, __LINE__, __func__,
+        "打开项目: {}", projectPath.toStdString());
 
     QDir::setCurrent(projectPath);
 
@@ -233,6 +260,14 @@ void MainWindow::setupLayout()
 
     ui->centralwidget->layout()->addWidget(splitter_);
 
+    auto *dock = new QDockWidget(LOC("terminal.title"), this);
+    dock->setObjectName(QStringLiteral("terminalDock"));
+    dock->setAllowedAreas(Qt::BottomDockWidgetArea);
+    terminal_panel_ = new TerminalPanel(dock);
+    dock->setWidget(terminal_panel_);
+    addDockWidget(Qt::BottomDockWidgetArea, dock);
+    dock->setVisible(false);
+
     applyStyles();
 
     connect(activity_bar_, &ActivityBar::itemSelected, this, [this](ActivityBarItem item) {
@@ -249,6 +284,15 @@ void MainWindow::setupLayout()
             break;
         case ActivityBarItem::HttpClient:
             editor_host_->openHttpClient();
+            break;
+        case ActivityBarItem::Hydra:
+            editor_host_->openHydra();
+            break;
+        case ActivityBarItem::Terminal:
+            if (auto *dock = findChild<QDockWidget *>(QStringLiteral("terminalDock"))) {
+                dock->setVisible(!dock->isVisible());
+                toggle_terminal_->setChecked(dock->isVisible());
+            }
             break;
         default: break;
         }

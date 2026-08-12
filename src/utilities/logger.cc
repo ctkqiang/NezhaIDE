@@ -4,6 +4,7 @@
 
 #include "logger.h"
 #include <chrono>
+#include <ctime>
 #include <iostream>
 
 #include "../configuration.h"
@@ -99,8 +100,13 @@ namespace NezhaIDE::Utilities {
     }
 
     std::string Logger::timestamp() {
+        // libc++ 的 chrono 格式化按 UTC 输出 system_clock，用 localtime_r + strftime 显式转换本地时区
         const auto now = std::chrono::system_clock::now();
-        const auto time = std::chrono::floor<std::chrono::seconds>(now);
-        return std::format("[{}] {:%Y-%m-%d %H:%M:%S}", NezhaIDE::Constants::ApplicationName, time);
+        const auto tt = std::chrono::system_clock::to_time_t(now);
+        std::tm local{};
+        localtime_r(&tt, &local);
+        char buf[40];
+        std::strftime(buf, sizeof(buf), "%Y-%m-%d %H:%M:%S", &local);
+        return std::format("[{}] {}", NezhaIDE::Constants::ApplicationName, std::string(buf));
     }
 }

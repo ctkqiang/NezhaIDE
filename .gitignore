@@ -9,3 +9,5 @@
 .NezhaAI
 cmake-build-*/
 data/*.db*
+*.restore
+data/*.txt
