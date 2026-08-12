@@ -107,6 +107,6 @@ namespace NezhaIDE::Utilities {
         localtime_r(&tt, &local);
         char buf[40];
         std::strftime(buf, sizeof(buf), "%Y-%m-%d %H:%M:%S", &local);
-        return std::format("[{}] {}", NezhaIDE::Constants::ApplicationName, buf);
+        return std::format("[{}] {}", NezhaIDE::Constants::ApplicationName, std::string(buf));
     }
 }
