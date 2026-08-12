@@ -56,6 +56,9 @@
     <string key="git.show_diff">查看差异</string>
     <string key="git.open_file">打开文件</string>
     <string key="git.diff_hint">选择文件查看差异</string>
+    <string key="git.changes">变更</string>
+    <string key="git.history">历史</string>
+    <string key="git.graph_empty">暂无提交记录</string>
     <string key="git.status.untracked">未跟踪</string>
     <string key="git.status.staged_modified">已暂存 (修改)</string>
     <string key="git.status.staged_added">已暂存 (新增)</string>
@@ -68,6 +71,14 @@
     <string key="git.status.conflict">冲突 / 未合并</string>
     <string key="git.status.staged_copied">已暂存（复制）</string>
     <string key="git.status.typechange">类型变更</string>
+    <string key="data_view.refresh">刷新</string>
+    <string key="data_view.run_query">运行查询</string>
+    <string key="data_view.sql_placeholder">输入 SQL 查询…</string>
+    <string key="data_view.no_tables">数据库中没有表</string>
+    <string key="data_view.load_error">无法打开数据文件: %1</string>
+    <string key="data_view.rows_status">显示 %1 / %2 行</string>
+    <string key="data_view.query_error">查询错误: %1</string>
+    <string key="data_view.csv_loaded">已加载 %1 行</string>
     <string key="menu.open_project">打开项目...</string>
     <string key="menu.save">保存</string>
     <string key="menu.quit">退出</string>
@@ -145,6 +156,9 @@
     <string key="hex.info">信息</string>
     <string key="hex.no_data">无可用数据</string>
     <string key="hex.stripped">已剥离符号 — 无符号表</string>
+    <string key="hex.offset_invalid">偏移超出范围</string>
+    <string key="hex.offset_hint">偏移（0x 十六进制或十进制）</string>
+    <string key="hex.go_to">跳转到偏移</string>
     <string key="terminal.title">终端</string>
     <string key="terminal.new">新建终端</string>
     <string key="terminal.close">关闭终端</string>
@@ -213,4 +227,9 @@
     <string key="hydra.status.no_target">未配置目标</string>
     <string key="hydra.status.select_service">请选择服务</string>
     <string key="hydra.status.stopped">已停止</string>
+    <string key="hydra.not_installed">未检测到 Hydra，请先安装 THC-Hydra</string>
+    <string key="hydra.username_file">从文件加载</string>
+    <string key="hydra.username_single">单个用户名</string>
+    <string key="hydra.username_single_placeholder">输入用户名，如 root</string>
+    <string key="hydra.username_single_loaded">使用用户名: %1</string>
 </localization>

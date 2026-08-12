@@ -155,6 +155,11 @@ namespace NezhaIDE::Tools {
         [[nodiscard]] bool isModuleInstalled(const QString &service) const;
 
         /**
+         * 探测后是否至少有一个可用的服务模块（hydra 是否已安装）。
+         */
+        [[nodiscard]] bool hasInstalledModules() const noexcept;
+
+        /**
          * 从工具数据库读取指定模块的动态参数定义。
          *
          * @param service 模块名（tool_procedures.name）。
@@ -169,6 +174,14 @@ namespace NezhaIDE::Tools {
          * @return 导入结果；文件不存在/不可读/为空时 error 非空。
          */
         LoadResult loadUsernameFile(const QString &path);
+
+        /**
+         * 以单个用户名（如 "root"）创建单条用户名数据集。
+         *
+         * @param username 用户名，去首尾空白后必须非空。
+         * @return 导入结果。
+         */
+        LoadResult loadSingleUsername(const QString &username);
 
         /**
          * 验证并导入自定义密码文件。

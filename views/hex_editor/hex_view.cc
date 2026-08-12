@@ -24,6 +24,20 @@ void HexView::setData(const uint8_t *data, size_t size) {
     viewport()->update();
 }
 
+void HexView::setSelection(const uint64_t start, const uint64_t size) {
+    if (!data_ || start >= data_size_) return;
+    sel_start_ = start;
+    sel_end_ = std::min(start + size, static_cast<uint64_t>(data_size_));
+    const auto y = static_cast<int>(start / kBytesPerRow) * rowHeight();
+    auto *vs = verticalScrollBar();
+    if (y < vs->value()) {
+        vs->setValue(y);
+    } else if (y + rowHeight() > vs->value() + viewport()->height()) {
+        vs->setValue(y + rowHeight() - viewport()->height());
+    }
+    viewport()->update();
+}
+
 void HexView::navigateToOffset(uint64_t offset) {
     if (!data_) return;
     auto row = static_cast<int>(offset / kBytesPerRow);

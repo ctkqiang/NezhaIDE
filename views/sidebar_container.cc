@@ -42,44 +42,40 @@ SidebarContainer::~SidebarContainer() = default;
 void SidebarContainer::setupHeader()
 {
     header_ = new QWidget(this);
-    header_->setFixedHeight(32);
+    header_->setFixedHeight(36);
     header_->setObjectName(QStringLiteral("sidebarHeader"));
 
     auto *layout = new QHBoxLayout(header_);
     layout->setContentsMargins(12, 0, 4, 0);
-    layout->setSpacing(4);
+    layout->setSpacing(2);
 
-    project_name_ = new QLabel(QStringLiteral("PROJECT"), header_);
-    project_name_->setStyleSheet(
-        QStringLiteral("QLabel { font-size: 11px; font-weight: bold;"
-        "text-transform: uppercase; letter-spacing: 0.5px; background: transparent; }"));
+    project_name_ = new QLabel(LOC("sidebar.explorer"), header_);
+    project_name_->setObjectName(QStringLiteral("sidebarTitle"));
     layout->addWidget(project_name_);
     layout->addStretch();
 
-    auto makeHeaderBtn = [](const QString &text, const QString &tooltip, QWidget *parent) -> QPushButton * {
-        auto *btn = new QPushButton(text, parent);
-        btn->setFixedSize(20, 20);
+    auto makeHeaderBtn = [](const QString &iconName, const QString &tooltip, QWidget *parent) -> QPushButton * {
+        auto *btn = new QPushButton(parent);
+        btn->setObjectName(QStringLiteral("sidebarHeaderBtn"));
+        btn->setFixedSize(26, 26);
+        btn->setIconSize({14, 14});
+        btn->setIcon(QIcon(QStringLiteral(":/vectors/%1.svg").arg(iconName)));
         btn->setFlat(true);
         btn->setCursor(Qt::PointingHandCursor);
         btn->setToolTip(tooltip);
-        btn->setStyleSheet(
-            QStringLiteral("QPushButton { border: none; font-size: 13px;"
-            "background: transparent; border-radius: 4px; }"
-            "QPushButton:hover { background: $hover; }")
-            .replace(QStringLiteral("$hover"),
-                NezhaIDE::Services::ThemeService::instance().color(QStringLiteral("overlay.hover"))));
         return btn;
     };
 
-    auto *btn_new = makeHeaderBtn(QStringLiteral("+"), LOC("explorer.new_file"), header_);
+    auto *btn_new = makeHeaderBtn(QStringLiteral("plus"), LOC("explorer.new_file"), header_);
     connect(btn_new, &QPushButton::clicked, explorer_panel_, &ExplorerPanel::onNewFile);
     layout->addWidget(btn_new);
 
-    auto *btn_folder = makeHeaderBtn(QStringLiteral("▸▾"), LOC("explorer.new_folder"), header_);
+    auto *btn_folder = makeHeaderBtn(QStringLiteral("plus"), LOC("explorer.new_folder"), header_);
+    btn_folder->setToolTip(LOC("explorer.new_folder"));
     connect(btn_folder, &QPushButton::clicked, explorer_panel_, &ExplorerPanel::onNewFolder);
     layout->addWidget(btn_folder);
 
-    auto *btn_refresh = makeHeaderBtn(QStringLiteral("⟳"), LOC("explorer.refresh"), header_);
+    auto *btn_refresh = makeHeaderBtn(QStringLiteral("refresh"), LOC("explorer.refresh"), header_);
     connect(btn_refresh, &QPushButton::clicked, this, [this] {
         explorer()->setRootPath(QDir::currentPath());
     });
@@ -104,10 +100,6 @@ void SidebarContainer::showGit()
 void SidebarContainer::setHeaderTitle(const QString &title)
 {
     project_name_->setText(title.toUpper());
-    project_name_->setStyleSheet(
-        project_name_->styleSheet() +
-        QStringLiteral(" color: %1;").arg(
-            NezhaIDE::Services::ThemeService::instance().color(QStringLiteral("text.secondary"))));
 }
 
 void SidebarContainer::applyStyles()

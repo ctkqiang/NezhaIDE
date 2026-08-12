@@ -56,6 +56,9 @@
     <string key="git.show_diff">Show Diff</string>
     <string key="git.open_file">Open File</string>
     <string key="git.diff_hint">Select a file to view diff</string>
+    <string key="git.changes">Changes</string>
+    <string key="git.history">History</string>
+    <string key="git.graph_empty">No commits yet</string>
     <string key="git.status.untracked">Untracked</string>
     <string key="git.status.staged_modified">Staged (modified)</string>
     <string key="git.status.staged_added">Staged (added)</string>
@@ -68,6 +71,14 @@
     <string key="git.status.conflict">Conflict / unmerged</string>
     <string key="git.status.staged_copied">Staged (copied)</string>
     <string key="git.status.typechange">Type change</string>
+    <string key="data_view.refresh">Refresh</string>
+    <string key="data_view.run_query">Run Query</string>
+    <string key="data_view.sql_placeholder">Enter SQL query…</string>
+    <string key="data_view.no_tables">No tables in database</string>
+    <string key="data_view.load_error">Could not open data file: %1</string>
+    <string key="data_view.rows_status">Showing %1 / %2 rows</string>
+    <string key="data_view.query_error">Query error: %1</string>
+    <string key="data_view.csv_loaded">Loaded %1 rows</string>
     <string key="menu.open_project">Open Project...</string>
     <string key="menu.save">Save</string>
     <string key="menu.quit">Quit</string>
@@ -145,6 +156,9 @@
     <string key="hex.info">Info</string>
     <string key="hex.no_data">No data available</string>
     <string key="hex.stripped">Stripped binary — no symbol table</string>
+    <string key="hex.offset_invalid">Offset out of range</string>
+    <string key="hex.offset_hint">Offset (0x hex or decimal)</string>
+    <string key="hex.go_to">Go to offset</string>
     <string key="terminal.title">Terminal</string>
     <string key="terminal.new">New Terminal</string>
     <string key="terminal.close">Close Terminal</string>
@@ -213,4 +227,9 @@
     <string key="hydra.status.no_target">No target configured</string>
     <string key="hydra.status.select_service">Select a service</string>
     <string key="hydra.status.stopped">Stopped</string>
+    <string key="hydra.not_installed">Hydra not installed. Please install THC-Hydra</string>
+    <string key="hydra.username_file">From file</string>
+    <string key="hydra.username_single">Single username</string>
+    <string key="hydra.username_single_placeholder">Enter a username, e.g. root</string>
+    <string key="hydra.username_single_loaded">Using username: %1</string>
 </localization>

@@ -1,7 +1,9 @@
 #include "activity_bar.h"
 #include "preferences_dialog.h"
+#include "src/services/localization_service.h"
 #include "src/services/theme_service.h"
 #include <QIcon>
+#include <QStyle>
 #include <QToolTip>
 
 namespace NezhaIDE::Views {
@@ -9,20 +11,20 @@ namespace NezhaIDE::Views {
 ActivityBar::ActivityBar(QWidget *parent)
     : QWidget(parent)
 {
-    setFixedWidth(36);
+    setFixedWidth(48);
     setObjectName(QStringLiteral("activityBar"));
 
     auto *layout = new QVBoxLayout(this);
-    layout->setContentsMargins(0, 8, 0, 0);
-    layout->setSpacing(2);
+    layout->setContentsMargins(0, 6, 0, 0);
+    layout->setSpacing(0);
 
-    btn_explorer_ = addButton(QStringLiteral("explorer"), "Explorer", ActivityBarItem::Explorer);
-    btn_git_ = addButton(QStringLiteral("git"), "Git", ActivityBarItem::Git);
-    btn_http_ = addButton(QStringLiteral("http"), "HTTP Client", ActivityBarItem::HttpClient);
-    btn_hydra_ = addButton(QStringLiteral("hydra"), "Hydra", ActivityBarItem::Hydra);
-    btn_terminal_ = addButton(QStringLiteral("terminal"), "Terminal", ActivityBarItem::Terminal);
+    btn_explorer_ = addButton(QStringLiteral("explorer"), LOC("activity.explorer") + QStringLiteral("  ⌘⇧E"), ActivityBarItem::Explorer);
+    btn_git_ = addButton(QStringLiteral("git"), LOC("activity.git") + QStringLiteral("  ⌘⇧G"), ActivityBarItem::Git);
+    btn_http_ = addButton(QStringLiteral("http"), QStringLiteral("HTTP Client  ⌘⇧H"), ActivityBarItem::HttpClient);
+    btn_hydra_ = addButton(QStringLiteral("hydra"), QStringLiteral("Hydra  ⌘⇧Y"), ActivityBarItem::Hydra);
+    btn_terminal_ = addButton(QStringLiteral("terminal"), LOC("activity.terminal") + QStringLiteral("  ⌘`"), ActivityBarItem::Terminal);
     layout->addStretch();
-    btn_prefs_ = addButton(QStringLiteral("preferences"), "Preferences", ActivityBarItem::Preferences);
+    btn_prefs_ = addButton(QStringLiteral("preferences"), LOC("activity.preferences") + QStringLiteral("  ⌘,"), ActivityBarItem::Preferences);
 
     setActive(ActivityBarItem::Explorer);
     applyStyles();
@@ -38,12 +40,13 @@ ActivityBar::ActivityBar(QWidget *parent)
 QPushButton *ActivityBar::addButton(const QString &iconPath, const QString &tooltip, ActivityBarItem id)
 {
     auto *btn = new QPushButton(this);
-    btn->setFixedSize(32, 32);
-    btn->setIconSize({18, 18});
+    btn->setFixedSize(40, 40);
+    btn->setIconSize({22, 22});
     btn->setIcon(QIcon(QStringLiteral(":/vectors/%1.svg").arg(iconPath)));
     btn->setToolTip(tooltip);
     btn->setCursor(Qt::PointingHandCursor);
     btn->setFlat(true);
+    btn->setObjectName(QStringLiteral("activityBarBtn"));
     connect(btn, &QPushButton::clicked, this, [this, id] {
         if (id == ActivityBarItem::Preferences) {
             PreferencesDialog dlg(window());
@@ -65,18 +68,9 @@ void ActivityBar::setActive(ActivityBarItem item)
     auto applyBtn = [&](QPushButton *btn, const QString &iconPath, bool active) {
         btn->setIcon(QIcon(QStringLiteral(":/vectors/%1%2.svg")
                                .arg(iconPath, active ? QStringLiteral("_active") : QString())));
-        if (active) {
-            btn->setStyleSheet(
-                QStringLiteral("QPushButton { background: transparent;"
-                "border: none; border-left: 2px solid %1;"
-                "padding: 0; border-radius: 0; }")
-                .arg(ts.color(QStringLiteral("accent"))));
-        } else {
-            btn->setStyleSheet(
-                QStringLiteral("QPushButton { background: transparent;"
-                "border: none; border-left: 2px solid transparent;"
-                "padding: 0; border-radius: 0; }"));
-        }
+        btn->setProperty("active", active);
+        btn->style()->unpolish(btn);
+        btn->style()->polish(btn);
     };
 
     applyBtn(btn_explorer_, QStringLiteral("explorer"), item == ActivityBarItem::Explorer);
@@ -89,9 +83,11 @@ void ActivityBar::setActive(ActivityBarItem item)
 
 void ActivityBar::applyStyles()
 {
-    setStyleSheet(
-        QStringLiteral("QWidget#activityBar { background: %1; }")
-        .arg(NezhaIDE::Services::ThemeService::instance().color(QStringLiteral("bg.secondary"))));
+    auto &ts = NezhaIDE::Services::ThemeService::instance();
+    setStyleSheet(ts.qss(QStringLiteral("style.activity_bar")));
+    for (auto *btn : findChildren<QPushButton*>(QStringLiteral("activityBarBtn"))) {
+        btn->setStyleSheet(ts.qss(QStringLiteral("style.activity_bar_btn")));
+    }
 }
 
 } // namespace NezhaIDE::Views

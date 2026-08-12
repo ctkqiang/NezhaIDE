@@ -81,6 +81,15 @@ HydraViewPanel::HydraViewPanel(QWidget *parent)
     connect(&svc, &NezhaIDE::Tools::HydraService::modulesProbed,
             this, [this] {
         probed_ = true;
+        if (!NezhaIDE::Tools::HydraService::instance().hasInstalledModules()) {
+            // hydra 未安装：无可选服务，明确提示并禁用运行
+            service_combo_->clear();
+            service_combo_->addItem(LOC("hydra.not_installed"), QVariant());
+            service_combo_->setEnabled(false);
+            setState(NezhaIDE::Tools::HydraState::Error);
+            status_label_->setText(LOC("hydra.not_installed"));
+            return;
+        }
         populateServices();
         recomputeState();
     });
@@ -88,7 +97,12 @@ HydraViewPanel::HydraViewPanel(QWidget *parent)
             this, [this](int count) {
         username_loaded_ = true;
         username_invalid_ = false;
-        username_hint_->setText(LOC("hydra.username_hint_loaded").arg(count));
+        if (username_single_radio_->isChecked()) {
+            username_hint_->setText(
+                LOC("hydra.username_single_loaded").arg(username_single_input_->text().trimmed()));
+        } else {
+            username_hint_->setText(LOC("hydra.username_hint_loaded").arg(count));
+        }
         recomputeState();
     });
     connect(&svc, &NezhaIDE::Tools::HydraService::passwordDatasetChanged,
@@ -136,7 +150,7 @@ void HydraViewPanel::setupUI()
     auto *configContainer = new QWidget(splitter);
     auto *configLayout = new QVBoxLayout(configContainer);
     configLayout->setContentsMargins(12, 12, 12, 8);
-    configLayout->setSpacing(8);
+    configLayout->setSpacing(10);
 
     configLayout->addWidget(buildTargetSection());
     configLayout->addWidget(buildModuleOptionsSection());
@@ -257,29 +271,64 @@ QWidget *HydraViewPanel::buildUsernameSection()
     auto *label = new QLabel(LOC("hydra.usernames"), frame);
     label->setObjectName(QStringLiteral("hydraSectionLabel"));
 
-    auto *row = new QHBoxLayout();
-    row->setSpacing(6);
+    auto *radioRow = new QHBoxLayout();
+    radioRow->setSpacing(16);
+    username_file_radio_ = new QRadioButton(LOC("hydra.username_file"), frame);
+    username_file_radio_->setObjectName(QStringLiteral("hydraUsernameSourceFile"));
+    username_single_radio_ = new QRadioButton(LOC("hydra.username_single"), frame);
+    username_single_radio_->setObjectName(QStringLiteral("hydraUsernameSourceSingle"));
+    username_file_radio_->setChecked(true);
+    radioRow->addWidget(username_file_radio_);
+    radioRow->addWidget(username_single_radio_);
+    layout->addLayout(radioRow);
 
-    username_path_input_ = new QLineEdit(frame);
+    username_file_row_ = new QWidget(frame);
+    auto *fileLayout = new QHBoxLayout(username_file_row_);
+    fileLayout->setContentsMargins(0, 0, 0, 0);
+    fileLayout->setSpacing(6);
+    username_path_input_ = new QLineEdit(username_file_row_);
     username_path_input_->setObjectName(QStringLiteral("hydraUsernamePath"));
     username_path_input_->setPlaceholderText(LOC("hydra.username_placeholder"));
     username_path_input_->setMinimumHeight(30);
     connect(username_path_input_, &QLineEdit::returnPressed, this,
             [this] { onLoadUsernames(username_path_input_->text()); });
-
-    auto *browseBtn = new QPushButton(LOC("hydra.browse"), frame);
+    auto *browseBtn = new QPushButton(LOC("hydra.browse"), username_file_row_);
     browseBtn->setObjectName(QStringLiteral("hydraGhostButton"));
     browseBtn->setCursor(Qt::PointingHandCursor);
     browseBtn->setMinimumHeight(30);
     connect(browseBtn, &QPushButton::clicked, this, &HydraViewPanel::onBrowseUsernames);
+    fileLayout->addWidget(username_path_input_, 1);
+    fileLayout->addWidget(browseBtn);
+    layout->addWidget(username_file_row_);
+
+    username_single_row_ = new QWidget(frame);
+    auto *singleLayout = new QHBoxLayout(username_single_row_);
+    singleLayout->setContentsMargins(0, 0, 0, 0);
+    singleLayout->setSpacing(6);
+    username_single_input_ = new QLineEdit(username_single_row_);
+    username_single_input_->setObjectName(QStringLiteral("hydraUsernameSingle"));
+    username_single_input_->setPlaceholderText(LOC("hydra.username_single_placeholder"));
+    username_single_input_->setMinimumHeight(30);
+    connect(username_single_input_, &QLineEdit::returnPressed, this,
+            [this] { onLoadSingleUsername(); });
+    singleLayout->addWidget(username_single_input_, 1);
+    username_single_row_->setVisible(false);
+    layout->addWidget(username_single_row_);
 
     username_hint_ = new QLabel(LOC("hydra.username_hint_none"), frame);
     username_hint_->setObjectName(QStringLiteral("hydraHintLabel"));
 
-    row->addWidget(username_path_input_, 1);
-    row->addWidget(browseBtn);
-    layout->addWidget(label);
-    layout->addLayout(row);
+    connect(username_file_radio_, &QRadioButton::toggled, this, [this](const bool checked) {
+        username_file_row_->setVisible(checked);
+        username_single_row_->setVisible(!checked);
+        if (checked && username_path_input_->text().trimmed().isEmpty()) {
+            username_loaded_ = false;
+            username_invalid_ = false;
+            username_hint_->setText(LOC("hydra.username_hint_none"));
+            recomputeState();
+        }
+    });
+
     layout->addWidget(username_hint_);
     return frame;
 }
@@ -675,6 +724,30 @@ void HydraViewPanel::onLoadUsernames(const QString &path)
     recomputeState();
 }
 
+void HydraViewPanel::onLoadSingleUsername()
+{
+    const auto name = username_single_input_->text().trimmed();
+    if (name.isEmpty()) {
+        username_loaded_ = false;
+        username_invalid_ = false;
+        username_hint_->setText(LOC("hydra.username_hint_none"));
+        recomputeState();
+        return;
+    }
+    const auto result = NezhaIDE::Tools::HydraService::instance().loadSingleUsername(name);
+    if (!result.ok()) {
+        username_loaded_ = false;
+        username_invalid_ = true;
+        username_hint_->setText(LOC("hydra.error.username_invalid"));
+        setState(NezhaIDE::Tools::HydraState::InvalidUsernameFile);
+        return;
+    }
+    username_hint_->setText(LOC("hydra.username_single_loaded").arg(name));
+    username_loaded_ = true;
+    username_invalid_ = false;
+    recomputeState();
+}
+
 void HydraViewPanel::onBrowsePasswords()
 {
     const auto path = QFileDialog::getOpenFileName(this, LOC("hydra.custom_file"),
@@ -830,13 +903,25 @@ void HydraViewPanel::recomputeState()
 void HydraViewPanel::setState(NezhaIDE::Tools::HydraState state)
 {
     state_ = state;
-    const auto &ts = NezhaIDE::Services::ThemeService::instance();
-    const auto bg = ts.color(QString::fromUtf8(stateColorKey(state)));
-    status_label_->setStyleSheet(
-        QStringLiteral("QLabel#hydraStatusLabel { background: %1; color: %2;"
-                       "border-radius: 11px; padding: 4px 14px;"
-                       "font-size: 12px; font-weight: bold; }")
-            .arg(bg, ts.color(QStringLiteral("button.text"))));
+    const char *propVal = "pending";
+    switch (state) {
+    case NezhaIDE::Tools::HydraState::Running:
+    case NezhaIDE::Tools::HydraState::UsernameLoaded:
+    case NezhaIDE::Tools::HydraState::PasswordLoaded:
+        propVal = "active"; break;
+    case NezhaIDE::Tools::HydraState::InvalidUsernameFile:
+    case NezhaIDE::Tools::HydraState::Error:
+        propVal = "error"; break;
+    case NezhaIDE::Tools::HydraState::CustomPasswordRequired:
+        propVal = "warn"; break;
+    case NezhaIDE::Tools::HydraState::Ready:
+    case NezhaIDE::Tools::HydraState::Completed:
+        propVal = "success"; break;
+    default: break;
+    }
+    status_label_->setProperty("state", QLatin1String(propVal));
+    status_label_->style()->unpolish(status_label_);
+    status_label_->style()->polish(status_label_);
     status_label_->setText(stateText(state));
     updateRunButton();
 }
@@ -869,12 +954,14 @@ void HydraViewPanel::applyStyles()
     setStyleSheet(ts.qss(QStringLiteral("style.hydra_panel")));
     host_input_->setStyleSheet(ts.qss(QStringLiteral("style.http_url_input")));
     username_path_input_->setStyleSheet(ts.qss(QStringLiteral("style.http_url_input")));
+    username_single_input_->setStyleSheet(ts.qss(QStringLiteral("style.http_url_input")));
     github_url_input_->setStyleSheet(ts.qss(QStringLiteral("style.http_url_input")));
     custom_path_input_->setStyleSheet(ts.qss(QStringLiteral("style.http_url_input")));
     extra_args_input_->setStyleSheet(ts.qss(QStringLiteral("style.http_url_input")));
     service_combo_->setStyleSheet(ts.qss(QStringLiteral("style.http_combo")));
     try_mode_combo_->setStyleSheet(ts.qss(QStringLiteral("style.http_combo")));
-    log_view_->setStyleSheet(ts.qss(QStringLiteral("style.http_response_body")));
+    log_view_->setStyleSheet(ts.qss(QStringLiteral("style.git_diff")));
+    status_label_->setStyleSheet(ts.qss(QStringLiteral("style.hydra_status_chip")));
     for (auto *spin : {port_spin_, random_count_spin_, random_min_spin_, random_max_spin_,
                         threads_spin_, timeout_spin_}) {
         spin->setStyleSheet(ts.qss(QStringLiteral("style.hydra_spin")));
