@@ -81,7 +81,8 @@ add_executable(NezhaIDE main.cc
         src/tools/hydra.cc
         src/tools/hydra.h
         src/utilities/downloader.cc
-        src/utilities/downloader.h)
+        src/utilities/downloader.h
+        src/model/password.h)
 
 set_target_properties(NezhaIDE PROPERTIES
     MACOSX_BUNDLE TRUE
