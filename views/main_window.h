@@ -10,6 +10,7 @@
 
 class QSplitter;
 class QAction;
+class QLabel;
 
 namespace NezhaIDE::Editor {
     class EditorTabHost;
@@ -65,6 +66,11 @@ private:
     QAction *toggle_hydra_{};
     QAction *toggle_terminal_{};
     TerminalPanel *terminal_panel_{};
+
+    // 状态栏组件
+    QLabel *cur_pos_label_{};
+    QLabel *lang_label_{};
+    QLabel *encoding_label_{};
 };
 
 } // namespace NezhaIDE::Views

@@ -425,6 +425,11 @@ void HexEditor::applyTheme() {
     imports_table_->setStyleSheet(ts.qss(QStringLiteral("style.http_kv_table")));
     strings_table_->setStyleSheet(ts.qss(QStringLiteral("style.http_kv_table")));
 
+    // Go 定位栏
+    if (auto *bar = pos_label_ ? pos_label_->parentWidget() : nullptr) {
+        bar->setStyleSheet(ts.qss(QStringLiteral("style.hex_gobar")));
+    }
+
     hex_view_->viewport()->update();
     disasm_view_->refresh();
 

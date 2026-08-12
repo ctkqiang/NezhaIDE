@@ -20,6 +20,7 @@
 #include <QLabel>
 #include <QMenuBar>
 #include <QMessageBox>
+#include <QPlainTextEdit>
 #include <QSplitter>
 #include <QStatusBar>
 
@@ -161,14 +162,24 @@ void MainWindow::setupStatusBar()
     branch_label->setObjectName(QStringLiteral("statusBranch"));
     connect(sidebar_->gitPanel(), &GitPanel::branchChanged, this,
             [branch_label](const QString &branch) {
-        branch_label->setText(QStringLiteral("  ") + LOC("git.branch").arg(branch) + QStringLiteral("  "));
+        branch_label->setText(QStringLiteral("  ⎇ ") + branch + QStringLiteral("  "));
     });
-
-    auto *info_label = new QLabel(this);
-    info_label->setObjectName(QStringLiteral("statusInfo"));
-    info_label->setText(QStringLiteral("  Ready  "));
-
     sb->addWidget(branch_label);
+
+    cur_pos_label_ = new QLabel(QStringLiteral("  Ln 1, Col 1  "), this);
+    cur_pos_label_->setObjectName(QStringLiteral("statusCursor"));
+    sb->addWidget(cur_pos_label_);
+
+    lang_label_ = new QLabel(QStringLiteral("  Plain Text  "), this);
+    lang_label_->setObjectName(QStringLiteral("statusLang"));
+    sb->addWidget(lang_label_);
+
+    encoding_label_ = new QLabel(QStringLiteral("  UTF-8  "), this);
+    encoding_label_->setObjectName(QStringLiteral("statusEncoding"));
+    sb->addWidget(encoding_label_);
+
+    auto *info_label = new QLabel(QStringLiteral("  Ready  "), this);
+    info_label->setObjectName(QStringLiteral("statusInfo"));
     sb->addPermanentWidget(info_label);
 }
 
@@ -242,7 +253,7 @@ void MainWindow::updateProjectRoot(const QString &projectPath)
 void MainWindow::setupLayout()
 {
     splitter_ = new QSplitter(Qt::Horizontal, this);
-    splitter_->setHandleWidth(1);
+    splitter_->setHandleWidth(4);
 
     activity_bar_ = new ActivityBar(this);
     splitter_->addWidget(activity_bar_);
@@ -256,7 +267,7 @@ void MainWindow::setupLayout()
     splitter_->setStretchFactor(0, 0);
     splitter_->setStretchFactor(1, 0);
     splitter_->setStretchFactor(2, 1);
-    splitter_->setSizes({36, 280, 964});
+    splitter_->setSizes({48, 280, 952});
 
     ui->centralwidget->layout()->addWidget(splitter_);
 
@@ -307,6 +318,45 @@ void MainWindow::setupLayout()
             this, &MainWindow::updateEditActions);
     connect(editor_host_, &NezhaIDE::Editor::EditorTabHost::editActionsChanged,
             this, &MainWindow::updateEditActions);
+
+    // 连接编辑器光标变化以更新状态栏
+    connect(editor_host_, &QTabWidget::currentChanged, this, [this](int) {
+        if (auto *ed = editor_host_->currentEditor()) {
+            connect(ed, &QPlainTextEdit::cursorPositionChanged, this, [this, ed] {
+                auto cursor = ed->textCursor();
+                cur_pos_label_->setText(
+                    QStringLiteral("  Ln %1, Col %2  ")
+                        .arg(cursor.blockNumber() + 1)
+                        .arg(cursor.columnNumber() + 1));
+                // 根据文件后缀更新语言模式
+                const auto suffix = QFileInfo(ed->filePath()).suffix().toLower();
+                QString lang = suffix.isEmpty() ? QStringLiteral("Plain Text") : suffix.toUpper();
+                // 已知语言映射
+                static const QHash<QString, QString> langMap = {
+                    {QStringLiteral("cpp"), QStringLiteral("C++")},
+                    {QStringLiteral("h"), QStringLiteral("C++")},
+                    {QStringLiteral("cc"), QStringLiteral("C++")},
+                    {QStringLiteral("c"), QStringLiteral("C")},
+                    {QStringLiteral("py"), QStringLiteral("Python")},
+                    {QStringLiteral("js"), QStringLiteral("JavaScript")},
+                    {QStringLiteral("ts"), QStringLiteral("TypeScript")},
+                    {QStringLiteral("json"), QStringLiteral("JSON")},
+                    {QStringLiteral("xml"), QStringLiteral("XML")},
+                    {QStringLiteral("html"), QStringLiteral("HTML")},
+                    {QStringLiteral("css"), QStringLiteral("CSS")},
+                    {QStringLiteral("sql"), QStringLiteral("SQL")},
+                    {QStringLiteral("md"), QStringLiteral("Markdown")},
+                    {QStringLiteral("yaml"), QStringLiteral("YAML")},
+                    {QStringLiteral("yml"), QStringLiteral("YAML")},
+                    {QStringLiteral("sh"), QStringLiteral("Shell")},
+                    {QStringLiteral("cmake"), QStringLiteral("CMake")},
+                    {QStringLiteral("txt"), QStringLiteral("Plain Text")},
+                };
+                if (langMap.contains(suffix)) lang = langMap[suffix];
+                lang_label_->setText(QStringLiteral("  %1  ").arg(lang));
+            });
+        }
+    });
 }
 
 void MainWindow::applyStyles()

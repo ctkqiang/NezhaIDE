@@ -76,6 +76,17 @@ static const QHash<QString, QString> kFallbackColorsDark = {
 };
 
 static const QHash<QString, QString> kStyleTemplates = {
+    {"style.activity_bar",
+     "QWidget#activityBar { background: $bg.secondary; }"},
+
+    {"style.activity_bar_btn",
+     "QPushButton#activityBarBtn { background: transparent;"
+     "border: none; border-left: 2px solid transparent;"
+     "border-radius: 0; padding: 0; }"
+     "QPushButton#activityBarBtn:hover { background: $overlay.hover; }"
+     "QPushButton#activityBarBtn[active=\"true\"]"
+     " { border-left: 2px solid $accent; }"},
+
     {"style.toolbar",
      "QToolBar { border: none; padding: 4px 6px; spacing: 2px;"
      "background: transparent; }"
@@ -103,7 +114,7 @@ static const QHash<QString, QString> kStyleTemplates = {
      "QListWidget::item:selected { background: $overlay.selection; color: $text.primary; }"},
 
     {"style.splitter",
-     "QSplitter::handle { background: transparent; width: 1px; }"
+     "QSplitter::handle { background: transparent; }"
      "QSplitter::handle:hover { background: $border; }"},
 
     {"style.tab_widget",
@@ -127,7 +138,13 @@ static const QHash<QString, QString> kStyleTemplates = {
      "QStackedWidget { background: $bg.secondary; }"},
 
     {"style.header",
-     "QWidget { background: $bg.secondary; }"},
+     "QWidget { background: $bg.secondary; }"
+     "QLabel#sidebarTitle { font-size: 11px; font-weight: 700;"
+     " text-transform: uppercase; letter-spacing: 1px; background: transparent;"
+     " color: $text.secondary; }"
+     "QPushButton#sidebarHeaderBtn { border: none; border-radius: 5px;"
+     " background: transparent; }"
+     "QPushButton#sidebarHeaderBtn:hover { background: $overlay.hover; }"},
 
     {"style.main_window",
      "QMainWindow { background: $bg.primary; }"},
@@ -164,9 +181,13 @@ static const QHash<QString, QString> kStyleTemplates = {
 
     {"style.statusbar",
      "QStatusBar { background: $bg.secondary; color: $text.tertiary;"
-     "border: none; font-size: 11px; padding: 0 12px; }"
+     "border: none; font-size: 11px; padding: 0 12px; min-height: 24px; }"
      "QStatusBar::item { border: none; }"
-     "QStatusBar QLabel { color: $text.tertiary; padding: 0 8px; }"},
+     "QStatusBar QLabel { color: $text.tertiary; padding: 0 8px; }"
+     "QStatusBar QLabel#statusCursor { color: $text.secondary; font-family: Menlo; }"
+     "QStatusBar QLabel#statusLang { color: $text.secondary; }"
+     "QStatusBar QLabel#statusEncoding { color: $text.secondary; }"
+     "QStatusBar QLabel#statusBranch { font-weight: 600; }"},
 
     {"style.branch_label",
      "QLabel { padding: 6px 12px; font-size: 12px; font-weight: bold;"
@@ -193,10 +214,10 @@ static const QHash<QString, QString> kStyleTemplates = {
     {"style.editor",
      "QPlainTextEdit { background: $syntax.editor.background; color: $syntax.editor.foreground;"
      "border: none; selection-background-color: $overlay.selection;"
-     "font-family: Menlo, 'Courier New', monospace; font-size: 13px;"
+     "font-family: Menlo; font-size: 13px;"
      "padding: 8px; }"
      "QWidget#lineNumberArea { background: $bg.secondary; color: $text.tertiary;"
-     "font-family: Menlo, 'Courier New', monospace; font-size: 12px; }"},
+     "font-family: Menlo; font-size: 12px; }"},
 
     {"style.http_panel",
      "QWidget#httpClientRoot { background: $bg.secondary; }"
@@ -226,7 +247,7 @@ static const QHash<QString, QString> kStyleTemplates = {
 
     {"style.http_body_editor",
      "QPlainTextEdit { border: 1px solid $border; border-radius: 8px; background: $bg.primary;"
-     "color: $text.primary; font-family: Menlo, monospace; font-size: 13px;"
+     "color: $text.primary; font-family: Menlo; font-size: 13px;"
      "selection-background-color: $overlay.selection; padding: 8px; }"
      "QPlainTextEdit:focus { border-color: $accent; }"},
 
@@ -253,12 +274,12 @@ static const QHash<QString, QString> kStyleTemplates = {
 
     {"style.http_response_body",
      "QPlainTextEdit { border: 1px solid $border; border-radius: 8px; background: $bg.primary;"
-     "color: $text.primary; font-family: Menlo, monospace; font-size: 12px;"
+     "color: $text.primary; font-family: Menlo; font-size: 12px;"
      "selection-background-color: $overlay.selection; padding: 8px; }"},
 
     {"style.git_diff",
      "QPlainTextEdit { background: $bg.tertiary; border: none; border-radius: 8px;"
-     "color: $text.primary; font-family: Menlo, monospace; font-size: 12px;"
+     "color: $text.primary; font-family: Menlo; font-size: 12px;"
      "selection-background-color: $overlay.selection; padding: 10px; }"},
 
     {"style.dock_widget",
@@ -304,7 +325,22 @@ static const QHash<QString, QString> kStyleTemplates = {
      "text-transform: uppercase; letter-spacing: 0.5px; color: $text.secondary; }"
      "QLabel#hydraHintLabel { font-size: 11px; color: $text.tertiary; }"
      "QRadioButton { color: $text.primary; font-size: 13px; spacing: 6px; }"
-     "QRadioButton::indicator { width: 15px; height: 15px; }"},
+     "QRadioButton::indicator { width: 15px; height: 15px; }""QCheckBox { color: $text.primary; font-size: 13px; spacing: 6px; }"},
+
+    {"style.hydra_status_chip",
+     "QLabel#hydraStatusLabel {"
+     "border-radius: 11px; padding: 4px 14px;"
+     "font-size: 12px; font-weight: 600; }"
+     "QLabel#hydraStatusLabel[state='pending']"
+     " { background: $text.secondary; color: $button.text; }"
+     "QLabel#hydraStatusLabel[state='active']"
+     " { background: $accent; color: $button.text; }"
+     "QLabel#hydraStatusLabel[state='error']"
+     " { background: $git.deleted; color: $button.text; }"
+     "QLabel#hydraStatusLabel[state='warn']"
+     " { background: $git.modified; color: $button.text; }"
+     "QLabel#hydraStatusLabel[state='success']"
+     " { background: $git.added; color: $button.text; }"},
 
     {"style.hydra_spin",
      "QSpinBox { border: 1px solid $border; border-radius: 8px;"
@@ -354,6 +390,24 @@ static const QHash<QString, QString> kStyleTemplates = {
      "border: none; border-bottom: 1px solid $border; padding: 6px 8px;"
      "font-size: 11px; font-weight: 600; }"
      "QTableCornerButton::section { background: $bg.secondary; border: none; }"},
+
+    {"style.welcome_root",
+     "QWidget#welcomeRoot { background: transparent; }"
+     "QLabel#welcomeTitle { font-size: 26px; font-weight: 600;"
+     " color: $text.primary; background: transparent; }"
+     "QLabel#welcomeVersion { font-size: 13px; color: $text.tertiary;"
+     " background: transparent; }"
+     "QLabel#welcomeStartLabel { font-size: 11px; font-weight: 600;"
+     " text-transform: uppercase; letter-spacing: 1px;"
+     " color: $text.secondary; background: transparent; }"
+     "QWidget#welcomeActionRow { background: transparent;"
+     " border-radius: 6px; }"
+     "QWidget#welcomeActionRow:hover { background: $overlay.hover; }"
+     "QLabel#welcomeActionLabel { font-size: 13px; color: $text.primary;"
+     " background: transparent; }"
+     "QLabel#welcomeActionKey { font-size: 11px; color: $text.tertiary;"
+     " background: transparent; padding: 1px 6px;"
+     " border: 1px solid $border; border-radius: 3px; }"},
 };
 
 ThemeService &ThemeService::instance()
