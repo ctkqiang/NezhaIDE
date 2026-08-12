@@ -1,5 +1,6 @@
 #include "editor_tab_host.h"
 #include "code_editor.h"
+#include "data_view.h"
 #include "views/hex_editor/hex_editor.h"
 #include "views/http_view_panel/http_view_panel.h"
 #include "views/hydra/hydra_view_panel.h"
@@ -7,9 +8,12 @@
 #include "src/services/localization_service.h"
 #include "src/services/theme_service.h"
 #include "src/utilities/logger.h"
+#include <QFile>
+#include <QJsonDocument>
 #include <QLabel>
 #include <QFileInfo>
 #include <QMessageBox>
+#include <QPushButton>
 #include <QTabBar>
 #include <QVBoxLayout>
 
@@ -58,12 +62,39 @@ void EditorTabHost::openFile(const QString &path)
         setCurrentWidget(it.value());
         return;
     }
+    if (auto it = data_views_.find(canonical); it != data_views_.end()) {
+        setCurrentWidget(it.value());
+        return;
+    }
+
+    const auto suffix = QFileInfo(canonical).suffix().toLower();
+    if (suffix == QStringLiteral("db") || suffix == QStringLiteral("sqlite")
+        || suffix == QStringLiteral("sqlite3")) {
+        openDataFile(canonical);
+        return;
+    }
+    if (suffix == QStringLiteral("csv")) {
+        openDataFile(canonical);
+        return;
+    }
+    if (suffix == QStringLiteral("json")) {
+        openJsonFile(canonical);
+        return;
+    }
 
     auto binaryCheck = Model::BinaryParser::open(canonical);
     if (binaryCheck.has_value()) {
         openBinaryFile(canonical);
         return;
     }
+
+    openCodeFile(canonical);
+}
+
+void EditorTabHost::openCodeFile(const QString &path)
+{
+    const auto canonical = QFileInfo(path).canonicalFilePath();
+    if (canonical.isEmpty()) return;
 
     NezhaIDE::Utilities::Logger::instance().log(
         NezhaIDE::Utilities::LogLevel::Info, __FILE__, __LINE__, __func__,
@@ -100,6 +131,84 @@ void EditorTabHost::openFile(const QString &path)
     removeWelcomeTab();
     setCurrentIndex(index);
     emit editActionsChanged();
+}
+
+void EditorTabHost::openDataFile(const QString &path)
+{
+    const auto canonical = QFileInfo(path).canonicalFilePath();
+    if (canonical.isEmpty()) return;
+
+    auto *dataView = new NezhaIDE::Views::DataView(canonical, this);
+    if (!dataView->load()) {
+        delete dataView;
+        openCodeFile(canonical);
+        return;
+    }
+
+    data_views_[canonical] = dataView;
+
+    const auto idx = addTab(dataView, QFileInfo(canonical).fileName());
+
+    connect(dataView, &NezhaIDE::Views::DataView::titleChanged, this,
+            [this](const QString &t) {
+        auto *dv = qobject_cast<NezhaIDE::Views::DataView *>(sender());
+        if (dv) {
+            const int i = indexOf(dv);
+            if (i >= 0) setTabText(i, t);
+        }
+    });
+
+    removeWelcomeTab();
+    setCurrentIndex(idx);
+    emit editActionsChanged();
+}
+
+void EditorTabHost::openJsonFile(const QString &path)
+{
+    const auto canonical = QFileInfo(path).canonicalFilePath();
+    if (canonical.isEmpty()) return;
+
+    QFile file(canonical);
+    if (file.open(QIODevice::ReadOnly)) {
+        const auto doc = QJsonDocument::fromJson(file.readAll());
+        if (!doc.isNull()) {
+            auto *editor = new CodeEditor(canonical, this);
+            if (!editor->load()) {
+                delete editor;
+                return;
+            }
+            editor->setPlainText(QString::fromUtf8(doc.toJson(QJsonDocument::Indented)));
+            editor->document()->setModified(false);
+
+            editors_[canonical] = editor;
+
+            const auto title = QFileInfo(canonical).fileName();
+            const auto index = addTab(editor, title);
+
+            connect(editor, &CodeEditor::titleChanged, this, [this](const QString &title) {
+                auto *ed = qobject_cast<CodeEditor *>(sender());
+                if (ed) {
+                    const int idx = indexOf(ed);
+                    if (idx >= 0) setTabText(idx, title);
+                }
+            });
+
+            connect(editor->document(), &QTextDocument::undoAvailable,
+                    this, &EditorTabHost::editActionsChanged);
+            connect(editor->document(), &QTextDocument::redoAvailable,
+                    this, &EditorTabHost::editActionsChanged);
+            connect(editor, &CodeEditor::copyAvailable,
+                    this, &EditorTabHost::editActionsChanged);
+            connect(editor, &CodeEditor::modificationChanged,
+                    this, &EditorTabHost::editActionsChanged);
+
+            removeWelcomeTab();
+            setCurrentIndex(index);
+            emit editActionsChanged();
+            return;
+        }
+    }
+    openCodeFile(canonical);
 }
 
 void EditorTabHost::openBinaryFile(const QString &path)
@@ -213,6 +322,10 @@ void EditorTabHost::onTabCloseRequested(int index)
         hex_editors_.remove(hex->filePath());
     }
 
+    if (auto *dv = qobject_cast<NezhaIDE::Views::DataView *>(w)) {
+        data_views_.remove(dv->filePath());
+    }
+
     removeTab(index);
     w->deleteLater();
 
@@ -229,40 +342,78 @@ void EditorTabHost::ensureWelcomeTab()
 
     const auto welcomeTitle = LOC("editor.welcome");
     auto *welcome = new QWidget();
-    auto *wl = new QVBoxLayout(welcome);
-    wl->setAlignment(Qt::AlignCenter);
-    wl->setSpacing(8);
+    welcome->setObjectName(QStringLiteral("welcomeRoot"));
+    auto *outer = new QVBoxLayout(welcome);
+    outer->setAlignment(Qt::AlignCenter);
+    outer->setSpacing(0);
+
+    outer->addStretch(3);
+
+    auto *brand = new QWidget();
+    auto *bl = new QVBoxLayout(brand);
+    bl->setAlignment(Qt::AlignCenter);
+    bl->setSpacing(4);
 
     auto *title = new QLabel(QString::fromUtf8(
         NezhaIDE::Constants::ApplicationName.data(),
         static_cast<int>(NezhaIDE::Constants::ApplicationName.size())));
-    title->setStyleSheet(QStringLiteral("QLabel { font-size: 24px; font-weight: bold;"
-        "color: $c; }").replace(QStringLiteral("$c"),
-        NezhaIDE::Services::ThemeService::instance().color(QStringLiteral("text.primary"))));
+    title->setObjectName(QStringLiteral("welcomeTitle"));
     title->setAlignment(Qt::AlignCenter);
-    wl->addWidget(title);
+    bl->addWidget(title);
 
-    auto *ver = new QLabel(QStringLiteral("v") + QString::fromUtf8(
+    auto *ver = new QLabel(QString::fromUtf8(
         NezhaIDE::Constants::ApplicationVersion.data(),
         static_cast<int>(NezhaIDE::Constants::ApplicationVersion.size())));
+    ver->setObjectName(QStringLiteral("welcomeVersion"));
     ver->setAlignment(Qt::AlignCenter);
-    ver->setStyleSheet(QStringLiteral("QLabel { font-size: 13px; color: $c; }")
-        .replace(QStringLiteral("$c"),
-        NezhaIDE::Services::ThemeService::instance().color(QStringLiteral("text.tertiary"))));
-    wl->addWidget(ver);
+    bl->addWidget(ver);
 
-    wl->addSpacing(16);
+    outer->addWidget(brand);
+    outer->addSpacing(48);
 
-    auto *hint = new QLabel(LOC("editor.open_to_edit"));
-    hint->setAlignment(Qt::AlignCenter);
-    hint->setStyleSheet(QStringLiteral("QLabel { font-size: 13px; color: $c; }")
-        .replace(QStringLiteral("$c"),
-        NezhaIDE::Services::ThemeService::instance().color(QStringLiteral("text.secondary"))));
-    wl->addWidget(hint);
+    auto *startLabel = new QLabel(LOC("editor.start"));
+    startLabel->setObjectName(QStringLiteral("welcomeStartLabel"));
+    startLabel->setAlignment(Qt::AlignCenter);
+    outer->addWidget(startLabel);
+    outer->addSpacing(8);
+
+    auto *actions = new QWidget();
+    actions->setObjectName(QStringLiteral("welcomeActions"));
+    auto *al = new QVBoxLayout(actions);
+    al->setAlignment(Qt::AlignHCenter);
+    al->setSpacing(2);
+
+    auto addAction = [&](const QString &text, const QString &shortcut) {
+        auto *row = new QWidget();
+        row->setObjectName(QStringLiteral("welcomeActionRow"));
+        auto *hl = new QHBoxLayout(row);
+        hl->setContentsMargins(16, 6, 16, 6);
+        hl->setSpacing(12);
+
+        auto *label = new QLabel(text);
+        label->setObjectName(QStringLiteral("welcomeActionLabel"));
+        hl->addWidget(label);
+        hl->addStretch();
+
+        auto *key = new QLabel(shortcut);
+        key->setObjectName(QStringLiteral("welcomeActionKey"));
+        hl->addWidget(key);
+
+        al->addWidget(row);
+    };
+
+    addAction(LOC("menu.open_project"), QStringLiteral("⌘O"));
+    addAction(LOC("explorer.new_file"), QStringLiteral("⌘N"));
+    addAction(LOC("git.clone"), QStringLiteral("⇧⌘P"));
+    addAction(LOC("menu.preferences"), QStringLiteral("⌘,"));
+
+    outer->addWidget(actions);
+    outer->addStretch(4);
 
     welcome_tab_ = welcome;
     const auto idx = addTab(welcome, welcomeTitle);
     tabBar()->setTabButton(idx, QTabBar::RightSide, nullptr);
+    applyStyles();
     emit editActionsChanged();
 }
 
@@ -275,6 +426,12 @@ void EditorTabHost::applyStyles()
     }
     for (auto *hex : hex_editors_) {
         hex->applyTheme();
+    }
+    for (auto *dv : data_views_) {
+        dv->applyTheme();
+    }
+    if (welcome_tab_) {
+        welcome_tab_->setStyleSheet(ts.qss(QStringLiteral("style.welcome_root")));
     }
 }
 

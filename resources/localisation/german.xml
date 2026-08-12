@@ -56,6 +56,9 @@
     <string key="git.show_diff">Diff anzeigen</string>
     <string key="git.open_file">Datei öffnen</string>
     <string key="git.diff_hint">Datei auswählen um Diff anzuzeigen</string>
+    <string key="git.changes">Änderungen</string>
+    <string key="git.history">Verlauf</string>
+    <string key="git.graph_empty">Noch keine Commits</string>
     <string key="git.status.untracked">Nicht verfolgt</string>
     <string key="git.status.staged_modified">Gestaged (geändert)</string>
     <string key="git.status.staged_added">Gestaged (hinzugefügt)</string>
@@ -68,6 +71,14 @@
     <string key="git.status.conflict">Konflikt / nicht zusammengeführt</string>
     <string key="git.status.staged_copied">Gestaged (kopiert)</string>
     <string key="git.status.typechange">Typänderung</string>
+    <string key="data_view.refresh">Aktualisieren</string>
+    <string key="data_view.run_query">Abfrage ausführen</string>
+    <string key="data_view.sql_placeholder">SQL-Abfrage eingeben…</string>
+    <string key="data_view.no_tables">Keine Tabellen in der Datenbank</string>
+    <string key="data_view.load_error">Datendatei konnte nicht geöffnet werden: %1</string>
+    <string key="data_view.rows_status">Zeige %1 / %2 Zeilen</string>
+    <string key="data_view.query_error">Abfragefehler: %1</string>
+    <string key="data_view.csv_loaded">%1 Zeilen geladen</string>
     <string key="menu.open_project">Projekt öffnen...</string>
     <string key="menu.save">Speichern</string>
     <string key="menu.quit">Beenden</string>
@@ -145,6 +156,9 @@
     <string key="hex.info">Info</string>
     <string key="hex.no_data">Keine Daten verfügbar</string>
     <string key="hex.stripped">Ohne Symbole — keine Symboltabelle</string>
+    <string key="hex.offset_invalid">Offset außerhalb des Bereichs</string>
+    <string key="hex.offset_hint">Offset (0x hex oder dezimal)</string>
+    <string key="hex.go_to">Zu Offset springen</string>
     <string key="terminal.title">Terminal</string>
     <string key="terminal.new">Neues Terminal</string>
     <string key="terminal.close">Terminal schließen</string>
@@ -213,4 +227,9 @@
     <string key="hydra.status.no_target">Kein Ziel konfiguriert</string>
     <string key="hydra.status.select_service">Dienst auswählen</string>
     <string key="hydra.status.stopped">Gestoppt</string>
+    <string key="hydra.not_installed">Hydra nicht installiert. Bitte THC-Hydra installieren</string>
+    <string key="hydra.username_file">Aus Datei</string>
+    <string key="hydra.username_single">Einzelner Benutzer</string>
+    <string key="hydra.username_single_placeholder">Benutzernamen eingeben, z. B. root</string>
+    <string key="hydra.username_single_loaded">Benutzer: %1</string>
 </localization>

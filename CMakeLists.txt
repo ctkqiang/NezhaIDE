@@ -32,6 +32,8 @@ add_executable(NezhaIDE main.cc
         views/editor/language_registry.h
         views/editor/editor_tab_host.cc
         views/editor/editor_tab_host.h
+        views/editor/data_view.cc
+        views/editor/data_view.h
         src/configuration.h
         src/configuration.cc
         views/main_window.cc
@@ -50,6 +52,8 @@ add_executable(NezhaIDE main.cc
         views/git_panel/git_panel.cc
         views/git_panel/git_panel.h
         views/git_panel/git_panel.ui
+        views/git_panel/git_graph.cc
+        views/git_panel/git_graph.h
         src/model/column_def.h
         src/model/user_preference.h
         src/model/http_request.h
@@ -67,6 +71,8 @@ add_executable(NezhaIDE main.cc
         views/hex_editor/binary_parser.h
         views/hex_editor/disassembler.cc
         views/hex_editor/disassembler.h
+        views/hex_editor/disasm_view.cc
+        views/hex_editor/disasm_view.h
         views/hex_editor/hex_view.cc
         views/hex_editor/hex_view.h
         views/hex_editor/hex_editor.cc

@@ -7,6 +7,7 @@ namespace NezhaIDE::Views {
     class HttpViewPanel;
     class HydraViewPanel;
     class HexEditor;
+    class DataView;
 }
 
 namespace NezhaIDE::Editor {
@@ -60,9 +61,13 @@ private:
     void ensureWelcomeTab();
     void removeWelcomeTab();
     void applyStyles();
+    void openCodeFile(const QString &path);
+    void openDataFile(const QString &path);
+    void openJsonFile(const QString &path);
 
     QHash<QString, CodeEditor *> editors_;
     QHash<QString, NezhaIDE::Views::HexEditor *> hex_editors_;
+    QHash<QString, NezhaIDE::Views::DataView *> data_views_;
     NezhaIDE::Views::HttpViewPanel *http_panel_{};
     NezhaIDE::Views::HydraViewPanel *hydra_panel_{};
     QWidget *welcome_tab_{};

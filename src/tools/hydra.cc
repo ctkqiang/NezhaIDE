@@ -281,6 +281,11 @@ bool HydraService::isModuleInstalled(const QString &service) const
     return installed_modules_.contains(service);
 }
 
+bool HydraService::hasInstalledModules() const noexcept
+{
+    return !installed_modules_.isEmpty();
+}
+
 QList<ModuleParam> HydraService::moduleParams(const QString &service) const
 {
     QList<ModuleParam> params;
@@ -352,6 +357,23 @@ HydraService::LoadResult HydraService::loadUsernameFile(const QString &path)
 
     const auto result = importLines(info.fileName(), QStringLiteral("username"),
                                     QStringLiteral("file"), path, lines);
+    if (result.ok()) {
+        username_dataset_id_ = result.dataset_id;
+        emit usernameDatasetChanged(result.entry_count);
+    }
+    return result;
+}
+
+HydraService::LoadResult HydraService::loadSingleUsername(const QString &username)
+{
+    const auto name = username.trimmed();
+    if (name.isEmpty()) {
+        return {0, 0, QStringLiteral("empty")};
+    }
+
+    const auto result = importLines(name, QStringLiteral("username"),
+                                    QStringLiteral("custom"), QStringLiteral("single-user"),
+                                    {name});
     if (result.ok()) {
         username_dataset_id_ = result.dataset_id;
         emit usernameDatasetChanged(result.entry_count);

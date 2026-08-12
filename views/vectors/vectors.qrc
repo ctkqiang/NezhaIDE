@@ -1,5 +1,7 @@
 <RCC>
   <qresource prefix="/vectors">
+    <file>chevron_down.svg</file>
+    <file>chevron_up.svg</file>
     <file>close.svg</file>
     <file>explorer.svg</file>
     <file>explorer_active.svg</file>
@@ -7,8 +9,12 @@
     <file>git_active.svg</file>
     <file>http.svg</file>
     <file>http_active.svg</file>
+    <file>hydra.svg</file>
+    <file>hydra_active.svg</file>
+    <file>plus.svg</file>
     <file>preferences.svg</file>
     <file>preferences_active.svg</file>
+    <file>refresh.svg</file>
     <file>stage_all.svg</file>
     <file>terminal.svg</file>
     <file>terminal_active.svg</file>

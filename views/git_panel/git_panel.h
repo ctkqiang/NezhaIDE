@@ -9,6 +9,8 @@
 #include <QToolBar>
 #include <QPlainTextEdit>
 #include <QSplitter>
+#include <QTabWidget>
+#include "git_graph.h"
 
 namespace NezhaIDE::Views {
 
@@ -61,11 +63,13 @@ private slots:
     void onListItemClicked(QListWidgetItem *item);
     void onListItemDoubleClicked(QListWidgetItem *item);
     void onCustomContextMenu(const QPoint &pos);
+    void onCommitSelected(const QString &hash, const QString &subject);
 
 private:
     void parseStatusOutput(const QString &output);
     void updateBranchDisplay();
     void showDiffForFile(const QString &path);
+    void loadGraph();
     void runGitCommand(const QStringList &args, std::function<void(int, const QString &)> callback);
     void applyStyles();
     void applyGitColors();
@@ -75,7 +79,9 @@ private:
     QString unquoteGitPath(const QString &raw) const;
 
     QSplitter *splitter_{};
+    QTabWidget *file_tabs_{};
     QListWidget *file_list_{};
+    GitGraphView *graph_view_{};
     QTextEdit *commit_message_{};
     QPushButton *commit_button_{};
     QLabel *branch_label_{};

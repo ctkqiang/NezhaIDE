@@ -10,9 +10,17 @@
 #include "src/utilities/downloader.h"
 #include "src/utilities/logger.h"
 #include "views/main_window.h"
+#include "views/editor/code_editor.h"
+#include "views/editor/data_view.h"
 #include "views/editor/editor_tab_host.h"
+#include "views/editor/simple_highlighter.h"
+#include "views/hex_editor/disasm_view.h"
+#include "views/hex_editor/hex_editor.h"
+#include "views/hex_editor/hex_view.h"
 #include "views/http_view_panel/http_view_panel.h"
 #include "views/hydra/hydra_view_panel.h"
+#include "views/git_panel/git_panel.h"
+#include "views/git_panel/git_graph.h"
 
 #include <QApplication>
 #include <QComboBox>
@@ -21,9 +29,14 @@
 #include <QKeyEvent>
 #include <QLabel>
 #include <QLineEdit>
+#include <QPlainTextEdit>
+#include <QProcess>
 #include <QPushButton>
 #include <QRadioButton>
 #include <QSpinBox>
+#include <QTableWidget>
+#include <QTextBlock>
+#include <QTextCursor>
 #include <QTextStream>
 #include <QTimer>
 
@@ -62,6 +75,11 @@ int main(int argc, char* argv[]) {
     }
 #endif
     QApplication app(argc, argv);
+    app.setStyle(QStringLiteral("Fusion"));
+
+    auto font = app.font();
+    font.setPointSize(13);
+    app.setFont(font);
 
     QApplication::setApplicationName(NezhaIDE::Constants::ApplicationName.data());
     QApplication::setApplicationVersion(NezhaIDE::Constants::ApplicationVersion.data());
@@ -361,11 +379,29 @@ int main(int argc, char* argv[]) {
                                     std::printf("SELFTEST: hydra status(invalid)=%s\n", status->text().toUtf8().constData());
                                     hpanel->grab().save(QStringLiteral("/tmp/nezha_09_hydra_invalid.png"));
 
-                                    users->setText(QStringLiteral("/tmp/nezha_users.txt"));
-                                    pressReturn(users);
+                                    auto *singleRadio = hpanel->findChild<QRadioButton *>(
+                                        QStringLiteral("hydraUsernameSourceSingle"));
+                                    auto *singleInput = hpanel->findChild<QLineEdit *>(
+                                        QStringLiteral("hydraUsernameSingle"));
+                                    singleRadio->setChecked(true);
+                                    std::printf("SELFTEST: hydra status(singleSel)=%s\n",
+                                                status->text().toUtf8().constData());
+                                    singleInput->setText(QStringLiteral("root"));
+                                    pressReturn(singleInput);
                                     QTimer::singleShot(400, this, [=] {
-                                        std::printf("SELFTEST: hydra status(reloaded)=%s runEnabled=%d\n",
-                                                    status->text().toUtf8().constData(), runBtn->isEnabled() ? 1 : 0);
+                                        std::printf("SELFTEST: hydra status(singleLoaded)=%s userHint=%s runEnabled=%d\n",
+                                                    status->text().toUtf8().constData(),
+                                                    hints.value(0)->text().toUtf8().constData(),
+                                                    runBtn->isEnabled() ? 1 : 0);
+                                        hpanel->grab().save(QStringLiteral("/tmp/nezha_09b_hydra_single.png"));
+
+                                        hpanel->findChild<QRadioButton *>(
+                                            QStringLiteral("hydraUsernameSourceFile"))->setChecked(true);
+                                        users->setText(QStringLiteral("/tmp/nezha_users.txt"));
+                                        pressReturn(users);
+                                        QTimer::singleShot(400, this, [=] {
+                                            std::printf("SELFTEST: hydra status(reloaded)=%s runEnabled=%d\n",
+                                                        status->text().toUtf8().constData(), runBtn->isEnabled() ? 1 : 0);
                                         runBtn->click();
                                         QTimer::singleShot(600, this, [=] {
                                             const auto running = status->text() == QStringLiteral("运行中");
@@ -376,10 +412,109 @@ int main(int argc, char* argv[]) {
                                                 QTimer::singleShot(3500, this, [=] {
                                                     std::printf("SELFTEST: hydra status(stopped)=%s\n", status->text().toUtf8().constData());
                                                     hpanel->grab().save(QStringLiteral("/tmp/nezha_11_hydra_stopped.png"));
-                                                    std::printf("SELFTEST: DONE\n");
-                                                    QApplication::exit(0);
+
+                                                    auto *gitPanel = window.findChild<NezhaIDE::Views::GitPanel *>();
+                                                    if (!gitPanel) {
+                                                        std::printf("SELFTEST: no git panel\n");
+                                                        QApplication::exit(2);
+                                                        return;
+                                                    }
+                                                    gitPanel->setWorkingDirectory(QStringLiteral(NEZHA_PROJECT_ROOT));
+                                                    auto *gitTabs = gitPanel->findChild<QTabWidget *>(QStringLiteral("gitFileTabs"));
+                                                    auto *graph = gitPanel->findChild<NezhaIDE::Views::GitGraphView *>(QStringLiteral("gitGraphView"));
+                                                    gitTabs->setCurrentIndex(1);
+                                                    QTimer::singleShot(1500, this, [=] {
+                                                        QMouseEvent press(QEvent::MouseButtonPress, QPointF(20, 23),
+                                                                          Qt::LeftButton, Qt::LeftButton, Qt::NoModifier);
+                                                        QApplication::sendEvent(graph->viewport(), &press);
+                                                        std::printf("SELFTEST: git graph selected=%s\n",
+                                                                    graph->selectedHash().toUtf8().constData());
+                                                        graph->grab().save(QStringLiteral("/tmp/nezha_12_git_graph.png"));
+                                                        QTimer::singleShot(600, this, [=] {
+                                                            auto *gitDiff = gitPanel->findChild<QPlainTextEdit *>();
+                                                            std::printf("SELFTEST: git tab0=%s diffLen=%d\n",
+                                                                        gitTabs->tabText(0).toUtf8().constData(),
+                                                                        static_cast<int>(gitDiff->toPlainText().size()));
+
+                                                            // DataView selftest：.db 表浏览+SQL / .csv 表格 / .json beautify
+                                                            {
+                                                                QFile csvFile(QStringLiteral("/tmp/nz_fixture.csv"));
+                                                                if (csvFile.open(QIODevice::WriteOnly)) {
+                                                                    csvFile.write(QStringLiteral(
+                                                                        "name,age,city\n"
+                                                                        "\"Alice, Jr\",25,\"New York\"\n"
+                                                                        "Bob,30,Paris\n").toUtf8());
+                                                                    csvFile.close();
+                                                                }
+                                                                QFile jsonFile(QStringLiteral("/tmp/nz_fixture.json"));
+                                                                if (jsonFile.open(QIODevice::WriteOnly)) {
+                                                                    jsonFile.write(QStringLiteral(
+                                                                        "{\"a\":\"你好\",\"n\":42}").toUtf8());
+                                                                    jsonFile.close();
+                                                                }
+                                                                QProcess::execute(QStringLiteral("sqlite3"),
+                                                                    {QStringLiteral("/tmp/nz_fixture.db"),
+                                                                     QStringLiteral("CREATE TABLE t(a INTEGER,b TEXT); "
+                                                                                    "INSERT INTO t VALUES(1,'x'),(2,'y');")});
+
+                                                                auto *editorHost = window.findChild<NezhaIDE::Editor::EditorTabHost *>();
+                                                                if (!editorHost) {
+                                                                    std::printf("SELFTEST: no editor host\n");
+                                                                    QApplication::exit(2);
+                                                                    return;
+                                                                }
+                                                                editorHost->openFile(QStringLiteral("/tmp/nz_fixture.db"));
+                                                                editorHost->openFile(QStringLiteral("/tmp/nz_fixture.csv"));
+                                                                editorHost->openFile(QStringLiteral("/tmp/nz_fixture.json"));
+
+                                                                int dbOk = 0, csvOk = 0, jsonOk = 0;
+                                                                const auto views = editorHost->findChildren<NezhaIDE::Views::DataView *>();
+                                                                for (auto *dv : views) {
+                                                                    auto *table = dv->findChild<QTableWidget *>();
+                                                                    if (dv->filePath().endsWith(QStringLiteral("nz_fixture.db"))) {
+                                                                        auto *combo = dv->findChild<QComboBox *>(QStringLiteral("dataViewTableCombo"));
+                                                                        auto *sqlEdit = dv->findChild<QPlainTextEdit *>();
+                                                                        dbOk = (combo && combo->count() == 1
+                                                                                && combo->currentText() == QStringLiteral("t")
+                                                                                && table && table->rowCount() >= 2
+                                                                                && table->columnCount() == 2
+                                                                                && table->item(0, 0)
+                                                                                && table->item(0, 0)->text() == QStringLiteral("1")
+                                                                                && sqlEdit
+                                                                                && sqlEdit->findChild<NezhaIDE::Editor::SimpleHighlighter *>())
+                                                                                   ? 1 : 0;
+                                                                    } else if (dv->filePath().endsWith(QStringLiteral("nz_fixture.csv"))) {
+                                                                        auto *combo = dv->findChild<QComboBox *>(QStringLiteral("dataViewTableCombo"));
+                                                                        csvOk = (table && table->rowCount() == 2
+                                                                                && table->columnCount() == 3
+                                                                                && table->item(0, 0)
+                                                                                && table->item(0, 0)->text() == QStringLiteral("Alice, Jr")
+                                                                                && combo && combo->isHidden()) ? 1 : 0;
+                                                                    }
+                                                                }
+                                                                auto *jsonEditor = qobject_cast<NezhaIDE::Editor::CodeEditor *>(editorHost->currentWidget());
+                                                                if (jsonEditor) {
+                                                                    const auto text = jsonEditor->document()->toPlainText();
+                                                                    jsonOk = (text.contains(QStringLiteral("你好"))
+                                                                              && text.contains(QStringLiteral("    "))
+                                                                              && jsonEditor->findChild<NezhaIDE::Editor::SimpleHighlighter *>())
+                                                                                 ? 1 : 0;
+                                                                }
+                                                                std::printf("SELFTEST: data db=%d csv=%d json=%d\n", dbOk, csvOk, jsonOk);
+                                                                if (!dbOk || !csvOk || !jsonOk) {
+                                                                    QApplication::exit(2);
+                                                                    return;
+                                                                }
+                                                                if (!views.isEmpty()) {
+                                                                    views.first()->grab().save(QStringLiteral("/tmp/nezha_13_data_view.png"));
+                                                                }
+                                                            }
+                                                            std::printf("SELFTEST: DONE\n");
+                                                            QApplication::exit(0);
+                                                        });
+                                                    });
                                                 });
-                                            } else {
+                                        } else {
                                                 std::printf("SELFTEST: hydra finished before stop\n");
                                                 std::printf("SELFTEST: DONE\n");
                                                 QApplication::exit(0);
@@ -391,10 +526,82 @@ int main(int argc, char* argv[]) {
                         });
                     });
                 });
+                });
             }
         };
         auto *st = new Selftest(window);
         QTimer::singleShot(500, st, [st] { st->start(); });
+    }
+
+    if (qEnvironmentVariableIsSet("NEZHA_HEX_SELFTEST")) {
+        struct HexSelftest : QObject {
+            NezhaIDE::Views::MainWindow &window;
+
+            explicit HexSelftest(NezhaIDE::Views::MainWindow &w) : window(w) {}
+
+            void start() {
+                auto *editorHost = window.findChild<NezhaIDE::Editor::EditorTabHost *>();
+                if (!editorHost) {
+                    std::printf("HEXST: no editor host\n");
+                    QApplication::exit(2);
+                    return;
+                }
+                editorHost->openBinaryFile(QStringLiteral("/bin/ls"));
+                auto *hex = editorHost->findChild<NezhaIDE::Views::HexEditor *>();
+                if (!hex) {
+                    std::printf("HEXST: no hex editor\n");
+                    QApplication::exit(2);
+                    return;
+                }
+                auto *disasm = hex->findChild<NezhaIDE::Views::DisasmView *>(
+                    QStringLiteral("hexDisasmView"));
+                auto *hexView = hex->findChild<NezhaIDE::Views::HexView *>(
+                    QStringLiteral("hexView"));
+                auto *goEdit = hex->findChild<QLineEdit *>(QStringLiteral("hexGoEdit"));
+                auto *posLabel = hex->findChild<QLabel *>(QStringLiteral("hexPosLabel"));
+
+                const auto docLines = disasm->document()->blockCount();
+                std::printf("HEXST: disasm lines=%d\n", docLines);
+                hex->grab().save(QStringLiteral("/tmp/hex_01_loaded.png"));
+
+                QKeyEvent press(QEvent::KeyPress, Qt::Key_Return, Qt::NoModifier);
+                goEdit->setText(QStringLiteral("0x1000"));
+                QApplication::sendEvent(goEdit, &press);
+                std::printf("HEXST: goto sel=%llx pos=%s\n", hexView->selectionStart(),
+                            posLabel->text().toUtf8().constData());
+                hex->grab().save(QStringLiteral("/tmp/hex_02_goto.png"));
+
+                goEdit->setText(QStringLiteral("999999999999"));
+                QApplication::sendEvent(goEdit, &press);
+                std::printf("HEXST: goto-invalid sel=%llx\n", hexView->selectionStart());
+                hex->grab().save(QStringLiteral("/tmp/hex_03_invalid.png"));
+
+                hexView->setSelection(0x2000, 2);
+                QApplication::processEvents();
+                std::printf("HEXST: disasm highlights=%d\n", disasm->extraSelections().size());
+                hex->grab().save(QStringLiteral("/tmp/hex_04_link.png"));
+
+                auto block = disasm->document()->firstBlock();
+                while (block.isValid() && !block.userData()) {
+                    block = block.next();
+                }
+                if (block.isValid()) {
+                    disasm->setTextCursor(QTextCursor(block));
+                    QApplication::processEvents();
+                    std::printf("HEXST: click-disasm sel=%llx size=%llu\n",
+                                hexView->selectionStart(),
+                                hexView->selectionEnd() - hexView->selectionStart());
+                    hex->grab().save(QStringLiteral("/tmp/hex_05_clickdisasm.png"));
+                } else {
+                    std::printf("HEXST: no insn block\n");
+                }
+
+                std::printf("HEXST: DONE\n");
+                QApplication::exit(0);
+            }
+        };
+        auto *hst = new HexSelftest(window);
+        QTimer::singleShot(500, hst, [hst] { hst->start(); });
     }
 
     return QApplication::exec();
