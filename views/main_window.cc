@@ -316,6 +316,9 @@ void MainWindow::applyStyles()
     menuBar()->setStyleSheet(ts.qss(QStringLiteral("style.menubar")));
     statusBar()->setStyleSheet(ts.qss(QStringLiteral("style.statusbar")));
     splitter_->setStyleSheet(ts.qss(QStringLiteral("style.splitter")));
+    if (auto *dock = findChild<QDockWidget *>(QStringLiteral("terminalDock"))) {
+        dock->setStyleSheet(ts.qss(QStringLiteral("style.dock_widget")));
+    }
     activity_bar_->applyStyles();
 }
 

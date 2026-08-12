@@ -7,13 +7,11 @@
 #include <QHBoxLayout>
 #include <QIcon>
 #include <algorithm>
-#include <QApplication>
 #include <QDir>
 #include <QMenu>
 #include <QMessageBox>
 #include <QProcess>
 #include <QShortcut>
-#include <QStyle>
 #include <QTimer>
 
 namespace NezhaIDE::Views {
@@ -28,20 +26,28 @@ GitPanel::GitPanel(QWidget *parent)
     toolbar_ = new QToolBar(this);
     toolbar_->setIconSize({16, 16});
     toolbar_->setMovable(false);
-    toolbar_->addAction(
-        QApplication::style()->standardIcon(QStyle::SP_BrowserReload),
+    toolbar_->setToolButtonStyle(Qt::ToolButtonIconOnly);
+    auto *refreshAct = toolbar_->addAction(
+        QIcon(QStringLiteral(":/vectors/refresh.svg")),
         LOC("git.refresh"), this, &GitPanel::onRefresh);
+    refreshAct->setToolTip(LOC("git.refresh"));
     toolbar_->addSeparator();
-    toolbar_->addAction(
-        QApplication::style()->standardIcon(QStyle::SP_ArrowUp),
+    auto *stageAct = toolbar_->addAction(
+        QIcon(QStringLiteral(":/vectors/chevron_down.svg")),
         LOC("git.stage"), this, &GitPanel::onStageFile);
-    toolbar_->addAction(
-        QApplication::style()->standardIcon(QStyle::SP_ArrowDown),
+    stageAct->setToolTip(LOC("git.stage"));
+    auto *unstageAct = toolbar_->addAction(
+        QIcon(QStringLiteral(":/vectors/chevron_up.svg")),
         LOC("git.unstage"), this, &GitPanel::onUnstageFile);
-    toolbar_->addAction(
-        QIcon(QStringLiteral(":/vectors/stage_all.svg")), LOC("git.stage_all"), this, &GitPanel::onStageAll);
-    toolbar_->addAction(
-        QIcon(QStringLiteral(":/vectors/unstage_all.svg")), LOC("git.unstage_all"), this, &GitPanel::onUnstageAll);
+    unstageAct->setToolTip(LOC("git.unstage"));
+    auto *stageAllAct = toolbar_->addAction(
+        QIcon(QStringLiteral(":/vectors/stage_all.svg")),
+        LOC("git.stage_all"), this, &GitPanel::onStageAll);
+    stageAllAct->setToolTip(LOC("git.stage_all"));
+    auto *unstageAllAct = toolbar_->addAction(
+        QIcon(QStringLiteral(":/vectors/unstage_all.svg")),
+        LOC("git.unstage_all"), this, &GitPanel::onUnstageAll);
+    unstageAllAct->setToolTip(LOC("git.unstage_all"));
     layout->addWidget(toolbar_);
 
     branch_label_ = new QLabel(this);
@@ -91,7 +97,7 @@ GitPanel::GitPanel(QWidget *parent)
 
     commit_message_ = new QTextEdit(this);
     commit_message_->setPlaceholderText(LOC("git.commit_placeholder"));
-    commit_message_->setMaximumHeight(80);
+    commit_message_->setMaximumHeight(64);
     commit_layout->addWidget(commit_message_);
 
     auto *ctrlEnter = new QShortcut(QKeySequence(Qt::CTRL | Qt::Key_Return), commit_message_);
@@ -496,10 +502,12 @@ void GitPanel::parseStatusOutput(const QString &output)
         entry.fullPath = QDir(git_process_->workingDirectory()).filePath(entry.path);
         entries_.append(entry);
 
-        auto label = QStringLiteral("[%1%2] %3")
-            .arg(entry.status_x != ' ' ? entry.status_x : QChar('_'))
-            .arg(entry.status_y != ' ' ? entry.status_y : QChar('_'))
-            .arg(entry.path);
+        QString status;
+        if (entry.status_x != ' ') status += entry.status_x;
+        if (entry.status_y != ' ') status += entry.status_y;
+        const auto label = status.isEmpty()
+                               ? entry.path
+                               : QStringLiteral("%1  %2").arg(status, entry.path);
 
         auto *item = new QListWidgetItem(label);
         item->setForeground(statusColor(entry.status_x, entry.status_y));
@@ -564,7 +572,7 @@ void GitPanel::applyStyles()
     if (auto *cf = commit_message_->parentWidget()) {
         cf->setStyleSheet(ts.qss(QStringLiteral("style.commit_frame")));
     }
-    diff_view_->setStyleSheet(ts.qss(QStringLiteral("style.http_response_body")));
+    diff_view_->setStyleSheet(ts.qss(QStringLiteral("style.git_diff")));
     graph_view_->refresh();
 }
 

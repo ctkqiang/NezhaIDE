@@ -256,6 +256,17 @@ static const QHash<QString, QString> kStyleTemplates = {
      "color: $text.primary; font-family: Menlo, monospace; font-size: 12px;"
      "selection-background-color: $overlay.selection; padding: 8px; }"},
 
+    {"style.git_diff",
+     "QPlainTextEdit { background: $bg.tertiary; border: none; border-radius: 8px;"
+     "color: $text.primary; font-family: Menlo, monospace; font-size: 12px;"
+     "selection-background-color: $overlay.selection; padding: 10px; }"},
+
+    {"style.dock_widget",
+     "QDockWidget { background: $bg.secondary; }"
+     "QDockWidget::title { background: $bg.secondary; color: $text.secondary;"
+     "border: none; border-bottom: 1px solid $border; padding: 5px 12px;"
+     "font-size: 12px; font-weight: 600; }"},
+
     {"style.http_meta_label",
      "QLabel { font-size: 12px; color: $text.secondary; padding: 2px 0; }"},
 

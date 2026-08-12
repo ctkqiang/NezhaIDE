@@ -7,8 +7,10 @@
 #include "src/utilities/logger.h"
 #include <QFile>
 #include <QFileInfo>
+#include <QKeySequence>
 #include <QMessageBox>
 #include <QPainter>
+#include <QShortcut>
 #include <QTextBlock>
 
 namespace NezhaIDE::Editor {
@@ -44,6 +46,10 @@ CodeEditor::CodeEditor(const QString &filePath, QWidget *parent)
         const auto title = QFileInfo(file_path_).fileName();
         emit titleChanged(changed ? QStringLiteral("* ") + title : title);
     });
+
+    auto *saveShortcut = new QShortcut(QKeySequence::Save, this);
+    saveShortcut->setContext(Qt::WidgetWithChildrenShortcut);
+    connect(saveShortcut, &QShortcut::activated, this, &CodeEditor::save);
 }
 
 CodeEditor::~CodeEditor() = default;

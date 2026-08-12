@@ -2,6 +2,7 @@
 #include "terminal_view.h"
 #include "src/services/localization_service.h"
 #include "src/services/theme_service.h"
+#include <QIcon>
 #include <QVBoxLayout>
 
 namespace NezhaIDE::Views {
@@ -27,9 +28,15 @@ void TerminalPanel::setupUI() {
     toolbar_ = new QToolBar(this);
     toolbar_->setIconSize({16, 16});
     toolbar_->setMovable(false);
-    toolbar_->addAction(QStringLiteral("+"), LOC("terminal.new"), this, &TerminalPanel::newTerminal);
-    toolbar_->addAction(QStringLiteral("×"), LOC("terminal.close"),
-                        this, &TerminalPanel::closeCurrentTerminal);
+    toolbar_->setToolButtonStyle(Qt::ToolButtonIconOnly);
+    auto *newAct = toolbar_->addAction(
+        QIcon(QStringLiteral(":/vectors/plus.svg")),
+        LOC("terminal.new"), this, &TerminalPanel::newTerminal);
+    newAct->setToolTip(LOC("terminal.new"));
+    auto *closeAct = toolbar_->addAction(
+        QIcon(QStringLiteral(":/vectors/close.svg")),
+        LOC("terminal.close"), this, &TerminalPanel::closeCurrentTerminal);
+    closeAct->setToolTip(LOC("terminal.close"));
     layout->addWidget(toolbar_);
 
     tab_widget_ = new QTabWidget(this);

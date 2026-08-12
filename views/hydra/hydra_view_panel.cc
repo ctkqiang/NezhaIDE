@@ -150,7 +150,7 @@ void HydraViewPanel::setupUI()
     auto *configContainer = new QWidget(splitter);
     auto *configLayout = new QVBoxLayout(configContainer);
     configLayout->setContentsMargins(12, 12, 12, 8);
-    configLayout->setSpacing(8);
+    configLayout->setSpacing(10);
 
     configLayout->addWidget(buildTargetSection());
     configLayout->addWidget(buildModuleOptionsSection());
@@ -947,7 +947,7 @@ void HydraViewPanel::applyStyles()
     extra_args_input_->setStyleSheet(ts.qss(QStringLiteral("style.http_url_input")));
     service_combo_->setStyleSheet(ts.qss(QStringLiteral("style.http_combo")));
     try_mode_combo_->setStyleSheet(ts.qss(QStringLiteral("style.http_combo")));
-    log_view_->setStyleSheet(ts.qss(QStringLiteral("style.http_response_body")));
+    log_view_->setStyleSheet(ts.qss(QStringLiteral("style.git_diff")));
     for (auto *spin : {port_spin_, random_count_spin_, random_min_spin_, random_max_spin_,
                         threads_spin_, timeout_spin_}) {
         spin->setStyleSheet(ts.qss(QStringLiteral("style.hydra_spin")));

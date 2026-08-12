@@ -509,7 +509,7 @@ int main(int argc, char* argv[]) {
                                                         });
                                                     });
                                                 });
-                                            } else {
+                                        } else {
                                                 std::printf("SELFTEST: hydra finished before stop\n");
                                                 std::printf("SELFTEST: DONE\n");
                                                 QApplication::exit(0);
