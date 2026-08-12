@@ -58,6 +58,7 @@ private:
 
     void onBrowseUsernames();
     void onLoadUsernames(const QString &path);
+    void onLoadSingleUsername();
     void onBrowsePasswords();
     void onLoadPasswords(const QString &path);
     void onPasswordSourceChanged();
@@ -79,6 +80,11 @@ private:
     QFormLayout *param_form_{};
     QHash<QString, QWidget *> param_widgets_;
     QLineEdit *username_path_input_{};
+    QWidget *username_file_row_{};
+    QRadioButton *username_file_radio_{};
+    QRadioButton *username_single_radio_{};
+    QLineEdit *username_single_input_{};
+    QWidget *username_single_row_{};
     QLabel *username_hint_{};
     QRadioButton *github_radio_{};
     QRadioButton *random_radio_{};

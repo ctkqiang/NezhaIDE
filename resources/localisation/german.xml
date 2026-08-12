@@ -145,6 +145,9 @@
     <string key="hex.info">Info</string>
     <string key="hex.no_data">Keine Daten verfügbar</string>
     <string key="hex.stripped">Ohne Symbole — keine Symboltabelle</string>
+    <string key="hex.offset_invalid">Offset außerhalb des Bereichs</string>
+    <string key="hex.offset_hint">Offset (0x hex oder dezimal)</string>
+    <string key="hex.go_to">Zu Offset springen</string>
     <string key="terminal.title">Terminal</string>
     <string key="terminal.new">Neues Terminal</string>
     <string key="terminal.close">Terminal schließen</string>
@@ -213,4 +216,9 @@
     <string key="hydra.status.no_target">Kein Ziel konfiguriert</string>
     <string key="hydra.status.select_service">Dienst auswählen</string>
     <string key="hydra.status.stopped">Gestoppt</string>
+    <string key="hydra.not_installed">Hydra nicht installiert. Bitte THC-Hydra installieren</string>
+    <string key="hydra.username_file">Aus Datei</string>
+    <string key="hydra.username_single">Einzelner Benutzer</string>
+    <string key="hydra.username_single_placeholder">Benutzernamen eingeben, z. B. root</string>
+    <string key="hydra.username_single_loaded">Benutzer: %1</string>
 </localization>

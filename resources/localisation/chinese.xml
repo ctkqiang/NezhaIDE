@@ -145,6 +145,9 @@
     <string key="hex.info">信息</string>
     <string key="hex.no_data">无可用数据</string>
     <string key="hex.stripped">已剥离符号 — 无符号表</string>
+    <string key="hex.offset_invalid">偏移超出范围</string>
+    <string key="hex.offset_hint">偏移（0x 十六进制或十进制）</string>
+    <string key="hex.go_to">跳转到偏移</string>
     <string key="terminal.title">终端</string>
     <string key="terminal.new">新建终端</string>
     <string key="terminal.close">关闭终端</string>
@@ -213,4 +216,9 @@
     <string key="hydra.status.no_target">未配置目标</string>
     <string key="hydra.status.select_service">请选择服务</string>
     <string key="hydra.status.stopped">已停止</string>
+    <string key="hydra.not_installed">未检测到 Hydra，请先安装 THC-Hydra</string>
+    <string key="hydra.username_file">从文件加载</string>
+    <string key="hydra.username_single">单个用户名</string>
+    <string key="hydra.username_single_placeholder">输入用户名，如 root</string>
+    <string key="hydra.username_single_loaded">使用用户名: %1</string>
 </localization>

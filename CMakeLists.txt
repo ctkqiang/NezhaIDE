@@ -67,6 +67,8 @@ add_executable(NezhaIDE main.cc
         views/hex_editor/binary_parser.h
         views/hex_editor/disassembler.cc
         views/hex_editor/disassembler.h
+        views/hex_editor/disasm_view.cc
+        views/hex_editor/disasm_view.h
         views/hex_editor/hex_view.cc
         views/hex_editor/hex_view.h
         views/hex_editor/hex_editor.cc

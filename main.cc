@@ -11,6 +11,9 @@
 #include "src/utilities/logger.h"
 #include "views/main_window.h"
 #include "views/editor/editor_tab_host.h"
+#include "views/hex_editor/disasm_view.h"
+#include "views/hex_editor/hex_editor.h"
+#include "views/hex_editor/hex_view.h"
 #include "views/http_view_panel/http_view_panel.h"
 #include "views/hydra/hydra_view_panel.h"
 
@@ -24,6 +27,8 @@
 #include <QPushButton>
 #include <QRadioButton>
 #include <QSpinBox>
+#include <QTextBlock>
+#include <QTextCursor>
 #include <QTextStream>
 #include <QTimer>
 
@@ -361,11 +366,29 @@ int main(int argc, char* argv[]) {
                                     std::printf("SELFTEST: hydra status(invalid)=%s\n", status->text().toUtf8().constData());
                                     hpanel->grab().save(QStringLiteral("/tmp/nezha_09_hydra_invalid.png"));
 
-                                    users->setText(QStringLiteral("/tmp/nezha_users.txt"));
-                                    pressReturn(users);
+                                    auto *singleRadio = hpanel->findChild<QRadioButton *>(
+                                        QStringLiteral("hydraUsernameSourceSingle"));
+                                    auto *singleInput = hpanel->findChild<QLineEdit *>(
+                                        QStringLiteral("hydraUsernameSingle"));
+                                    singleRadio->setChecked(true);
+                                    std::printf("SELFTEST: hydra status(singleSel)=%s\n",
+                                                status->text().toUtf8().constData());
+                                    singleInput->setText(QStringLiteral("root"));
+                                    pressReturn(singleInput);
                                     QTimer::singleShot(400, this, [=] {
-                                        std::printf("SELFTEST: hydra status(reloaded)=%s runEnabled=%d\n",
-                                                    status->text().toUtf8().constData(), runBtn->isEnabled() ? 1 : 0);
+                                        std::printf("SELFTEST: hydra status(singleLoaded)=%s userHint=%s runEnabled=%d\n",
+                                                    status->text().toUtf8().constData(),
+                                                    hints.value(0)->text().toUtf8().constData(),
+                                                    runBtn->isEnabled() ? 1 : 0);
+                                        hpanel->grab().save(QStringLiteral("/tmp/nezha_09b_hydra_single.png"));
+
+                                        hpanel->findChild<QRadioButton *>(
+                                            QStringLiteral("hydraUsernameSourceFile"))->setChecked(true);
+                                        users->setText(QStringLiteral("/tmp/nezha_users.txt"));
+                                        pressReturn(users);
+                                        QTimer::singleShot(400, this, [=] {
+                                            std::printf("SELFTEST: hydra status(reloaded)=%s runEnabled=%d\n",
+                                                        status->text().toUtf8().constData(), runBtn->isEnabled() ? 1 : 0);
                                         runBtn->click();
                                         QTimer::singleShot(600, this, [=] {
                                             const auto running = status->text() == QStringLiteral("运行中");
@@ -391,10 +414,82 @@ int main(int argc, char* argv[]) {
                         });
                     });
                 });
+                });
             }
         };
         auto *st = new Selftest(window);
         QTimer::singleShot(500, st, [st] { st->start(); });
+    }
+
+    if (qEnvironmentVariableIsSet("NEZHA_HEX_SELFTEST")) {
+        struct HexSelftest : QObject {
+            NezhaIDE::Views::MainWindow &window;
+
+            explicit HexSelftest(NezhaIDE::Views::MainWindow &w) : window(w) {}
+
+            void start() {
+                auto *editorHost = window.findChild<NezhaIDE::Editor::EditorTabHost *>();
+                if (!editorHost) {
+                    std::printf("HEXST: no editor host\n");
+                    QApplication::exit(2);
+                    return;
+                }
+                editorHost->openBinaryFile(QStringLiteral("/bin/ls"));
+                auto *hex = editorHost->findChild<NezhaIDE::Views::HexEditor *>();
+                if (!hex) {
+                    std::printf("HEXST: no hex editor\n");
+                    QApplication::exit(2);
+                    return;
+                }
+                auto *disasm = hex->findChild<NezhaIDE::Views::DisasmView *>(
+                    QStringLiteral("hexDisasmView"));
+                auto *hexView = hex->findChild<NezhaIDE::Views::HexView *>(
+                    QStringLiteral("hexView"));
+                auto *goEdit = hex->findChild<QLineEdit *>(QStringLiteral("hexGoEdit"));
+                auto *posLabel = hex->findChild<QLabel *>(QStringLiteral("hexPosLabel"));
+
+                const auto docLines = disasm->document()->blockCount();
+                std::printf("HEXST: disasm lines=%d\n", docLines);
+                hex->grab().save(QStringLiteral("/tmp/hex_01_loaded.png"));
+
+                QKeyEvent press(QEvent::KeyPress, Qt::Key_Return, Qt::NoModifier);
+                goEdit->setText(QStringLiteral("0x1000"));
+                QApplication::sendEvent(goEdit, &press);
+                std::printf("HEXST: goto sel=%llx pos=%s\n", hexView->selectionStart(),
+                            posLabel->text().toUtf8().constData());
+                hex->grab().save(QStringLiteral("/tmp/hex_02_goto.png"));
+
+                goEdit->setText(QStringLiteral("999999999999"));
+                QApplication::sendEvent(goEdit, &press);
+                std::printf("HEXST: goto-invalid sel=%llx\n", hexView->selectionStart());
+                hex->grab().save(QStringLiteral("/tmp/hex_03_invalid.png"));
+
+                hexView->setSelection(0x2000, 2);
+                QApplication::processEvents();
+                std::printf("HEXST: disasm highlights=%d\n", disasm->extraSelections().size());
+                hex->grab().save(QStringLiteral("/tmp/hex_04_link.png"));
+
+                auto block = disasm->document()->firstBlock();
+                while (block.isValid() && !block.userData()) {
+                    block = block.next();
+                }
+                if (block.isValid()) {
+                    disasm->setTextCursor(QTextCursor(block));
+                    QApplication::processEvents();
+                    std::printf("HEXST: click-disasm sel=%llx size=%llu\n",
+                                hexView->selectionStart(),
+                                hexView->selectionEnd() - hexView->selectionStart());
+                    hex->grab().save(QStringLiteral("/tmp/hex_05_clickdisasm.png"));
+                } else {
+                    std::printf("HEXST: no insn block\n");
+                }
+
+                std::printf("HEXST: DONE\n");
+                QApplication::exit(0);
+            }
+        };
+        auto *hst = new HexSelftest(window);
+        QTimer::singleShot(500, hst, [hst] { hst->start(); });
     }
 
     return QApplication::exec();

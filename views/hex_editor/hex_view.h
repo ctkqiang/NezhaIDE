@@ -32,6 +32,12 @@ public:
     uint64_t selectionEnd() const noexcept { return sel_end_; }
     bool hasSelection() const noexcept { return sel_start_ < sel_end_; }
 
+    /**
+     * 设置选中范围并滚动到可见位置。
+     * 不发出 byteRangeSelected，供程序联动调用（避免双向同步回环）。
+     */
+    void setSelection(uint64_t start, uint64_t size);
+
 public slots:
     void navigateToOffset(uint64_t offset);
 

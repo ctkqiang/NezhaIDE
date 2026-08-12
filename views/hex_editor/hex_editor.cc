@@ -3,17 +3,38 @@
 #include "src/services/theme_service.h"
 #include <QFontDatabase>
 #include <QFileInfo>
-#include <QHeaderView>
 #include <QHBoxLayout>
+#include <QHeaderView>
 #include <QLabel>
+#include <QPushButton>
+#include <QTextBlock>
+#include <QToolTip>
 #include <QVBoxLayout>
 
 namespace NezhaIDE::Views {
+
+namespace {
+
+struct DisasmBlockData : QTextBlockUserData {
+    int insn_index{-1};
+};
+
+} // namespace
 
 HexEditor::HexEditor(const QString &filePath, QWidget *parent)
     : QWidget(parent), file_path_(filePath)
 {
     setupUI();
+    setupGoBar();
+
+    connect(disasm_view_, &QPlainTextEdit::cursorPositionChanged, this, [this] {
+        const auto *data = dynamic_cast<const DisasmBlockData *>(
+            disasm_view_->textCursor().block().userData());
+        if (!data || data->insn_index < 0) return;
+        const auto &insn = disasm_insns_[static_cast<size_t>(data->insn_index)];
+        hex_view_->setSelection(insn.offset, insn.size);
+        syncHexSelectionToDisasm();
+    });
 
     connect(&Services::ThemeService::instance(), &Services::ThemeService::themeChanged,
             this, [this] { applyTheme(); });
@@ -38,8 +59,37 @@ void HexEditor::setupUI() {
     layout->addWidget(main_splitter_);
 }
 
+void HexEditor::setupGoBar() {
+    auto *bar = new QWidget(this);
+    auto *h = new QHBoxLayout(bar);
+    h->setContentsMargins(8, 4, 8, 4);
+    h->setSpacing(6);
+
+    pos_label_ = new QLabel(QStringLiteral("0x0"), bar);
+    pos_label_->setObjectName(QStringLiteral("hexPosLabel"));
+    pos_label_->setMinimumWidth(56);
+    h->addWidget(pos_label_);
+    h->addStretch();
+
+    go_edit_ = new QLineEdit(bar);
+    go_edit_->setObjectName(QStringLiteral("hexGoEdit"));
+    go_edit_->setPlaceholderText(LOC("hex.offset_hint"));
+    go_edit_->setFixedWidth(200);
+    h->addWidget(go_edit_);
+
+    auto *go_btn = new QPushButton(LOC("hex.go_to"), bar);
+    go_btn->setObjectName(QStringLiteral("hexGoButton"));
+    h->addWidget(go_btn);
+
+    connect(go_btn, &QPushButton::clicked, this, [this] { goToOffset(); });
+    connect(go_edit_, &QLineEdit::returnPressed, this, [this] { goToOffset(); });
+
+    layout()->addWidget(bar);
+}
+
 void HexEditor::setupHexDataView() {
     hex_view_ = new HexView(main_splitter_);
+    hex_view_->setObjectName(QStringLiteral("hexView"));
     main_splitter_->addWidget(hex_view_);
 }
 
@@ -47,7 +97,7 @@ void HexEditor::setupAnalysisTabs() {
     analysis_tabs_ = new QTabWidget(main_splitter_);
     analysis_tabs_->setObjectName(QStringLiteral("hexAnalysisTabs"));
 
-    disasm_view_ = new QPlainTextEdit(analysis_tabs_);
+    disasm_view_ = new DisasmView(analysis_tabs_);
     disasm_view_->setObjectName(QStringLiteral("hexDisasmView"));
     disasm_view_->setReadOnly(true);
     disasm_view_->setFont(QFontDatabase::systemFont(QFontDatabase::FixedFont));
@@ -116,27 +166,8 @@ bool HexEditor::load() {
     hex_view_->setData(raw.data(), raw.size());
 
     connect(hex_view_, &HexView::byteRangeSelected, this, [this](uint64_t, uint64_t) {
-        if (!parser_ || disasm_insns_.empty()) return;
-
-        auto start = hex_view_->selectionStart();
-        auto end = hex_view_->selectionEnd();
-
-        QList<QTextEdit::ExtraSelection> highlights;
-        for (int i = 0; i < static_cast<int>(disasm_insns_.size()); ++i) {
-            const auto &insn = disasm_insns_[i];
-            if (insn.offset >= start && insn.offset < end) {
-                QTextEdit::ExtraSelection sel;
-                sel.format.setBackground(
-                    Services::ThemeService::instance().qcolor(QStringLiteral("overlay.selection")));
-                sel.format.setProperty(QTextFormat::FullWidthSelection, true);
-                QTextCursor cursor(disasm_view_->document());
-                cursor.movePosition(QTextCursor::Start);
-                cursor.movePosition(QTextCursor::Down, QTextCursor::MoveAnchor, i);
-                sel.cursor = cursor;
-                highlights.append(sel);
-            }
-        }
-        disasm_view_->setExtraSelections(highlights);
+        pos_label_->setText(QStringLiteral("0x%1").arg(hex_view_->selectionStart(), 0, 16));
+        syncHexSelectionToDisasm();
     });
 
     populateSections();
@@ -255,13 +286,36 @@ void HexEditor::runDisassembly() {
     const auto &raw = parser_->raw_data();
     auto arch = parser_->arch();
 
+    disasm_insns_.clear();
+    insn_block_numbers_.clear();
+    disasm_view_->setCurrentLine(-1);
+    disasm_view_->setInstructionHighlights({});
+    disasm_view_->clear();
+
     if (targets.empty() || arch == Model::BinaryArch::Unknown) {
         disasm_view_->setPlainText(LOC("hex.no_data"));
         return;
     }
 
     auto &disasm = Services::Disassembler::instance();
-    QStringList allLines;
+    auto &ts = Services::ThemeService::instance();
+
+    QTextCursor cursor(disasm_view_->document());
+    cursor.beginEditBlock();
+
+    const auto c_comment = ts.qcolor(QStringLiteral("text.tertiary"));
+    const auto c_address = ts.qcolor(QStringLiteral("text.tertiary"));
+    const auto c_bytes = ts.qcolor(QStringLiteral("text.secondary"));
+    const auto c_mnemonic = ts.qcolor(QStringLiteral("accent"));
+    const auto c_operands = ts.qcolor(QStringLiteral("text.primary"));
+
+    const auto append = [&cursor](const QColor &color, const QString &text, const bool italic) {
+        QTextCharFormat fmt;
+        fmt.setForeground(color);
+        fmt.setFontItalic(italic);
+        cursor.setCharFormat(fmt);
+        cursor.insertText(text);
+    };
 
     for (const auto &tgt : targets) {
         if (tgt.offset >= raw.size() || tgt.size == 0) continue;
@@ -271,28 +325,82 @@ void HexEditor::runDisassembly() {
             raw.data() + tgt.offset, actual_size, tgt.offset, tgt.address, arch);
         if (!result.has_value()) continue;
 
-        allLines.append(QStringLiteral("; section at 0x%1:").arg(tgt.address, 0, 16));
+        append(c_comment, QStringLiteral("; section at 0x%1").arg(tgt.address, 0, 16), true);
+        append(c_comment, QStringLiteral("\n"), false);
 
         for (const auto &insn : result.value()) {
             disasm_insns_.push_back(insn);
-            allLines.append(QStringLiteral("0x%1  %2  %3 %4")
-                .arg(insn.address, 0, 16)
-                .arg(QString::fromStdString(insn.bytes_hex), -20)
-                .arg(QString::fromStdString(insn.mnemonic), -8)
-                .arg(QString::fromStdString(insn.operands)));
+            insn_block_numbers_.push_back(cursor.blockNumber());
+
+            auto *block_data = new DisasmBlockData;
+            block_data->insn_index = static_cast<int>(disasm_insns_.size()) - 1;
+            cursor.block().setUserData(block_data);
+
+            append(c_address, QStringLiteral("0x%1").arg(insn.address, 16, 16, QLatin1Char('0')), false);
+            append(c_comment, QStringLiteral("  "), false);
+            append(c_bytes, QString::fromStdString(insn.bytes_hex), false);
+            append(c_comment, QStringLiteral("  "), false);
+            append(c_mnemonic, QString::fromStdString(insn.mnemonic).leftJustified(8, ' '), false);
+            append(c_operands, QString::fromStdString(insn.operands), false);
+            append(c_comment, QStringLiteral("\n"), false);
         }
-        allLines.append(QString());
+        append(c_comment, QStringLiteral("\n"), false);
     }
 
-    disasm_view_->setPlainText(allLines.join(QStringLiteral("\n")));
+    cursor.endEditBlock();
+    disasm_view_->setTextCursor(QTextCursor(disasm_view_->document()));
+}
 
-    connect(disasm_view_, &QPlainTextEdit::cursorPositionChanged, this, [this] {
-        auto cursor = disasm_view_->textCursor();
-        int line = cursor.blockNumber();
-        if (line < 0 || line >= static_cast<int>(disasm_insns_.size())) return;
-        const auto &insn = disasm_insns_[line];
-        hex_view_->navigateToOffset(insn.offset);
-    });
+void HexEditor::syncHexSelectionToDisasm() {
+    if (!parser_ || disasm_insns_.empty()) return;
+
+    const auto start = hex_view_->selectionStart();
+    const auto end = hex_view_->selectionEnd();
+    auto &ts = Services::ThemeService::instance();
+
+    QList<QTextEdit::ExtraSelection> highlights;
+    int first_match = -1;
+    for (int i = 0; i < static_cast<int>(disasm_insns_.size()); ++i) {
+        const auto &insn = disasm_insns_[i];
+        if (insn.offset >= start && insn.offset < end) {
+            if (first_match < 0) first_match = i;
+            QTextEdit::ExtraSelection sel;
+            sel.format.setBackground(ts.qcolor(QStringLiteral("overlay.selection")));
+            sel.format.setProperty(QTextFormat::FullWidthSelection, true);
+            QTextCursor cursor(disasm_view_->document());
+            cursor.movePosition(QTextCursor::Start);
+            cursor.movePosition(QTextCursor::Down, QTextCursor::MoveAnchor,
+                                insn_block_numbers_[i]);
+            sel.cursor = cursor;
+            highlights.append(sel);
+        }
+    }
+
+    disasm_view_->setInstructionHighlights(highlights);
+    if (first_match >= 0) {
+        disasm_view_->setCurrentLine(insn_block_numbers_[first_match]);
+    }
+}
+
+void HexEditor::goToOffset() {
+    if (!parser_) return;
+    const auto text = go_edit_->text().trimmed();
+    bool ok = false;
+    uint64_t offset = 0;
+    if (text.startsWith(QStringLiteral("0x"), Qt::CaseInsensitive)) {
+        offset = text.mid(2).toULongLong(&ok, 16);
+    } else {
+        offset = text.toULongLong(&ok, 10);
+    }
+    if (!ok || offset >= parser_->raw_data().size()) {
+        go_edit_->setToolTip(LOC("hex.offset_invalid"));
+        QToolTip::showText(go_edit_->mapToGlobal(QPoint(0, 0)), LOC("hex.offset_invalid"), go_edit_);
+        return;
+    }
+    go_edit_->setToolTip({});
+    hex_view_->setSelection(offset, 1);
+    pos_label_->setText(QStringLiteral("0x%1").arg(offset, 0, 16));
+    syncHexSelectionToDisasm();
 }
 
 void HexEditor::applyEmptyState(QTableWidget *table, const QString &message) {
@@ -318,25 +426,14 @@ void HexEditor::applyTheme() {
     strings_table_->setStyleSheet(ts.qss(QStringLiteral("style.http_kv_table")));
 
     hex_view_->viewport()->update();
+    disasm_view_->refresh();
 
-    if (!disasm_insns_.empty()) {
-        QList<QTextEdit::ExtraSelection> highlights;
-        auto start = hex_view_->selectionStart();
-        auto end = hex_view_->selectionEnd();
-        for (int i = 0; i < static_cast<int>(disasm_insns_.size()); ++i) {
-            const auto &insn = disasm_insns_[i];
-            if (insn.offset >= start && insn.offset < end) {
-                QTextEdit::ExtraSelection sel;
-                sel.format.setBackground(ts.qcolor(QStringLiteral("overlay.selection")));
-                sel.format.setProperty(QTextFormat::FullWidthSelection, true);
-                QTextCursor cursor(disasm_view_->document());
-                cursor.movePosition(QTextCursor::Start);
-                cursor.movePosition(QTextCursor::Down, QTextCursor::MoveAnchor, i);
-                sel.cursor = cursor;
-                highlights.append(sel);
-            }
-        }
-        disasm_view_->setExtraSelections(highlights);
+    // 反汇编文本携带静态主题色，主题切换后需重建文档刷新颜色
+    if (parser_) {
+        const auto sel_start = hex_view_->selectionStart();
+        runDisassembly();
+        syncHexSelectionToDisasm();
+        hex_view_->setSelection(sel_start, 1);
     }
 }
 
