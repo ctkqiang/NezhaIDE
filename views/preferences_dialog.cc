@@ -48,6 +48,7 @@ void PreferencesDialog::setupUi()
     auto *lang_layout = new QFormLayout(lang_group);
     language_combo_ = new QComboBox(this);
     language_combo_->addItem(LOC("prefs.lang_chinese"), static_cast<int>(NezhaIDE::IDELanguage::Chinese));
+    language_combo_->addItem(LOC("prefs.lang_german"), static_cast<int>(NezhaIDE::IDELanguage::German));
     language_combo_->addItem(LOC("prefs.lang_english"), static_cast<int>(NezhaIDE::IDELanguage::English));
     lang_layout->addRow(language_combo_);
     main_layout->addWidget(lang_group);

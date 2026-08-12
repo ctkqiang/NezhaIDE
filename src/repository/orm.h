@@ -79,7 +79,7 @@ namespace NezhaIDE::Repository {
             instance.bind_values(query, true);
             auto er = query.Execute();
             if (!er.has_value()) {
-                return er;
+                return std::unexpected(DatabaseError{er.error(), {}, sql});
             }
             instance.id = static_cast<int>(db_.last_insert_rowid());
             return {};
@@ -93,7 +93,11 @@ namespace NezhaIDE::Repository {
             }
             auto& query = qr.value();
             instance.bind_values(query, false);
-            return query.Execute();
+            auto er = query.Execute();
+            if (!er.has_value()) {
+                return std::unexpected(DatabaseError{er.error(), {}, sql});
+            }
+            return {};
         }
 
         static constexpr const ::NezhaIDE::Model::ColumnDef* primary_key_column() {

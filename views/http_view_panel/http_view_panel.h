@@ -14,8 +14,21 @@
 #include "src/model/http_request.h"
 #include "views/editor/simple_highlighter.h"
 
+/**
+ * IDE 视图组件命名空间。
+ */
 namespace NezhaIDE::Views {
 
+/**
+ * HTTP 客户端面板，支持分字段编辑和 BurpSuite 风格原始文本编辑。
+ *
+ * 请求编辑支持两种模式：分字段模式（Params/Headers/Body tabs）
+ * 和 Raw 模式（直接编辑 HTTP 原始文本）。响应显示 Raw、美化 Body、
+ * Headers 表格和 HTML 预览四种视图。通过 HttpClientService
+ * 异步发送请求。
+ *
+ * @see NezhaIDE::Services::HTTP::HttpClientService
+ */
 class HttpViewPanel : public QWidget {
     Q_OBJECT
 
@@ -80,6 +93,7 @@ private:
     QPlainTextEdit *raw_response_editor_{};
     NezhaIDE::Editor::SimpleHighlighter *response_raw_highlighter_{};
     QTextBrowser *html_preview_{};
+    QPlainTextEdit *response_hex_{};
 
     QString method_{QStringLiteral("GET")};
     bool sending_{false};

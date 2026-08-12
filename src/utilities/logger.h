@@ -10,7 +10,14 @@
 #include <mutex>
 #include <string_view>
 
+/**
+ * 日志与调试工具命名空间。
+ */
 namespace NezhaIDE::Utilities {
+
+    /**
+     * 日志严重级别。
+     */
     enum class LogLevel {
         Info = 0,
         Debug,
@@ -20,8 +27,19 @@ namespace NezhaIDE::Utilities {
         Verbose
     };
 
+    /**
+     * 线程安全的日志记录器单例。
+     *
+     * 支持控制台和文件双输出通道，模板化格式化消息，
+     * 按级别过滤日志输出。
+     */
     class Logger final {
     public:
+        /**
+         * 获取全局日志记录器实例。
+         *
+         * @return 单例引用。
+         */
         static Logger &instance();
 
         Logger(const Logger &) = delete;
@@ -43,6 +61,16 @@ namespace NezhaIDE::Utilities {
         [[nodiscard]]
         LogLevel level() const noexcept;
 
+        /**
+         * 记录一条格式化日志消息。
+         *
+         * @param level 日志级别，低于 minimum_level_ 的消息将被丢弃
+         * @param file 源文件名（通常传 __FILE__）
+         * @param line 行号（通常传 __LINE__）
+         * @param function 函数名（通常传 __func__）
+         * @param format C++26 格式化字符串
+         * @param args 格式化参数
+         */
         template<typename... Args>
         void log(
             const LogLevel level,
