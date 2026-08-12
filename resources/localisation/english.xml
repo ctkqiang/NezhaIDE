@@ -71,6 +71,14 @@
     <string key="git.status.conflict">Conflict / unmerged</string>
     <string key="git.status.staged_copied">Staged (copied)</string>
     <string key="git.status.typechange">Type change</string>
+    <string key="data_view.refresh">Refresh</string>
+    <string key="data_view.run_query">Run Query</string>
+    <string key="data_view.sql_placeholder">Enter SQL query…</string>
+    <string key="data_view.no_tables">No tables in database</string>
+    <string key="data_view.load_error">Could not open data file: %1</string>
+    <string key="data_view.rows_status">Showing %1 / %2 rows</string>
+    <string key="data_view.query_error">Query error: %1</string>
+    <string key="data_view.csv_loaded">Loaded %1 rows</string>
     <string key="menu.open_project">Open Project...</string>
     <string key="menu.save">Save</string>
     <string key="menu.quit">Quit</string>

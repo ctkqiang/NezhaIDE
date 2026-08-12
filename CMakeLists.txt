@@ -32,6 +32,8 @@ add_executable(NezhaIDE main.cc
         views/editor/language_registry.h
         views/editor/editor_tab_host.cc
         views/editor/editor_tab_host.h
+        views/editor/data_view.cc
+        views/editor/data_view.h
         src/configuration.h
         src/configuration.cc
         views/main_window.cc

@@ -71,6 +71,14 @@
     <string key="git.status.conflict">Konflikt / nicht zusammengeführt</string>
     <string key="git.status.staged_copied">Gestaged (kopiert)</string>
     <string key="git.status.typechange">Typänderung</string>
+    <string key="data_view.refresh">Aktualisieren</string>
+    <string key="data_view.run_query">Abfrage ausführen</string>
+    <string key="data_view.sql_placeholder">SQL-Abfrage eingeben…</string>
+    <string key="data_view.no_tables">Keine Tabellen in der Datenbank</string>
+    <string key="data_view.load_error">Datendatei konnte nicht geöffnet werden: %1</string>
+    <string key="data_view.rows_status">Zeige %1 / %2 Zeilen</string>
+    <string key="data_view.query_error">Abfragefehler: %1</string>
+    <string key="data_view.csv_loaded">%1 Zeilen geladen</string>
     <string key="menu.open_project">Projekt öffnen...</string>
     <string key="menu.save">Speichern</string>
     <string key="menu.quit">Beenden</string>

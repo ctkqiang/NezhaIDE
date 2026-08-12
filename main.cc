@@ -10,7 +10,10 @@
 #include "src/utilities/downloader.h"
 #include "src/utilities/logger.h"
 #include "views/main_window.h"
+#include "views/editor/code_editor.h"
+#include "views/editor/data_view.h"
 #include "views/editor/editor_tab_host.h"
+#include "views/editor/simple_highlighter.h"
 #include "views/hex_editor/disasm_view.h"
 #include "views/hex_editor/hex_editor.h"
 #include "views/hex_editor/hex_view.h"
@@ -26,9 +29,12 @@
 #include <QKeyEvent>
 #include <QLabel>
 #include <QLineEdit>
+#include <QPlainTextEdit>
+#include <QProcess>
 #include <QPushButton>
 #include <QRadioButton>
 #include <QSpinBox>
+#include <QTableWidget>
 #include <QTextBlock>
 #include <QTextCursor>
 #include <QTextStream>
@@ -424,6 +430,80 @@ int main(int argc, char* argv[]) {
                                                             std::printf("SELFTEST: git tab0=%s diffLen=%d\n",
                                                                         gitTabs->tabText(0).toUtf8().constData(),
                                                                         static_cast<int>(gitDiff->toPlainText().size()));
+
+                                                            // DataView selftest：.db 表浏览+SQL / .csv 表格 / .json beautify
+                                                            {
+                                                                QFile csvFile(QStringLiteral("/tmp/nz_fixture.csv"));
+                                                                if (csvFile.open(QIODevice::WriteOnly)) {
+                                                                    csvFile.write(QStringLiteral(
+                                                                        "name,age,city\n"
+                                                                        "\"Alice, Jr\",25,\"New York\"\n"
+                                                                        "Bob,30,Paris\n").toUtf8());
+                                                                    csvFile.close();
+                                                                }
+                                                                QFile jsonFile(QStringLiteral("/tmp/nz_fixture.json"));
+                                                                if (jsonFile.open(QIODevice::WriteOnly)) {
+                                                                    jsonFile.write(QStringLiteral(
+                                                                        "{\"a\":\"你好\",\"n\":42}").toUtf8());
+                                                                    jsonFile.close();
+                                                                }
+                                                                QProcess::execute(QStringLiteral("sqlite3"),
+                                                                    {QStringLiteral("/tmp/nz_fixture.db"),
+                                                                     QStringLiteral("CREATE TABLE t(a INTEGER,b TEXT); "
+                                                                                    "INSERT INTO t VALUES(1,'x'),(2,'y');")});
+
+                                                                auto *editorHost = window.findChild<NezhaIDE::Editor::EditorTabHost *>();
+                                                                if (!editorHost) {
+                                                                    std::printf("SELFTEST: no editor host\n");
+                                                                    QApplication::exit(2);
+                                                                    return;
+                                                                }
+                                                                editorHost->openFile(QStringLiteral("/tmp/nz_fixture.db"));
+                                                                editorHost->openFile(QStringLiteral("/tmp/nz_fixture.csv"));
+                                                                editorHost->openFile(QStringLiteral("/tmp/nz_fixture.json"));
+
+                                                                int dbOk = 0, csvOk = 0, jsonOk = 0;
+                                                                const auto views = editorHost->findChildren<NezhaIDE::Views::DataView *>();
+                                                                for (auto *dv : views) {
+                                                                    auto *table = dv->findChild<QTableWidget *>();
+                                                                    if (dv->filePath().endsWith(QStringLiteral("nz_fixture.db"))) {
+                                                                        auto *combo = dv->findChild<QComboBox *>(QStringLiteral("dataViewTableCombo"));
+                                                                        auto *sqlEdit = dv->findChild<QPlainTextEdit *>();
+                                                                        dbOk = (combo && combo->count() == 1
+                                                                                && combo->currentText() == QStringLiteral("t")
+                                                                                && table && table->rowCount() >= 2
+                                                                                && table->columnCount() == 2
+                                                                                && table->item(0, 0)
+                                                                                && table->item(0, 0)->text() == QStringLiteral("1")
+                                                                                && sqlEdit
+                                                                                && sqlEdit->findChild<NezhaIDE::Editor::SimpleHighlighter *>())
+                                                                                   ? 1 : 0;
+                                                                    } else if (dv->filePath().endsWith(QStringLiteral("nz_fixture.csv"))) {
+                                                                        auto *combo = dv->findChild<QComboBox *>(QStringLiteral("dataViewTableCombo"));
+                                                                        csvOk = (table && table->rowCount() == 2
+                                                                                && table->columnCount() == 3
+                                                                                && table->item(0, 0)
+                                                                                && table->item(0, 0)->text() == QStringLiteral("Alice, Jr")
+                                                                                && combo && combo->isHidden()) ? 1 : 0;
+                                                                    }
+                                                                }
+                                                                auto *jsonEditor = qobject_cast<NezhaIDE::Editor::CodeEditor *>(editorHost->currentWidget());
+                                                                if (jsonEditor) {
+                                                                    const auto text = jsonEditor->document()->toPlainText();
+                                                                    jsonOk = (text.contains(QStringLiteral("你好"))
+                                                                              && text.contains(QStringLiteral("    "))
+                                                                              && jsonEditor->findChild<NezhaIDE::Editor::SimpleHighlighter *>())
+                                                                                 ? 1 : 0;
+                                                                }
+                                                                std::printf("SELFTEST: data db=%d csv=%d json=%d\n", dbOk, csvOk, jsonOk);
+                                                                if (!dbOk || !csvOk || !jsonOk) {
+                                                                    QApplication::exit(2);
+                                                                    return;
+                                                                }
+                                                                if (!views.isEmpty()) {
+                                                                    views.first()->grab().save(QStringLiteral("/tmp/nezha_13_data_view.png"));
+                                                                }
+                                                            }
                                                             std::printf("SELFTEST: DONE\n");
                                                             QApplication::exit(0);
                                                         });

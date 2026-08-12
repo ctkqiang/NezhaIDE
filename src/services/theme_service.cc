@@ -306,6 +306,43 @@ static const QHash<QString, QString> kStyleTemplates = {
      "width: 10px; height: 10px; }"
      "QSpinBox::down-arrow { image: url(:/vectors/chevron_down.svg);"
      "width: 10px; height: 10px; }"},
+
+    {"style.data_view",
+     "QWidget#dataViewRoot { background: $bg.secondary; }"
+     "QWidget#dataViewToolbar { background: $bg.primary;"
+     "border: 1px solid $border; border-radius: 8px; }"
+     "QLabel#dataViewPath { font-size: 13px; font-weight: 600; color: $text.primary; }"
+     "QLabel#dataViewStatus { font-size: 11px; color: $text.secondary; }"
+     "QComboBox#dataViewTableCombo { border: 1px solid $border; border-radius: 8px;"
+     "background: $bg.primary; color: $text.primary; font-size: 12px;"
+     "padding: 2px 8px; }"
+     "QComboBox#dataViewTableCombo::drop-down { border: none; width: 20px; }"
+     "QComboBox#dataViewTableCombo::down-arrow { image: url(:/vectors/chevron_down.svg);"
+     "width: 10px; height: 10px; }"
+     "QPushButton#dataViewRefresh { border: 1px solid $border; border-radius: 7px;"
+     "background: transparent; color: $text.primary; font-size: 12px; padding: 4px 12px; }"
+     "QPushButton#dataViewRefresh:hover { background: $overlay.hover; }"
+     "QPushButton#dataViewRefresh:pressed { background: $overlay.selection; }"
+     "QWidget#dataViewSqlPanel { background: $bg.primary;"
+     "border-top: 1px solid $border; }"
+     "QPlainTextEdit { border: 1px solid $border; border-radius: 8px;"
+     "background: $bg.primary; color: $text.primary; font-size: 13px; padding: 6px; }"
+     "QPushButton#dataViewRunQuery { border: 1px solid $accent; border-radius: 7px;"
+     "background: $accent; color: white; font-size: 12px; padding: 4px 14px; }"
+     "QPushButton#dataViewRunQuery:hover { background: $accent.hover; border-color: $accent.hover; }"
+     "QPushButton#dataViewRunQuery:pressed { background: $accent.pressed; border-color: $accent.pressed; }"},
+
+    {"style.data_view_table",
+     "QTableWidget { border: none; background: $bg.primary;"
+     "color: $text.primary; font-size: 13px; outline: none;"
+     "alternate-background-color: $bg.tertiary; gridline-color: $border; }"
+     "QTableWidget::item { padding: 0 8px; border: none; }"
+     "QTableWidget::item:selected { background: $overlay.selection; color: $text.primary; }"
+     "QTableWidget::item:hover { background: $overlay.hover.subtle; }"
+     "QHeaderView::section { background: $bg.secondary; color: $text.secondary;"
+     "border: none; border-bottom: 1px solid $border; padding: 6px 8px;"
+     "font-size: 11px; font-weight: 600; }"
+     "QTableCornerButton::section { background: $bg.secondary; border: none; }"},
 };
 
 ThemeService &ThemeService::instance()
