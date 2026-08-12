@@ -8,10 +8,11 @@
 #define NEZHAIDE_CONFIGURATION_H
 
 #if __has_include(<QSettings>)
-    #include <QSettings>
-    #define HAS_QSETTINGS 1
+#include <QSettings>
+#define HAS_QSETTINGS 1
 #else
-    #define HAS_QSETTINGS 0
+#define HAS_QSETTINGS 0
+#error "QSettings 不存在"
 #endif
 
 #include <array>
@@ -23,10 +24,9 @@
  * 以及应用元数据常量（名称、版本、数据库表名等）。
  */
 namespace NezhaIDE {
-
-/**
- * 作者元数据，用于界面展示和文档生成。
- */
+    /**
+     * 作者元数据，用于界面展示和文档生成。
+     */
     struct AuthorMetadata final {
         std::string_view name;
         std::string_view email;
@@ -92,11 +92,17 @@ namespace NezhaIDE {
         };
 
         [[ maybe_unused ]]
-        static constexpr std::array<std::string_view, 4> DatabaseTable = {
+        static constexpr std::string_view PasswordList =
+                "https://github.com/ctkqiang/NezhaIDE/releases/download/password-list/rockyou.txt";
+
+        [[ maybe_unused ]]
+        static constexpr std::array<std::string_view, 6> DatabaseTable = {
             "tools",
             "tools_procedures",
             "tool_parameters",
-            "user_preferences"
+            "user_preferences",
+            "credential_datasets",
+            "credential_entries"
         };
     };
 

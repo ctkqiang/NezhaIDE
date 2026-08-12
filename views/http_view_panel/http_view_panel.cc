@@ -10,6 +10,7 @@
 #include <QFrame>
 #include <QHeaderView>
 #include <QHBoxLayout>
+#include <QIcon>
 #include <QJsonDocument>
 #include <QMenu>
 #include <QRegularExpression>
@@ -593,7 +594,9 @@ void HttpViewPanel::appendKeyValueRow(QTableWidget *table)
     table->setItem(row, 1, new QTableWidgetItem());
     table->setItem(row, 2, new QTableWidgetItem());
 
-    auto *removeBtn = new QPushButton(QStringLiteral("✕"), table);
+    auto *removeBtn = new QPushButton(table);
+    removeBtn->setIcon(QIcon(QStringLiteral(":/vectors/close.svg")));
+    removeBtn->setIconSize({14, 14});
     removeBtn->setObjectName(QStringLiteral("httpRemoveRow"));
     removeBtn->setCursor(Qt::PointingHandCursor);
     removeBtn->setFixedSize(22, 22);
@@ -758,7 +761,9 @@ void HttpViewPanel::applyDefaultValues()
         headers_table_->setItem(row, 0, enabled);
         headers_table_->setItem(row, 1, new QTableWidgetItem(name));
         headers_table_->setItem(row, 2, new QTableWidgetItem(value));
-        auto *removeBtn = new QPushButton(QStringLiteral("✕"), headers_table_);
+        auto *removeBtn = new QPushButton(headers_table_);
+        removeBtn->setIcon(QIcon(QStringLiteral(":/vectors/close.svg")));
+        removeBtn->setIconSize({14, 14});
         removeBtn->setObjectName(QStringLiteral("httpRemoveRow"));
         removeBtn->setCursor(Qt::PointingHandCursor);
         removeBtn->setFixedSize(22, 22);
@@ -809,7 +814,9 @@ void HttpViewPanel::syncWidgetsFromRaw()
         headers_table_->setItem(row, 0, enabled);
         headers_table_->setItem(row, 1, new QTableWidgetItem(QString::fromStdString(h.name)));
         headers_table_->setItem(row, 2, new QTableWidgetItem(QString::fromStdString(h.value)));
-        auto *removeBtn = new QPushButton(QStringLiteral("✕"), headers_table_);
+        auto *removeBtn = new QPushButton(headers_table_);
+        removeBtn->setIcon(QIcon(QStringLiteral(":/vectors/close.svg")));
+        removeBtn->setIconSize({14, 14});
         removeBtn->setObjectName(QStringLiteral("httpRemoveRow"));
         removeBtn->setCursor(Qt::PointingHandCursor);
         removeBtn->setFixedSize(22, 22);

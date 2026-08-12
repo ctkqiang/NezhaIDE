@@ -5,10 +5,19 @@
 #include <QScrollBar>
 #include <QTextCursor>
 #include <cstdlib>
+
+#ifdef Q_OS_WIN
+#include <QProcess>
+#else
 #include <unistd.h>
-#include <util.h>
 #include <sys/ioctl.h>
 #include <signal.h>
+#ifdef __APPLE__
+#include <util.h>
+#else
+#include <pty.h>
+#endif
+#endif
 
 namespace NezhaIDE::Views {
 
@@ -79,6 +88,7 @@ void TerminalView::resizeEvent(QResizeEvent *event) {
 }
 
 void TerminalView::updatePtySize() {
+#ifndef Q_OS_WIN
     if (master_fd_ < 0) return;
     auto fm = fontMetrics();
     int cols = viewport()->width() / fm.horizontalAdvance(' ');
@@ -92,9 +102,25 @@ void TerminalView::updatePtySize() {
     ws.ws_xpixel = 0;
     ws.ws_ypixel = 0;
     ioctl(master_fd_, TIOCSWINSZ, &ws);
+#endif
 }
 
 bool TerminalView::startShell() {
+#ifdef Q_OS_WIN
+    const auto shell = qEnvironmentVariable("COMSPEC", QStringLiteral("cmd.exe"));
+    shell_path_ = shell;
+    process_ = new QProcess(this);
+    connect(process_, &QProcess::readyReadStandardOutput, this, [this] {
+        parseAnsiAndAppend(process_->readAllStandardOutput());
+    });
+    connect(process_, &QProcess::readyReadStandardError, this, [this] {
+        parseAnsiAndAppend(process_->readAllStandardError());
+    });
+    connect(process_, QOverload<int, QProcess::ExitStatus>::of(&QProcess::finished),
+            this, [this](int code, QProcess::ExitStatus) { emit shellExited(code); });
+    process_->start(shell, {QStringLiteral("/K")});
+    return process_->waitForStarted(3000);
+#else
     struct winsize ws{};
     ws.ws_col = 120;
     ws.ws_row = 40;
@@ -124,31 +150,58 @@ bool TerminalView::startShell() {
     setTextCursor(cursor);
 
     return true;
+#endif
 }
 
 void TerminalView::killShell() {
-    if (shell_pid_ > 0) {
+#ifdef Q_OS_WIN
+    if (process_) {
+        if (process_->state() != QProcess::NotRunning) {
+            process_->kill();
+            process_->waitForFinished(2000);
+        }
+        delete process_;
+        process_ = nullptr;
+    }
+#else
+    if (shell_pid_ > 0 && master_fd_ >= 0) {
         ::write(master_fd_, "\x03", 1);
-        usleep(50000);
         ::write(master_fd_, "exit\n", 5);
+    }
+    // 关闭 master 使 slave 侧读到 EOF，shell 收到 SIGHUP 自行退出
+    if (master_fd_ >= 0) {
+        notifier_.reset();
+        ::close(master_fd_);
+        master_fd_ = -1;
+    }
+    if (shell_pid_ > 0) {
         int status;
-        pid_t result;
-        for (int i = 0; i < 10; ++i) {
-            result = waitpid(shell_pid_, &status, WNOHANG);
-            if (result > 0) break;
+        for (int i = 0; i < 15; ++i) {
+            if (waitpid(shell_pid_, &status, WNOHANG) == shell_pid_) {
+                shell_pid_ = -1;
+                return;
+            }
             usleep(100000);
         }
-        if (result <= 0) { kill(shell_pid_, SIGKILL); waitpid(shell_pid_, &status, 0); }
+        // macOS 上对 exiting 状态的进程同步 waitpid 可能永久阻塞（内核
+        // 清理挂起），进程退出时僵尸会被 init 收割，因此强杀后不等待
+        kill(shell_pid_, SIGKILL);
         shell_pid_ = -1;
     }
-    if (master_fd_ >= 0) { notifier_.reset(); ::close(master_fd_); master_fd_ = -1; }
+#endif
 }
 
-bool TerminalView::isRunning() const noexcept { return shell_pid_ > 0 && master_fd_ >= 0; }
+bool TerminalView::isRunning() const noexcept {
+#ifdef Q_OS_WIN
+    return process_ && process_->state() != QProcess::NotRunning;
+#else
+    return shell_pid_ > 0 && master_fd_ >= 0;
+#endif
+}
 
 QString TerminalView::shellName() const {
     if (shell_path_.isEmpty()) return QStringLiteral("shell");
-    int pos = shell_path_.lastIndexOf(QChar('/'));
+    int pos = qMax(shell_path_.lastIndexOf(QChar('/')), shell_path_.lastIndexOf(QChar('\\')));
     return pos >= 0 ? shell_path_.mid(pos + 1) : shell_path_;
 }
 
@@ -158,8 +211,12 @@ void TerminalView::sendText(const QString &text) {
 }
 
 void TerminalView::writeToPty(const QByteArray &data) {
+#ifdef Q_OS_WIN
+    if (process_) process_->write(data);
+#else
     if (master_fd_ < 0) return;
     ::write(master_fd_, data.constData(), static_cast<size_t>(data.size()));
+#endif
 }
 
 void TerminalView::keyPressEvent(QKeyEvent *event) {
@@ -197,6 +254,7 @@ void TerminalView::keyPressEvent(QKeyEvent *event) {
     else event->ignore();
 }
 
+#ifndef Q_OS_WIN
 void TerminalView::onPtyReadyRead() {
     char buf[4096];
     ssize_t n = ::read(master_fd_, buf, sizeof(buf));
@@ -204,6 +262,7 @@ void TerminalView::onPtyReadyRead() {
     parseAnsiAndAppend(QByteArray(buf, static_cast<int>(n)));
     ensureCursorVisible();
 }
+#endif
 
 static QColor ansiToColor(int code, const QColor &themeFg, const QColor &themeBg) {
     auto &ts = Services::ThemeService::instance();

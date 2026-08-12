@@ -4,8 +4,9 @@ project(NezhaIDE)
 set(CMAKE_CXX_STANDARD 26)
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTOUIC ON)
+set(CMAKE_AUTORCC ON)
 
-find_package(Qt6 REQUIRED COMPONENTS Core Widgets Network)
+find_package(Qt6 REQUIRED COMPONENTS Core Widgets Network Svg)
 find_package(SQLite3 REQUIRED)
 find_package(tl-expected REQUIRED)
 find_package(LIEF REQUIRED)
@@ -52,12 +53,15 @@ add_executable(NezhaIDE main.cc
         src/model/column_def.h
         src/model/user_preference.h
         src/model/http_request.h
+        src/model/credential_dataset.h
         src/repository/orm.h
         src/model/tool_registry.h
         src/services/http.cc
         src/services/http.h
         views/http_view_panel/http_view_panel.cc
         views/http_view_panel/http_view_panel.h
+        views/hydra/hydra_view_panel.cc
+        views/hydra/hydra_view_panel.h
         src/model/tools.h
         views/hex_editor/binary_parser.cc
         views/hex_editor/binary_parser.h
@@ -72,7 +76,12 @@ add_executable(NezhaIDE main.cc
         views/terminal/terminal_panel.cc
         views/terminal/terminal_panel.h
         src/utilities/permission.cc
-        src/utilities/permission.h)
+        src/utilities/permission.h
+        views/vectors/vectors.qrc
+        src/tools/hydra.cc
+        src/tools/hydra.h
+        src/utilities/downloader.cc
+        src/utilities/downloader.h)
 
 set_target_properties(NezhaIDE PROPERTIES
     MACOSX_BUNDLE TRUE
@@ -110,4 +119,4 @@ target_include_directories(NezhaIDE PRIVATE ${CMAKE_SOURCE_DIR} ${CAPSTONE_INCLU
 
 target_compile_definitions(NezhaIDE PRIVATE NEZHA_PROJECT_ROOT="${CMAKE_SOURCE_DIR}")
 
-target_link_libraries(NezhaIDE PRIVATE Qt6::Core Qt6::Widgets Qt6::Network SQLite3::SQLite3 LIEF::LIEF ${CAPSTONE_LIBRARY})
+target_link_libraries(NezhaIDE PRIVATE Qt6::Core Qt6::Widgets Qt6::Network Qt6::Svg SQLite3::SQLite3 LIEF::LIEF ${CAPSTONE_LIBRARY})

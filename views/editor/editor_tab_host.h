@@ -5,6 +5,7 @@
 
 namespace NezhaIDE::Views {
     class HttpViewPanel;
+    class HydraViewPanel;
     class HexEditor;
 }
 
@@ -46,6 +47,11 @@ public slots:
      */
     void openHttpClient();
 
+    /**
+     * 创建或切换到 Hydra 凭据测试面板。
+     */
+    void openHydra();
+
 signals:
     void editActionsChanged();
 
@@ -58,6 +64,7 @@ private:
     QHash<QString, CodeEditor *> editors_;
     QHash<QString, NezhaIDE::Views::HexEditor *> hex_editors_;
     NezhaIDE::Views::HttpViewPanel *http_panel_{};
+    NezhaIDE::Views::HydraViewPanel *hydra_panel_{};
     QWidget *welcome_tab_{};
 };
 

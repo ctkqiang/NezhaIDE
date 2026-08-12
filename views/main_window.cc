@@ -134,6 +134,13 @@ void MainWindow::setupMenuBar()
         editor_host_->openHttpClient();
     });
 
+    toggle_hydra_ = view_menu->addAction(LOC("menu.view_hydra"));
+    toggle_hydra_->setCheckable(true);
+    toggle_hydra_->setChecked(true);
+    connect(toggle_hydra_, &QAction::triggered, this, [this] {
+        editor_host_->openHydra();
+    });
+
     toggle_terminal_ = view_menu->addAction(LOC("menu.view_terminal"));
     toggle_terminal_->setCheckable(true);
     toggle_terminal_->setChecked(true);
@@ -277,6 +284,9 @@ void MainWindow::setupLayout()
             break;
         case ActivityBarItem::HttpClient:
             editor_host_->openHttpClient();
+            break;
+        case ActivityBarItem::Hydra:
+            editor_host_->openHydra();
             break;
         case ActivityBarItem::Terminal:
             if (auto *dock = findChild<QDockWidget *>(QStringLiteral("terminalDock"))) {

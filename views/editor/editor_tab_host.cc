@@ -2,6 +2,7 @@
 #include "code_editor.h"
 #include "views/hex_editor/hex_editor.h"
 #include "views/http_view_panel/http_view_panel.h"
+#include "views/hydra/hydra_view_panel.h"
 #include "src/configuration.h"
 #include "src/services/localization_service.h"
 #include "src/services/theme_service.h"
@@ -42,6 +43,12 @@ void EditorTabHost::openFile(const QString &path)
 {
     const auto canonical = QFileInfo(path).canonicalFilePath();
     if (canonical.isEmpty()) return;
+
+    // .hydra 后缀作为 Hydra 工具入口，从 Explorer 双击即打开工具面板
+    if (QFileInfo(canonical).suffix().compare(QStringLiteral("hydra"), Qt::CaseInsensitive) == 0) {
+        openHydra();
+        return;
+    }
 
     if (auto it = editors_.find(canonical); it != editors_.end()) {
         setCurrentWidget(it.value());
@@ -145,6 +152,20 @@ void EditorTabHost::openHttpClient()
     setCurrentIndex(idx);
 }
 
+void EditorTabHost::openHydra()
+{
+    if (hydra_panel_) {
+        setCurrentWidget(hydra_panel_);
+        return;
+    }
+
+    hydra_panel_ = new NezhaIDE::Views::HydraViewPanel(this);
+    const auto idx = addTab(hydra_panel_, LOC("hydra.tab_title"));
+
+    removeWelcomeTab();
+    setCurrentIndex(idx);
+}
+
 CodeEditor *EditorTabHost::currentEditor() const
 {
     return qobject_cast<CodeEditor *>(currentWidget());
@@ -182,6 +203,10 @@ void EditorTabHost::onTabCloseRequested(int index)
 
     if (w == http_panel_) {
         http_panel_ = nullptr;
+    }
+
+    if (w == hydra_panel_) {
+        hydra_panel_ = nullptr;
     }
 
     if (auto *hex = qobject_cast<NezhaIDE::Views::HexEditor *>(w)) {

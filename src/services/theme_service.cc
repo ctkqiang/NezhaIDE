@@ -280,6 +280,26 @@ static const QHash<QString, QString> kStyleTemplates = {
     {"style.http_section_label",
      "QLabel { font-size: 11px; font-weight: 600;"
      "text-transform: uppercase; letter-spacing: 0.5px; color: $text.secondary; }"},
+
+    {"style.hydra_panel",
+     "QWidget#hydraRoot { background: $bg.secondary; }"
+     "QFrame#hydraTargetBar { background: $bg.primary;"
+     "border: 1px solid $border; border-radius: 8px; }"
+     "QFrame#hydraSection { background: $bg.primary;"
+     "border: 1px solid $border; border-radius: 8px; }"
+     "QLabel#hydraSectionLabel { font-size: 11px; font-weight: 600;"
+     "text-transform: uppercase; letter-spacing: 0.5px; color: $text.secondary; }"
+     "QLabel#hydraHintLabel { font-size: 11px; color: $text.tertiary; }"
+     "QRadioButton { color: $text.primary; font-size: 13px; spacing: 6px; }"
+     "QRadioButton::indicator { width: 15px; height: 15px; }"},
+
+    {"style.hydra_spin",
+     "QSpinBox { border: 1px solid $border; border-radius: 6px;"
+     "background: $bg.primary; color: $text.primary; font-size: 12px;"
+     "padding: 2px 6px; }"
+     "QSpinBox:focus { border-color: $accent; }"
+     "QSpinBox::up-button, QSpinBox::down-button { width: 18px;"
+     "border: none; background: transparent; }"},
 };
 
 ThemeService &ThemeService::instance()

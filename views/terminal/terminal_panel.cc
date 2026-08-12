@@ -56,7 +56,7 @@ void TerminalPanel::newTerminal() {
     tab_widget_->setCurrentIndex(idx);
 
     if (!term->startShell()) {
-        term->setPlainText(QStringLiteral("Failed to start shell"));
+        term->setPlainText(LOC("terminal.start_failed"));
     }
 
     connect(term, &TerminalView::shellExited, this, [this, term](int) {
@@ -67,7 +67,7 @@ void TerminalPanel::newTerminal() {
                 term->deleteLater();
             } else {
                 term->setReadOnly(true);
-                term->appendPlainText(QStringLiteral("\n[Process exited]"));
+                term->appendPlainText(QStringLiteral("\n") + LOC("terminal.process_exited"));
             }
         }
     });

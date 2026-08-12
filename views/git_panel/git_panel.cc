@@ -5,6 +5,7 @@
 #include "src/utilities/logger.h"
 #include <QVBoxLayout>
 #include <QHBoxLayout>
+#include <QIcon>
 #include <algorithm>
 #include <QApplication>
 #include <QDir>
@@ -38,9 +39,9 @@ GitPanel::GitPanel(QWidget *parent)
         QApplication::style()->standardIcon(QStyle::SP_ArrowDown),
         LOC("git.unstage"), this, &GitPanel::onUnstageFile);
     toolbar_->addAction(
-        QStringLiteral("▲▲"), LOC("git.stage_all"), this, &GitPanel::onStageAll);
+        QIcon(QStringLiteral(":/vectors/stage_all.svg")), LOC("git.stage_all"), this, &GitPanel::onStageAll);
     toolbar_->addAction(
-        QStringLiteral("▼▼"), LOC("git.unstage_all"), this, &GitPanel::onUnstageAll);
+        QIcon(QStringLiteral(":/vectors/unstage_all.svg")), LOC("git.unstage_all"), this, &GitPanel::onUnstageAll);
     layout->addWidget(toolbar_);
 
     branch_label_ = new QLabel(this);

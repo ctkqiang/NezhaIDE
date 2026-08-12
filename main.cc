@@ -1,4 +1,5 @@
 #include "src/configuration.h"
+#include "src/model/credential_dataset.h"
 #include "src/model/tool_registry.h"
 #include "src/model/user_preference.h"
 #include "src/repository/orm.h"
@@ -9,12 +10,18 @@
 #include "views/main_window.h"
 #include "views/editor/editor_tab_host.h"
 #include "views/http_view_panel/http_view_panel.h"
+#include "views/hydra/hydra_view_panel.h"
 
 #include <QApplication>
+#include <QComboBox>
 #include <QDir>
+#include <QFile>
+#include <QKeyEvent>
 #include <QLabel>
 #include <QLineEdit>
 #include <QPushButton>
+#include <QRadioButton>
+#include <QSpinBox>
 #include <QTimer>
 
 static auto& logger = NezhaIDE::Utilities::Logger::instance();
@@ -94,6 +101,8 @@ int main(int argc, char* argv[]) {
     NezhaIDE::Repository::Repository<NezhaIDE::Model::ToolProcedure> proc_repo(db);
     NezhaIDE::Repository::Repository<NezhaIDE::Model::ToolParameter> param_repo(db);
     NezhaIDE::Repository::Repository<NezhaIDE::Model::UserPreference> pref_repo(db);
+    NezhaIDE::Repository::Repository<NezhaIDE::Model::CredentialDataset> dataset_repo(db);
+    NezhaIDE::Repository::Repository<NezhaIDE::Model::CredentialEntry> entry_repo(db);
 
     const auto &tables = NezhaIDE::Constants::DatabaseTable;
     const auto init_all_schemas = [&]<typename... T>(T &...repos) {
@@ -101,7 +110,7 @@ int main(int argc, char* argv[]) {
         (init_schema(repos, tables[i++]), ...);
     };
 
-    init_all_schemas(tool_repo, proc_repo, param_repo, pref_repo);
+    init_all_schemas(tool_repo, proc_repo, param_repo, pref_repo, dataset_repo, entry_repo);
 
     logger.log(
         NezhaIDE::Utilities::LogLevel::Info,
@@ -135,6 +144,21 @@ int main(int argc, char* argv[]) {
                 }
                 std::printf("SELFTEST: geo %s x=%d y=%d w=%d h=%d visible=%d\n",
                     name, w->x(), w->y(), w->width(), w->height(), w->isVisible() ? 1 : 0);
+            }
+
+            void pressReturn(QLineEdit *edit) {
+                QKeyEvent press(QEvent::KeyPress, Qt::Key_Return, Qt::NoModifier);
+                QApplication::sendEvent(edit, &press);
+                QKeyEvent release(QEvent::KeyRelease, Qt::Key_Return, Qt::NoModifier);
+                QApplication::sendEvent(edit, &release);
+            }
+
+            void writeFixture(const QString &path, const QString &content) {
+                QFile f(path);
+                if (f.open(QIODevice::WriteOnly | QIODevice::Truncate)) {
+                    f.write(content.toUtf8());
+                    f.close();
+                }
             }
 
             void start() {
@@ -208,8 +232,153 @@ int main(int argc, char* argv[]) {
                             auto *pill = panel->findChild<QLabel *>(QStringLiteral("httpStatusPill"));
                             std::printf("SELFTEST: errorPill=%s\n", pill->text().toUtf8().constData());
                             panel->grab().save(QStringLiteral("/tmp/nezha_06_error.png"));
-                            std::printf("SELFTEST: DONE\n");
-                            QApplication::exit(0);
+                            runHydraSelftest();
+                        });
+                    });
+                });
+            }
+            void runHydraSelftest() {
+                auto *editorHost = window.findChild<NezhaIDE::Editor::EditorTabHost *>();
+                if (!editorHost) {
+                    std::printf("SELFTEST: no editor host\n");
+                    QApplication::exit(2);
+                    return;
+                }
+                editorHost->openHydra();
+                auto *hpanel = editorHost->findChild<NezhaIDE::Views::HydraViewPanel *>();
+                if (!hpanel) {
+                    std::printf("SELFTEST: no hydra panel\n");
+                    QApplication::exit(2);
+                    return;
+                }
+                auto *status = hpanel->findChild<QLabel *>(QStringLiteral("hydraStatusLabel"));
+                auto *combo = hpanel->findChild<QComboBox *>(QStringLiteral("hydraServiceCombo"));
+                auto *port = hpanel->findChild<QSpinBox *>(QStringLiteral("hydraPortSpin"));
+                auto *host = hpanel->findChild<QLineEdit *>(QStringLiteral("hydraHostInput"));
+                auto *users = hpanel->findChild<QLineEdit *>(QStringLiteral("hydraUsernamePath"));
+                auto *customPath = hpanel->findChild<QLineEdit *>(QStringLiteral("hydraCustomPath"));
+                auto *customRadio = hpanel->findChild<QRadioButton *>(QStringLiteral("hydraSourceCustom"));
+                auto *randomRadio = hpanel->findChild<QRadioButton *>(QStringLiteral("hydraSourceRandom"));
+                auto *generateBtn = hpanel->findChild<QPushButton *>(QStringLiteral("hydraGenerateButton"));
+                auto *runBtn = hpanel->findChild<QPushButton *>(QStringLiteral("hydraRunButton"));
+                const auto hints = hpanel->findChildren<QLabel *>(QStringLiteral("hydraHintLabel"));
+
+                const auto findService = [combo](const QString &name) {
+                    for (int i = 0; i < combo->count(); ++i) {
+                        if (combo->itemData(i).toString() == name) return i;
+                    }
+                    return -1;
+                };
+                const auto selectService = [combo](const QString &name) {
+                    for (int i = 0; i < combo->count(); ++i) {
+                        if (combo->itemData(i).toString() == name) {
+                            combo->setCurrentIndex(i);
+                            return true;
+                        }
+                    }
+                    return false;
+                };
+                const auto moduleArgsVisible = [hpanel] {
+                    return hpanel->findChild<QLineEdit *>(
+                        QStringLiteral("hydraModuleParam_module_args")) != nullptr;
+                };
+
+                // 等待模块探测（hydra -h 异步解析）完成后才断言
+                QTimer::singleShot(1000, this, [=] {
+                    std::printf("SELFTEST: hydra services=%d status=%s\n",
+                                combo->count(), status->text().toUtf8().constData());
+                    const auto ftpIdx = findService(QStringLiteral("ftp"));
+                    const auto sshIdx = findService(QStringLiteral("ssh"));
+                    std::printf("SELFTEST: hydra ftpIdx=%d sshIdx=%d sshEnabled=%d sshText=%s\n",
+                                ftpIdx, sshIdx,
+                                sshIdx >= 0 ? (combo->itemData(sshIdx, Qt::UserRole - 1).toBool() ? 1 : 0) : -1,
+                                sshIdx >= 0 ? combo->itemText(sshIdx).toUtf8().constData() : "-");
+
+                    selectService(QStringLiteral("ftp"));
+                    std::printf("SELFTEST: hydra ftp port=%d moduleArgs=%s\n",
+                                port->value(), moduleArgsVisible() ? "present" : "hidden");
+
+                    selectService(QStringLiteral("mysql"));
+                    std::printf("SELFTEST: hydra mysql port=%d moduleArgs=%s\n",
+                                port->value(), moduleArgsVisible() ? "present" : "hidden");
+
+                    selectService(QStringLiteral("http-get"));
+                    std::printf("SELFTEST: hydra http-get port=%d moduleArgs=%s\n",
+                                port->value(), moduleArgsVisible() ? "present" : "hidden");
+                    if (auto *moduleArgs = hpanel->findChild<QLineEdit *>(
+                            QStringLiteral("hydraModuleParam_module_args"))) {
+                        moduleArgs->setText(QStringLiteral("SSL"));
+                    }
+
+                    selectService(QStringLiteral("mssql"));
+                    std::printf("SELFTEST: hydra mssql port=%d\n", port->value());
+                    hpanel->grab().save(QStringLiteral("/tmp/nezha_07_hydra_initial.png"));
+
+                    selectService(QStringLiteral("ftp"));
+                    host->setText(QStringLiteral("10.0.0.1"));
+                    std::printf("SELFTEST: hydra status(host)=%s\n", status->text().toUtf8().constData());
+
+                    writeFixture(QStringLiteral("/tmp/nezha_users.txt"), QStringLiteral("admin\nroot\ntest\n"));
+                    users->setText(QStringLiteral("/tmp/nezha_users.txt"));
+                    pressReturn(users);
+                    QTimer::singleShot(400, this, [=] {
+                        std::printf("SELFTEST: hydra status(users)=%s userHint=%s\n",
+                                    status->text().toUtf8().constData(),
+                                    hints.value(0)->text().toUtf8().constData());
+                        customRadio->setChecked(true);
+                        std::printf("SELFTEST: hydra status(custom)=%s\n", status->text().toUtf8().constData());
+
+                        writeFixture(QStringLiteral("/tmp/nezha_passwords.txt"),
+                                     QStringLiteral("123456\npassword\nadmin\nletmein\nqwerty\n"));
+                        customPath->setText(QStringLiteral("/tmp/nezha_passwords.txt"));
+                        pressReturn(customPath);
+                        QTimer::singleShot(400, this, [=] {
+                            std::printf("SELFTEST: hydra status(customLoaded)=%s runEnabled=%d passHint=%s\n",
+                                        status->text().toUtf8().constData(), runBtn->isEnabled() ? 1 : 0,
+                                        hints.value(3)->text().toUtf8().constData());
+                            hpanel->grab().save(QStringLiteral("/tmp/nezha_08_hydra_ready.png"));
+
+                            randomRadio->setChecked(true);
+                            std::printf("SELFTEST: hydra status(randomSel)=%s\n", status->text().toUtf8().constData());
+                            generateBtn->click();
+                            QTimer::singleShot(500, this, [=] {
+                                std::printf("SELFTEST: hydra status(randomLoaded)=%s passHint=%s\n",
+                                            status->text().toUtf8().constData(),
+                                            hints.value(3)->text().toUtf8().constData());
+
+                                users->setText(QStringLiteral("/tmp/nezha_missing.txt"));
+                                pressReturn(users);
+                                QTimer::singleShot(400, this, [=] {
+                                    std::printf("SELFTEST: hydra status(invalid)=%s\n", status->text().toUtf8().constData());
+                                    hpanel->grab().save(QStringLiteral("/tmp/nezha_09_hydra_invalid.png"));
+
+                                    users->setText(QStringLiteral("/tmp/nezha_users.txt"));
+                                    pressReturn(users);
+                                    QTimer::singleShot(400, this, [=] {
+                                        std::printf("SELFTEST: hydra status(reloaded)=%s runEnabled=%d\n",
+                                                    status->text().toUtf8().constData(), runBtn->isEnabled() ? 1 : 0);
+                                        runBtn->click();
+                                        QTimer::singleShot(600, this, [=] {
+                                            const auto running = status->text() == QStringLiteral("运行中");
+                                            std::printf("SELFTEST: hydra status(run)=%s\n", status->text().toUtf8().constData());
+                                            hpanel->grab().save(QStringLiteral("/tmp/nezha_10_hydra_running.png"));
+                                            if (running) {
+                                                runBtn->click();
+                                                QTimer::singleShot(3500, this, [=] {
+                                                    std::printf("SELFTEST: hydra status(stopped)=%s\n", status->text().toUtf8().constData());
+                                                    hpanel->grab().save(QStringLiteral("/tmp/nezha_11_hydra_stopped.png"));
+                                                    std::printf("SELFTEST: DONE\n");
+                                                    QApplication::exit(0);
+                                                });
+                                            } else {
+                                                std::printf("SELFTEST: hydra finished before stop\n");
+                                                std::printf("SELFTEST: DONE\n");
+                                                QApplication::exit(0);
+                                            }
+                                        });
+                                    });
+                                });
+                            });
                         });
                     });
                 });
@@ -220,4 +389,8 @@ int main(int argc, char* argv[]) {
     }
 
     return QApplication::exec();
+}
+
+int onStart() {
+
 }
