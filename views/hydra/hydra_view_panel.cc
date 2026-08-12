@@ -903,13 +903,25 @@ void HydraViewPanel::recomputeState()
 void HydraViewPanel::setState(NezhaIDE::Tools::HydraState state)
 {
     state_ = state;
-    const auto &ts = NezhaIDE::Services::ThemeService::instance();
-    const auto bg = ts.color(QString::fromUtf8(stateColorKey(state)));
-    status_label_->setStyleSheet(
-        QStringLiteral("QLabel#hydraStatusLabel { background: %1; color: %2;"
-                       "border-radius: 11px; padding: 4px 14px;"
-                       "font-size: 12px; font-weight: bold; }")
-            .arg(bg, ts.color(QStringLiteral("button.text"))));
+    const char *propVal = "pending";
+    switch (state) {
+    case NezhaIDE::Tools::HydraState::Running:
+    case NezhaIDE::Tools::HydraState::UsernameLoaded:
+    case NezhaIDE::Tools::HydraState::PasswordLoaded:
+        propVal = "active"; break;
+    case NezhaIDE::Tools::HydraState::InvalidUsernameFile:
+    case NezhaIDE::Tools::HydraState::Error:
+        propVal = "error"; break;
+    case NezhaIDE::Tools::HydraState::CustomPasswordRequired:
+        propVal = "warn"; break;
+    case NezhaIDE::Tools::HydraState::Ready:
+    case NezhaIDE::Tools::HydraState::Completed:
+        propVal = "success"; break;
+    default: break;
+    }
+    status_label_->setProperty("state", QLatin1String(propVal));
+    status_label_->style()->unpolish(status_label_);
+    status_label_->style()->polish(status_label_);
     status_label_->setText(stateText(state));
     updateRunButton();
 }
@@ -942,12 +954,14 @@ void HydraViewPanel::applyStyles()
     setStyleSheet(ts.qss(QStringLiteral("style.hydra_panel")));
     host_input_->setStyleSheet(ts.qss(QStringLiteral("style.http_url_input")));
     username_path_input_->setStyleSheet(ts.qss(QStringLiteral("style.http_url_input")));
+    username_single_input_->setStyleSheet(ts.qss(QStringLiteral("style.http_url_input")));
     github_url_input_->setStyleSheet(ts.qss(QStringLiteral("style.http_url_input")));
     custom_path_input_->setStyleSheet(ts.qss(QStringLiteral("style.http_url_input")));
     extra_args_input_->setStyleSheet(ts.qss(QStringLiteral("style.http_url_input")));
     service_combo_->setStyleSheet(ts.qss(QStringLiteral("style.http_combo")));
     try_mode_combo_->setStyleSheet(ts.qss(QStringLiteral("style.http_combo")));
     log_view_->setStyleSheet(ts.qss(QStringLiteral("style.git_diff")));
+    status_label_->setStyleSheet(ts.qss(QStringLiteral("style.hydra_status_chip")));
     for (auto *spin : {port_spin_, random_count_spin_, random_min_spin_, random_max_spin_,
                         threads_spin_, timeout_spin_}) {
         spin->setStyleSheet(ts.qss(QStringLiteral("style.hydra_spin")));

@@ -75,6 +75,11 @@ int main(int argc, char* argv[]) {
     }
 #endif
     QApplication app(argc, argv);
+    app.setStyle(QStringLiteral("Fusion"));
+
+    auto font = app.font();
+    font.setPointSize(13);
+    app.setFont(font);
 
     QApplication::setApplicationName(NezhaIDE::Constants::ApplicationName.data());
     QApplication::setApplicationVersion(NezhaIDE::Constants::ApplicationVersion.data());

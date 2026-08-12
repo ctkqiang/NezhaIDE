@@ -1,0 +1,5 @@
+/Users/johnmelodyme/Documents/ctkqiang/NezhaIDE/build/CMakeFiles/NezhaIDE.dir
+/Users/johnmelodyme/Documents/ctkqiang/NezhaIDE/build/CMakeFiles/edit_cache.dir
+/Users/johnmelodyme/Documents/ctkqiang/NezhaIDE/build/CMakeFiles/rebuild_cache.dir
+/Users/johnmelodyme/Documents/ctkqiang/NezhaIDE/build/CMakeFiles/NezhaIDE_autogen_timestamp_deps.dir
+/Users/johnmelodyme/Documents/ctkqiang/NezhaIDE/build/CMakeFiles/NezhaIDE_autogen.dir

@@ -562,7 +562,7 @@ QString GitPanel::statusCharToText(QChar x, QChar y) const
 void GitPanel::applyStyles()
 {
     auto &ts = NezhaIDE::Services::ThemeService::instance();
-    toolbar_->setStyleSheet(ts.qss(QStringLiteral("style.toolbar")));
+    toolbar_->setStyleSheet(ts.qss(QStringLiteral("style.git_toolbar")));
     branch_label_->setStyleSheet(ts.qss(QStringLiteral("style.branch_label")));
     file_list_->setStyleSheet(ts.qss(QStringLiteral("style.list_widget")));
     file_tabs_->setStyleSheet(ts.qss(QStringLiteral("style.tab_widget")));

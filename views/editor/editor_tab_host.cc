@@ -13,6 +13,7 @@
 #include <QLabel>
 #include <QFileInfo>
 #include <QMessageBox>
+#include <QPushButton>
 #include <QTabBar>
 #include <QVBoxLayout>
 
@@ -341,40 +342,78 @@ void EditorTabHost::ensureWelcomeTab()
 
     const auto welcomeTitle = LOC("editor.welcome");
     auto *welcome = new QWidget();
-    auto *wl = new QVBoxLayout(welcome);
-    wl->setAlignment(Qt::AlignCenter);
-    wl->setSpacing(8);
+    welcome->setObjectName(QStringLiteral("welcomeRoot"));
+    auto *outer = new QVBoxLayout(welcome);
+    outer->setAlignment(Qt::AlignCenter);
+    outer->setSpacing(0);
+
+    outer->addStretch(3);
+
+    auto *brand = new QWidget();
+    auto *bl = new QVBoxLayout(brand);
+    bl->setAlignment(Qt::AlignCenter);
+    bl->setSpacing(4);
 
     auto *title = new QLabel(QString::fromUtf8(
         NezhaIDE::Constants::ApplicationName.data(),
         static_cast<int>(NezhaIDE::Constants::ApplicationName.size())));
-    title->setStyleSheet(QStringLiteral("QLabel { font-size: 24px; font-weight: bold;"
-        "color: $c; }").replace(QStringLiteral("$c"),
-        NezhaIDE::Services::ThemeService::instance().color(QStringLiteral("text.primary"))));
+    title->setObjectName(QStringLiteral("welcomeTitle"));
     title->setAlignment(Qt::AlignCenter);
-    wl->addWidget(title);
+    bl->addWidget(title);
 
-    auto *ver = new QLabel(QStringLiteral("v") + QString::fromUtf8(
+    auto *ver = new QLabel(QString::fromUtf8(
         NezhaIDE::Constants::ApplicationVersion.data(),
         static_cast<int>(NezhaIDE::Constants::ApplicationVersion.size())));
+    ver->setObjectName(QStringLiteral("welcomeVersion"));
     ver->setAlignment(Qt::AlignCenter);
-    ver->setStyleSheet(QStringLiteral("QLabel { font-size: 13px; color: $c; }")
-        .replace(QStringLiteral("$c"),
-        NezhaIDE::Services::ThemeService::instance().color(QStringLiteral("text.tertiary"))));
-    wl->addWidget(ver);
+    bl->addWidget(ver);
 
-    wl->addSpacing(16);
+    outer->addWidget(brand);
+    outer->addSpacing(48);
 
-    auto *hint = new QLabel(LOC("editor.open_to_edit"));
-    hint->setAlignment(Qt::AlignCenter);
-    hint->setStyleSheet(QStringLiteral("QLabel { font-size: 13px; color: $c; }")
-        .replace(QStringLiteral("$c"),
-        NezhaIDE::Services::ThemeService::instance().color(QStringLiteral("text.secondary"))));
-    wl->addWidget(hint);
+    auto *startLabel = new QLabel(LOC("editor.start"));
+    startLabel->setObjectName(QStringLiteral("welcomeStartLabel"));
+    startLabel->setAlignment(Qt::AlignCenter);
+    outer->addWidget(startLabel);
+    outer->addSpacing(8);
+
+    auto *actions = new QWidget();
+    actions->setObjectName(QStringLiteral("welcomeActions"));
+    auto *al = new QVBoxLayout(actions);
+    al->setAlignment(Qt::AlignHCenter);
+    al->setSpacing(2);
+
+    auto addAction = [&](const QString &text, const QString &shortcut) {
+        auto *row = new QWidget();
+        row->setObjectName(QStringLiteral("welcomeActionRow"));
+        auto *hl = new QHBoxLayout(row);
+        hl->setContentsMargins(16, 6, 16, 6);
+        hl->setSpacing(12);
+
+        auto *label = new QLabel(text);
+        label->setObjectName(QStringLiteral("welcomeActionLabel"));
+        hl->addWidget(label);
+        hl->addStretch();
+
+        auto *key = new QLabel(shortcut);
+        key->setObjectName(QStringLiteral("welcomeActionKey"));
+        hl->addWidget(key);
+
+        al->addWidget(row);
+    };
+
+    addAction(LOC("menu.open_project"), QStringLiteral("⌘O"));
+    addAction(LOC("explorer.new_file"), QStringLiteral("⌘N"));
+    addAction(LOC("git.clone"), QStringLiteral("⇧⌘P"));
+    addAction(LOC("menu.preferences"), QStringLiteral("⌘,"));
+
+    outer->addWidget(actions);
+    outer->addStretch(4);
 
     welcome_tab_ = welcome;
     const auto idx = addTab(welcome, welcomeTitle);
     tabBar()->setTabButton(idx, QTabBar::RightSide, nullptr);
+    applyStyles();
     emit editActionsChanged();
 }
 
@@ -390,6 +429,9 @@ void EditorTabHost::applyStyles()
     }
     for (auto *dv : data_views_) {
         dv->applyTheme();
+    }
+    if (welcome_tab_) {
+        welcome_tab_->setStyleSheet(ts.qss(QStringLiteral("style.welcome_root")));
     }
 }
 
