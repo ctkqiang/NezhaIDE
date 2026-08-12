@@ -1,0 +1,4 @@
+# Hashes of file build rules.
+e01057f1ac76dd41d70339bc7cc87310 CMakeFiles/NezhaIDE_autogen
+ad94eddb479c8d7e8edcb9c441df24ac NezhaIDE_autogen/BTBNRJ4WLO/qrc_vectors.cpp
+c7548f86538a61130a93a0c9e3c0704d NezhaIDE_autogen/timestamp
