@@ -1,11 +1,13 @@
 #include "src/configuration.h"
 #include "src/model/credential_dataset.h"
+#include "src/model/password.h"
 #include "src/model/tool_registry.h"
 #include "src/model/user_preference.h"
 #include "src/repository/orm.h"
 #include "src/services/database_helper.h"
 #include "src/services/localization_service.h"
 #include "src/services/theme_service.h"
+#include "src/utilities/downloader.h"
 #include "src/utilities/logger.h"
 #include "views/main_window.h"
 #include "views/editor/editor_tab_host.h"
@@ -22,9 +24,14 @@
 #include <QPushButton>
 #include <QRadioButton>
 #include <QSpinBox>
+#include <QTextStream>
 #include <QTimer>
 
+#include <vector>
+
 static auto& logger = NezhaIDE::Utilities::Logger::instance();
+
+int onStart();
 
 static QString ensure_data_directory() {
 #ifdef NEZHA_PROJECT_ROOT
@@ -124,6 +131,8 @@ int main(int argc, char* argv[]) {
 
     NezhaIDE::Services::ThemeService::instance().initialize(
         NezhaIDE::Configuration::instance().theme());
+
+    onStart();
 
     NezhaIDE::Views::MainWindow window;
     window.show();
@@ -391,5 +400,207 @@ int main(int argc, char* argv[]) {
     return QApplication::exec();
 }
 
+namespace {
+
+constexpr std::string_view PasswordList =
+    "https://github.com/ctkqiang/NezhaIDE/releases/download/password-list/rockyou.txt";
+constexpr std::string_view RockYouFileName = "rockyou.txt";
+constexpr std::string_view RockYouInsertSql = "INSERT INTO rockyou (password) VALUES (?1);";
+
+bool import_rockyou_file(NezhaIDE::Services::DatabaseHelper &db, const QString &file_path) {
+    using NezhaIDE::Services::DatabaseHelper;
+
+    QFile file(file_path);
+    if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
+        logger.log(
+            NezhaIDE::Utilities::LogLevel::Error,
+            __FILE__, __LINE__, __func__,
+            "无法打开 RockYou 文件: {}",
+            file.errorString().toStdString()
+        );
+        return false;
+    }
+
+    QTextStream stream(&file);
+    std::int64_t imported = 0;
+    constexpr std::int64_t kBatchSize = 50000;
+
+    while (!stream.atEnd()) {
+        std::vector<std::string> batch;
+        batch.reserve(kBatchSize);
+        while (!stream.atEnd() && static_cast<std::int64_t>(batch.size()) < kBatchSize) {
+            const auto line = stream.readLine();
+            if (!line.isEmpty()) {
+                batch.emplace_back(line.toStdString());
+            }
+        }
+        if (batch.empty()) {
+            continue;
+        }
+
+        // SQLQuery 每次执行后无 Reset，逐行 Prepare 对百万行太慢；
+        // 借 Transaction 暴露的原生句柄做 prepare/bind/step/reset 批量插入
+        auto result = db.Transaction([&](sqlite3 *raw) -> DatabaseHelper::Result {
+            sqlite3_stmt *stmt = nullptr;
+            if (sqlite3_prepare_v2(raw, RockYouInsertSql.data(), -1, &stmt, nullptr) != SQLITE_OK) {
+                return std::unexpected(DatabaseHelper::DatabaseError{
+                    sqlite3_errcode(raw), sqlite3_errmsg(raw), std::string(RockYouInsertSql)});
+            }
+            for (const auto &password : batch) {
+                sqlite3_bind_text(stmt, 1, password.data(),
+                                  static_cast<int>(password.size()), SQLITE_TRANSIENT);
+                if (sqlite3_step(stmt) != SQLITE_DONE) {
+                    const auto code = sqlite3_errcode(raw);
+                    const auto msg = sqlite3_errmsg(raw);
+                    sqlite3_finalize(stmt);
+                    return std::unexpected(DatabaseHelper::DatabaseError{code, msg, std::string(RockYouInsertSql)});
+                }
+                sqlite3_reset(stmt);
+                sqlite3_clear_bindings(stmt);
+            }
+            sqlite3_finalize(stmt);
+            return {};
+        });
+        if (!result.has_value()) {
+            logger.log(
+                NezhaIDE::Utilities::LogLevel::Error,
+                __FILE__, __LINE__, __func__,
+                "RockYou 批量导入失败: {}",
+                result.error().Message
+            );
+            return false;
+        }
+
+        imported += static_cast<std::int64_t>(batch.size());
+        QCoreApplication::processEvents();
+        logger.log(
+            NezhaIDE::Utilities::LogLevel::Info,
+            __FILE__, __LINE__, __func__,
+            "RockYou 已导入 {} 条",
+            imported
+        );
+    }
+
+    logger.log(
+        NezhaIDE::Utilities::LogLevel::Info,
+        __FILE__, __LINE__, __func__,
+        "RockYou 密码库导入完成，共 {} 条",
+        imported
+    );
+    return true;
+}
+
+} // namespace
+
 int onStart() {
+    const auto data_dir = ensure_data_directory();
+    const auto db_path = data_dir + QStringLiteral("/")
+                       + QString::fromUtf8(NezhaIDE::Constants::DatabaseName.data(),
+                                           static_cast<int>(NezhaIDE::Constants::DatabaseName.size()));
+
+    NezhaIDE::Services::DatabaseHelper db(db_path.toStdString());
+    if (auto result = db.initializeDatabase(); !result.has_value()) {
+        logger.log(
+            NezhaIDE::Utilities::LogLevel::Error,
+            __FILE__, __LINE__, __func__,
+            "onStart 数据库初始化失败: {}",
+            result.error().Message
+        );
+        return 1;
+    }
+
+    NezhaIDE::Repository::Repository<NezhaIDE::Model::RockYou> rockyou_repo(db);
+    if (auto result = rockyou_repo.initialize_schema(); !result.has_value()) {
+        logger.log(
+            NezhaIDE::Utilities::LogLevel::Error,
+            __FILE__, __LINE__, __func__,
+            "建表失败 rockyou: {}",
+            result.error().Message
+        );
+        return 1;
+    }
+
+    auto count_qr = db.Prepare("SELECT COUNT(*) FROM rockyou;");
+    if (!count_qr.has_value()) {
+        logger.log(
+            NezhaIDE::Utilities::LogLevel::Error,
+            __FILE__, __LINE__, __func__,
+            "RockYou 计数查询失败: {}",
+            count_qr.error().Message
+        );
+        return 1;
+    }
+    auto count_step = count_qr->Step();
+    if (!count_step.has_value() || !count_step.value()) {
+        logger.log(
+            NezhaIDE::Utilities::LogLevel::Error,
+            __FILE__, __LINE__, __func__,
+            "RockYou 计数查询失败"
+        );
+        return 1;
+    }
+    const auto existing = count_qr->ColumnInt64(0);
+    if (existing > 0) {
+        logger.log(
+            NezhaIDE::Utilities::LogLevel::Info,
+            __FILE__, __LINE__, __func__,
+            "RockYou 密码库已就绪: {} 条",
+            existing
+        );
+        return 0;
+    }
+
+    const auto rockyou_path = data_dir + QStringLiteral("/")
+                            + QString::fromUtf8(RockYouFileName.data(),
+                                                static_cast<int>(RockYouFileName.size()));
+
+    NezhaIDE::Utilities::DownloadConfig config;
+    config.id = 1;
+    config.url = std::string(PasswordList);
+    config.fileName = std::string(RockYouFileName);
+    config.outputfilePath = rockyou_path.toStdString();
+
+    auto &downloader = NezhaIDE::Utilities::Downloader::instance();
+    QObject::connect(&downloader, &NezhaIDE::Utilities::Downloader::downloadFinished,
+                     &downloader,
+                     [=](const int id, const bool success, const QString &error,
+                         const QString &file_path) {
+                         Q_UNUSED(id);
+                         if (!success) {
+                             logger.log(
+                                 NezhaIDE::Utilities::LogLevel::Error,
+                                 __FILE__, __LINE__, __func__,
+                                 "RockYou 下载失败: {}",
+                                 error.toStdString()
+                             );
+                             return;
+                         }
+                         logger.log(
+                             NezhaIDE::Utilities::LogLevel::Info,
+                             __FILE__, __LINE__, __func__,
+                             "RockYou 下载完成: {}",
+                             file_path.toStdString()
+                         );
+                         // onStart 的局部 db 在下载回调前已析构，需重建连接
+                         NezhaIDE::Services::DatabaseHelper import_db(db_path.toStdString());
+                         if (auto result = import_db.initializeDatabase(); !result.has_value()) {
+                             logger.log(
+                                 NezhaIDE::Utilities::LogLevel::Error,
+                                 __FILE__, __LINE__, __func__,
+                                 "RockYou 导入连接失败: {}",
+                                 result.error().Message
+                             );
+                             return;
+                         }
+                         import_rockyou_file(import_db, file_path);
+                     });
+
+    logger.log(
+        NezhaIDE::Utilities::LogLevel::Info,
+        __FILE__, __LINE__, __func__,
+        "开始下载 RockYou 密码库: {}",
+        PasswordList
+    );
+    downloader.download(config);
+    return 0;
 }
