@@ -1,5 +1,6 @@
 #include "git_graph.h"
 #include "src/services/theme_service.h"
+#include <QFontDatabase>
 #include <QMouseEvent>
 #include <QPainter>
 #include <QScrollBar>
@@ -173,7 +174,8 @@ void GitGraphView::paintEvent(QPaintEvent *event)
     Q_UNUSED(event);
     auto &ts = NezhaIDE::Services::ThemeService::instance();
     QPainter p(viewport());
-    p.fillRect(viewport()->rect(), ts.qcolor(QStringLiteral("bg.primary")));
+    p.setRenderHint(QPainter::Antialiasing, true);
+    p.fillRect(viewport()->rect(), ts.qcolor(QStringLiteral("bg.tertiary")));
 
     if (commits_.isEmpty()) {
         p.setPen(ts.qcolor(QStringLiteral("text.secondary")));
@@ -213,11 +215,11 @@ void GitGraphView::paintEvent(QPaintEvent *event)
         }
     }
 
-    QFont subjectFont = font();
-    subjectFont.setPixelSize(13);
+    QFont subjectFont = QFontDatabase::systemFont(QFontDatabase::FixedFont);
+    subjectFont.setPointSize(12);
     subjectFont.setBold(true);
-    QFont metaFont = font();
-    metaFont.setPixelSize(11);
+    QFont metaFont = QFontDatabase::systemFont(QFontDatabase::FixedFont);
+    metaFont.setPointSize(10);
     const QFontMetrics metaFm(metaFont);
     const QFontMetrics subjFm(subjectFont);
 
@@ -240,7 +242,8 @@ void GitGraphView::paintEvent(QPaintEvent *event)
         qreal tx = textX;
         if (!c.refs.isEmpty()) {
             p.setFont(metaFont);
-            p.setPen(Qt::white);
+            const QColor refLabelText = ts.qcolor(QStringLiteral("badge.text"));
+            p.setPen(refLabelText);
             for (const auto &ref : c.refs) {
                 const qreal w = subjFm.horizontalAdvance(ref) + kRefLabelPad * 2;
                 QRectF r(tx, rowY + 5, w, kRefLabelHeight);
@@ -248,7 +251,7 @@ void GitGraphView::paintEvent(QPaintEvent *event)
                 p.setBrush(ref == QStringLiteral("HEAD") ? ts.qcolor(QStringLiteral("accent"))
                                                          : color);
                 p.drawRoundedRect(r, 3, 3);
-                p.setPen(Qt::white);
+                p.setPen(refLabelText);
                 p.drawText(r, Qt::AlignCenter, ref);
                 tx += w + 6;
             }

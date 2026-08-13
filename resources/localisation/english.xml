@@ -232,4 +232,25 @@
     <string key="hydra.username_single">Single username</string>
     <string key="hydra.username_single_placeholder">Enter a username, e.g. root</string>
     <string key="hydra.username_single_loaded">Using username: %1</string>
+    <string key="activity.explorer">Explorer</string>
+    <string key="activity.git">Git</string>
+    <string key="activity.terminal">Terminal</string>
+    <string key="activity.preferences">Preferences</string>
+    <string key="activity.http_client">HTTP Client</string>
+    <string key="activity.hydra">Hydra</string>
+    <string key="status.position">Ln %1, Col %2</string>
+    <string key="status.lang.plain">Plain Text</string>
+    <string key="bottom.tab.terminal">Terminal</string>
+    <string key="bottom.tab.output">Output</string>
+    <string key="bottom.tab.problems">Problems</string>
+    <string key="bottom.output.placeholder">Build output, logs and diagnostics will appear here...</string>
+    <string key="bottom.problems.empty">No problems detected</string>
+    <string key="bottom.panel.maximize">Maximize/Restore Panel</string>
+    <string key="bottom.panel.close">Close Panel</string>
+    <string key="hex.headers.offset">Offset</string>
+    <string key="hex.headers.va">VA</string>
+    <string key="hex.headers.address">Address</string>
+    <string key="hex.headers.size">Size</string>
+    <string key="hex.headers.flags">Flags</string>
+    <string key="hex.headers.library">Library</string>
 </localization>

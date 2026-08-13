@@ -342,73 +342,77 @@ void EditorTabHost::ensureWelcomeTab()
 
     const auto welcomeTitle = LOC("editor.welcome");
     auto *welcome = new QWidget();
-    welcome->setObjectName(QStringLiteral("welcomeRoot"));
+    welcome->setObjectName(QStringLiteral("welcomeModernRoot"));
     auto *outer = new QVBoxLayout(welcome);
     outer->setAlignment(Qt::AlignCenter);
     outer->setSpacing(0);
 
-    outer->addStretch(3);
+    outer->addStretch(2);
 
-    auto *brand = new QWidget();
-    auto *bl = new QVBoxLayout(brand);
-    bl->setAlignment(Qt::AlignCenter);
-    bl->setSpacing(4);
+    auto *logo = new QLabel(QStringLiteral("N"));
+    logo->setObjectName(QStringLiteral("welcomeModernLogo"));
+    logo->setAlignment(Qt::AlignCenter);
+    outer->addWidget(logo);
+    outer->addSpacing(16);
 
     auto *title = new QLabel(QString::fromUtf8(
         NezhaIDE::Constants::ApplicationName.data(),
         static_cast<int>(NezhaIDE::Constants::ApplicationName.size())));
-    title->setObjectName(QStringLiteral("welcomeTitle"));
+    title->setObjectName(QStringLiteral("welcomeModernTitle"));
     title->setAlignment(Qt::AlignCenter);
-    bl->addWidget(title);
+    outer->addWidget(title);
 
     auto *ver = new QLabel(QString::fromUtf8(
         NezhaIDE::Constants::ApplicationVersion.data(),
         static_cast<int>(NezhaIDE::Constants::ApplicationVersion.size())));
-    ver->setObjectName(QStringLiteral("welcomeVersion"));
+    ver->setObjectName(QStringLiteral("welcomeModernSubtitle"));
     ver->setAlignment(Qt::AlignCenter);
-    bl->addWidget(ver);
+    outer->addWidget(ver);
 
-    outer->addWidget(brand);
-    outer->addSpacing(48);
+    outer->addSpacing(36);
 
-    auto *startLabel = new QLabel(LOC("editor.start"));
-    startLabel->setObjectName(QStringLiteral("welcomeStartLabel"));
-    startLabel->setAlignment(Qt::AlignCenter);
-    outer->addWidget(startLabel);
-    outer->addSpacing(8);
+    auto *cards = new QWidget();
+    auto *cardsLayout = new QHBoxLayout(cards);
+    cardsLayout->setAlignment(Qt::AlignCenter);
+    cardsLayout->setSpacing(16);
 
-    auto *actions = new QWidget();
-    actions->setObjectName(QStringLiteral("welcomeActions"));
-    auto *al = new QVBoxLayout(actions);
-    al->setAlignment(Qt::AlignHCenter);
-    al->setSpacing(2);
+    auto makeCard = [&](const QString &icon, const QString &titleText,
+                         const QString &desc, const QString &shortcut) -> QWidget* {
+        auto *card = new QWidget();
+        card->setObjectName(QStringLiteral("welcomeCard"));
+        card->setFixedSize(220, 120);
+        card->setCursor(Qt::PointingHandCursor);
+        auto *cl = new QVBoxLayout(card);
+        cl->setContentsMargins(20, 16, 20, 16);
+        cl->setSpacing(6);
 
-    auto addAction = [&](const QString &text, const QString &shortcut) {
-        auto *row = new QWidget();
-        row->setObjectName(QStringLiteral("welcomeActionRow"));
-        auto *hl = new QHBoxLayout(row);
-        hl->setContentsMargins(16, 6, 16, 6);
-        hl->setSpacing(12);
+        auto *iconLabel = new QLabel(icon);
+        iconLabel->setObjectName(QStringLiteral("welcomeCardIcon"));
+        cl->addWidget(iconLabel);
 
-        auto *label = new QLabel(text);
-        label->setObjectName(QStringLiteral("welcomeActionLabel"));
-        hl->addWidget(label);
-        hl->addStretch();
+        auto *cardTitle = new QLabel(titleText);
+        cardTitle->setObjectName(QStringLiteral("welcomeCardTitle"));
+        cl->addWidget(cardTitle);
 
-        auto *key = new QLabel(shortcut);
-        key->setObjectName(QStringLiteral("welcomeActionKey"));
-        hl->addWidget(key);
+        auto *cardDesc = new QLabel(desc);
+        cardDesc->setObjectName(QStringLiteral("welcomeCardDesc"));
+        cardDesc->setWordWrap(true);
+        cl->addWidget(cardDesc);
 
-        al->addWidget(row);
+        return card;
     };
 
-    addAction(LOC("menu.open_project"), QStringLiteral("⌘O"));
-    addAction(LOC("explorer.new_file"), QStringLiteral("⌘N"));
-    addAction(LOC("git.clone"), QStringLiteral("⇧⌘P"));
-    addAction(LOC("menu.preferences"), QStringLiteral("⌘,"));
+    cardsLayout->addWidget(makeCard(
+        QStringLiteral("\xF0\x9F\x93\x82"), LOC("menu.open_project"),
+        LOC("dialog.open_project_title"),
+        QStringLiteral("")));
+    cardsLayout->addWidget(makeCard(
+        QStringLiteral("\xF0\x9F\x94\x8D"), LOC("explorer.new_file"),
+        LOC("editor.start"),
+        QStringLiteral("")));
 
-    outer->addWidget(actions);
-    outer->addStretch(4);
+    outer->addWidget(cards);
+    outer->addStretch(3);
 
     welcome_tab_ = welcome;
     const auto idx = addTab(welcome, welcomeTitle);
@@ -431,7 +435,7 @@ void EditorTabHost::applyStyles()
         dv->applyTheme();
     }
     if (welcome_tab_) {
-        welcome_tab_->setStyleSheet(ts.qss(QStringLiteral("style.welcome_root")));
+        welcome_tab_->setStyleSheet(ts.qss(QStringLiteral("style.welcome_modern")));
     }
 }
 

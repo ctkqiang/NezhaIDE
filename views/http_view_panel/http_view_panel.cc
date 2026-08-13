@@ -905,48 +905,24 @@ void HttpViewPanel::onMethodClicked()
 
 void HttpViewPanel::setMethodStyle(const QString &method)
 {
-    auto &ts = NezhaIDE::Services::ThemeService::instance();
-    auto color = [&](const QString &key) { return ts.color(key); };
-
-    QString bg;
-    if (method == QStringLiteral("GET")) bg = color(QStringLiteral("git.added"));
-    else if (method == QStringLiteral("POST")) bg = color(QStringLiteral("accent"));
-    else if (method == QStringLiteral("PUT") || method == QStringLiteral("PATCH")) bg = color(QStringLiteral("git.modified"));
-    else if (method == QStringLiteral("DELETE")) bg = color(QStringLiteral("git.deleted"));
-    else bg = color(QStringLiteral("text.tertiary"));
-
     method_btn_->setText(method + QStringLiteral(" ▾"));
-    method_btn_->setStyleSheet(
-        QStringLiteral("QPushButton { background: %1; border: none; border-radius: 5px;"
-                       "padding: 5px 12px; font-size: 12px; font-weight: bold; color: %2; }"
-                       "QPushButton:hover { background: %3; }")
-            .arg(bg)
-            .arg(NezhaIDE::Services::ThemeService::instance().color(QStringLiteral("button.text")))
-            .arg(bg));
+    method_btn_->setProperty("method", method);
+    method_btn_->style()->unpolish(method_btn_);
+    method_btn_->style()->polish(method_btn_);
 }
 
 void HttpViewPanel::setStatusPill(int statusCode, const QString &text)
 {
-    auto &ts = NezhaIDE::Services::ThemeService::instance();
-    QString color;
-    if (statusCode < 0) {
-        color = ts.color(QStringLiteral("git.deleted"));
-    } else if (statusCode >= 200 && statusCode < 300) {
-        color = ts.color(QStringLiteral("git.added"));
-    } else if (statusCode >= 300 && statusCode < 400) {
-        color = ts.color(QStringLiteral("accent"));
-    } else if (statusCode >= 400 && statusCode < 500) {
-        color = ts.color(QStringLiteral("git.modified"));
-    } else {
-        color = ts.color(QStringLiteral("git.deleted"));
-    }
+    QString state;
+    if (statusCode < 0) state = QStringLiteral("error");
+    else if (statusCode >= 200 && statusCode < 300) state = QStringLiteral("ok");
+    else if (statusCode >= 300 && statusCode < 400) state = QStringLiteral("redirect");
+    else if (statusCode >= 400 && statusCode < 500) state = QStringLiteral("client_err");
+    else state = QStringLiteral("server_err");
 
-    status_pill_->setStyleSheet(
-        QStringLiteral("QLabel#httpStatusPill { background: %1; color: %2;"
-                       "border-radius: 11px; padding: 4px 14px;"
-                       "font-size: 13px; font-weight: bold; }")
-            .arg(color)
-            .arg(ts.color(QStringLiteral("button.text"))));
+    status_pill_->setProperty("state", state);
+    status_pill_->style()->unpolish(status_pill_);
+    status_pill_->style()->polish(status_pill_);
     status_pill_->setText(text);
 }
 
@@ -1189,6 +1165,8 @@ void HttpViewPanel::applyStyles()
 {
     auto &ts = NezhaIDE::Services::ThemeService::instance();
     setStyleSheet(ts.qss(QStringLiteral("style.http_panel")));
+    method_btn_->setStyleSheet(ts.qss(QStringLiteral("style.http_method_btn")));
+    status_pill_->setStyleSheet(ts.qss(QStringLiteral("style.http_status_pill")));
     url_input_->setStyleSheet(ts.qss(QStringLiteral("style.http_url_input")));
     params_table_->setStyleSheet(ts.qss(QStringLiteral("style.http_kv_table")));
     headers_table_->setStyleSheet(ts.qss(QStringLiteral("style.http_kv_table")));

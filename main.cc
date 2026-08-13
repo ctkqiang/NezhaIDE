@@ -10,6 +10,7 @@
 #include "src/utilities/downloader.h"
 #include "src/utilities/logger.h"
 #include "views/main_window.h"
+#include "views/preferences_dialog.h"
 #include "views/editor/code_editor.h"
 #include "views/editor/data_view.h"
 #include "views/editor/editor_tab_host.h"
@@ -189,6 +190,9 @@ int main(int argc, char* argv[]) {
             }
 
             void start() {
+                // UI 现代化回归：整窗截图（含活动栏/侧栏/编辑器/底部面板/状态栏）
+                window.grab().save(QStringLiteral("/tmp/nezha_00_main.png"));
+
                 auto *editorHost = window.findChild<NezhaIDE::Editor::EditorTabHost *>();
                 if (!editorHost) {
                     std::printf("SELFTEST: no editor host\n");
@@ -509,8 +513,22 @@ int main(int argc, char* argv[]) {
                                                                     views.first()->grab().save(QStringLiteral("/tmp/nezha_13_data_view.png"));
                                                                 }
                                                             }
-                                                            std::printf("SELFTEST: DONE\n");
-                                                            QApplication::exit(0);
+                                                            // UI 现代化回归：暗色主题整窗 + PreferencesDialog
+                                                            NezhaIDE::Services::ThemeService::instance()
+                                                                .applyTheme(NezhaIDE::IDETheme::Dark);
+                                                            QTimer::singleShot(300, this, [this] {
+                                                                window.grab().save(
+                                                                    QStringLiteral("/tmp/nezha_20_dark_main.png"));
+                                                                auto *prefs =
+                                                                    new NezhaIDE::Views::PreferencesDialog(&window);
+                                                                prefs->show();
+                                                                QTimer::singleShot(300, this, [prefs] {
+                                                                    prefs->grab().save(
+                                                                        QStringLiteral("/tmp/nezha_21_prefs.png"));
+                                                                    std::printf("SELFTEST: DONE\n");
+                                                                    QApplication::exit(0);
+                                                                });
+                                                            });
                                                         });
                                                     });
                                                 });

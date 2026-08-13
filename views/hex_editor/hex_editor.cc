@@ -61,6 +61,7 @@ void HexEditor::setupUI() {
 
 void HexEditor::setupGoBar() {
     auto *bar = new QWidget(this);
+    bar->setObjectName(QStringLiteral("hexGoBar"));
     auto *h = new QHBoxLayout(bar);
     h->setContentsMargins(8, 4, 8, 4);
     h->setSpacing(6);
@@ -106,7 +107,7 @@ void HexEditor::setupAnalysisTabs() {
     strings_table_ = new QTableWidget(0, 2, analysis_tabs_);
     strings_table_->setObjectName(QStringLiteral("hexStringsTable"));
     strings_table_->setHorizontalHeaderLabels(
-        {QStringLiteral("Offset"), LOC("hex.strings")});
+        {LOC("hex.headers.offset"), LOC("hex.strings")});
     strings_table_->horizontalHeader()->setStretchLastSection(true);
     strings_table_->verticalHeader()->setVisible(false);
     strings_table_->setEditTriggers(QAbstractItemView::NoEditTriggers);
@@ -117,8 +118,8 @@ void HexEditor::setupAnalysisTabs() {
     sections_table_ = new QTableWidget(0, 5, analysis_tabs_);
     sections_table_->setObjectName(QStringLiteral("hexSectionsTable"));
     sections_table_->setHorizontalHeaderLabels(
-        {LOC("hex.sections"), QStringLiteral("VA"), QStringLiteral("Offset"),
-         QStringLiteral("Size"), QStringLiteral("Flags")});
+        {LOC("hex.sections"), LOC("hex.headers.va"), LOC("hex.headers.offset"),
+         LOC("hex.headers.size"), LOC("hex.headers.flags")});
     sections_table_->horizontalHeader()->setStretchLastSection(true);
     sections_table_->verticalHeader()->setVisible(false);
     sections_table_->setEditTriggers(QAbstractItemView::NoEditTriggers);
@@ -129,7 +130,7 @@ void HexEditor::setupAnalysisTabs() {
     symbols_table_ = new QTableWidget(0, 3, analysis_tabs_);
     symbols_table_->setObjectName(QStringLiteral("hexSymbolsTable"));
     symbols_table_->setHorizontalHeaderLabels(
-        {LOC("hex.symbols"), QStringLiteral("Address"), QStringLiteral("Size")});
+        {LOC("hex.symbols"), LOC("hex.headers.address"), LOC("hex.headers.size")});
     symbols_table_->horizontalHeader()->setStretchLastSection(true);
     symbols_table_->verticalHeader()->setVisible(false);
     symbols_table_->setEditTriggers(QAbstractItemView::NoEditTriggers);
@@ -140,7 +141,7 @@ void HexEditor::setupAnalysisTabs() {
     imports_table_ = new QTableWidget(0, 2, analysis_tabs_);
     imports_table_->setObjectName(QStringLiteral("hexImportsTable"));
     imports_table_->setHorizontalHeaderLabels(
-        {LOC("hex.imports"), QStringLiteral("Library")});
+        {LOC("hex.imports"), LOC("hex.headers.library")});
     imports_table_->horizontalHeader()->setStretchLastSection(true);
     imports_table_->verticalHeader()->setVisible(false);
     imports_table_->setEditTriggers(QAbstractItemView::NoEditTriggers);
@@ -414,9 +415,7 @@ QString HexEditor::filePath() const { return file_path_; }
 void HexEditor::applyTheme() {
     auto &ts = Services::ThemeService::instance();
     setStyleSheet(ts.qss(QStringLiteral("style.http_panel")));
-    hex_view_->setStyleSheet(
-        QStringLiteral("QAbstractScrollArea { background: %1; }").arg(
-            ts.color(QStringLiteral("bg.primary"))));
+    hex_view_->setStyleSheet(ts.qss(QStringLiteral("style.hex_view")));
     analysis_tabs_->setStyleSheet(ts.qss(QStringLiteral("style.http_tabs")));
     disasm_view_->setStyleSheet(ts.qss(QStringLiteral("style.http_response_body")));
     info_view_->setStyleSheet(ts.qss(QStringLiteral("style.http_response_body")));

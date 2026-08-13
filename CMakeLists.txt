@@ -81,6 +81,8 @@ add_executable(NezhaIDE main.cc
         views/terminal/terminal_view.h
         views/terminal/terminal_panel.cc
         views/terminal/terminal_panel.h
+        views/bottom_panel/bottom_panel.cc
+        views/bottom_panel/bottom_panel.h
         src/utilities/permission.cc
         src/utilities/permission.h
         views/vectors/vectors.qrc
