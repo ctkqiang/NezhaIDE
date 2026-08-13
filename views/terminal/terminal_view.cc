@@ -55,14 +55,10 @@ void TerminalView::applyTheme() {
     p.setColor(QPalette::PlaceholderText, ts.qcolor(QStringLiteral("text.tertiary")));
     setPalette(p);
 
+    // 滚动条由全局 style.scrollbar 提供，此处只覆盖文本区底色
     setStyleSheet(QStringLiteral(
-        "QPlainTextEdit { border: none; background: %1; color: %2; }"
-        "QScrollBar:vertical { background: %3; width: 10px; margin: 0; }"
-        "QScrollBar::handle:vertical { background: %4; border-radius: 4px; min-height: 20px; }"
-        "QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical { height: 0; }")
-        .arg(theme_bg_.name(), theme_fg_.name(),
-             ts.color(QStringLiteral("bg.secondary")),
-             ts.color(QStringLiteral("border"))));
+        "QPlainTextEdit { border: none; background: %1; color: %2; }")
+        .arg(theme_bg_.name(), theme_fg_.name()));
 
     fg_color_ = theme_fg_;
     bg_color_ = theme_bg_;

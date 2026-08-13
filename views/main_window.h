@@ -8,12 +8,17 @@
     #error "缺少QT，请先安装 QT。"
 #endif
 
+#include <QHash>
+#include <QMetaObject>
+
 class QSplitter;
 class QAction;
 class QLabel;
+class QPlainTextEdit;
 
 namespace NezhaIDE::Editor {
     class EditorTabHost;
+    class CodeEditor;
 }
 
 namespace NezhaIDE::Views {
@@ -43,6 +48,7 @@ private:
     void applyStyles();
     void updateProjectRoot(const QString &projectPath);
     void updateEditActions();
+    void updateStatusFromEditor(NezhaIDE::Editor::CodeEditor *editor);
 
     void onOpenProject();
     void onSaveFile();
@@ -73,6 +79,9 @@ private:
     QLabel *cur_pos_label_{};
     QLabel *lang_label_{};
     QLabel *encoding_label_{};
+
+    // 光标位置连接去重：每个编辑器至多一条 cursorPositionChanged 连接
+    QHash<QPlainTextEdit *, QMetaObject::Connection> cursor_conns_{};
 };
 
 } // namespace NezhaIDE::Views

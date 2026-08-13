@@ -10,6 +10,7 @@ namespace NezhaIDE::Views {
 TerminalPanel::TerminalPanel(QWidget *parent)
     : QWidget(parent)
 {
+    setObjectName(QStringLiteral("terminalPanelRoot"));
     setupUI();
     applyTheme();
     newTerminal();
@@ -92,8 +93,7 @@ void TerminalPanel::applyTheme() {
     auto &ts = Services::ThemeService::instance();
     toolbar_->setStyleSheet(ts.qss(QStringLiteral("style.toolbar")));
     tab_widget_->setStyleSheet(ts.qss(QStringLiteral("style.http_tabs")));
-    setStyleSheet(
-        QStringLiteral("QWidget { background: %1; }").arg(ts.color(QStringLiteral("bg.primary"))));
+    setStyleSheet(ts.qss(QStringLiteral("style.terminal_panel")));
 
     for (int i = 0; i < tab_widget_->count(); ++i) {
         auto *tv = qobject_cast<TerminalView *>(tab_widget_->widget(i));

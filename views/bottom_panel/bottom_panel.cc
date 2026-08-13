@@ -1,5 +1,7 @@
 #include "bottom_panel.h"
 #include "views/terminal/terminal_panel.h"
+#include "src/services/design_tokens.h"
+#include "src/services/localization_service.h"
 #include "src/services/theme_service.h"
 #include <QPlainTextEdit>
 #include <QVBoxLayout>
@@ -28,7 +30,7 @@ void BottomPanel::setupUI()
     layout->setSpacing(0);
 
     header_ = new QWidget(this);
-    header_->setFixedHeight(32);
+    header_->setFixedHeight(NezhaIDE::Services::Tokens::kBottomPanelHeaderH);
     header_->setObjectName(QStringLiteral("bottomPanelHeader"));
 
     auto *header_layout = new QHBoxLayout(header_);
@@ -41,24 +43,28 @@ void BottomPanel::setupUI()
     tab_layout->setContentsMargins(0, 0, 0, 0);
     tab_layout->setSpacing(0);
 
-    auto *terminal_btn = makeTabButton(QStringLiteral("终端"), 0);
-    auto *output_btn = makeTabButton(QStringLiteral("输出"), 1);
-    auto *problems_btn = makeTabButton(QStringLiteral("问题"), 2);
+    auto *terminal_btn = makeTabButton(LOC("bottom.tab.terminal"), 0);
+    auto *output_btn = makeTabButton(LOC("bottom.tab.output"), 1);
+    auto *problems_btn = makeTabButton(LOC("bottom.tab.problems"), 2);
 
     header_layout->addWidget(tab_bar_);
     header_layout->addStretch();
 
     auto *max_btn = new QPushButton(QStringLiteral("\u25A1"), header_);
     max_btn->setObjectName(QStringLiteral("panelToolBtn"));
-    max_btn->setFixedSize(24, 24);
+    max_btn->setFixedSize(NezhaIDE::Services::Tokens::kToolBtnSize,
+                          NezhaIDE::Services::Tokens::kToolBtnSize);
     max_btn->setCursor(Qt::PointingHandCursor);
+    max_btn->setToolTip(LOC("bottom.panel.maximize"));
     connect(max_btn, &QPushButton::clicked, this, &BottomPanel::togglePanel);
     header_layout->addWidget(max_btn);
 
     auto *close_btn = new QPushButton(QStringLiteral("\u2715"), header_);
     close_btn->setObjectName(QStringLiteral("panelToolBtn"));
-    close_btn->setFixedSize(24, 24);
+    close_btn->setFixedSize(NezhaIDE::Services::Tokens::kToolBtnSize,
+                            NezhaIDE::Services::Tokens::kToolBtnSize);
     close_btn->setCursor(Qt::PointingHandCursor);
+    close_btn->setToolTip(LOC("bottom.panel.close"));
     connect(close_btn, &QPushButton::clicked, this, &BottomPanel::hidePanel);
     header_layout->addWidget(close_btn);
 
@@ -66,6 +72,7 @@ void BottomPanel::setupUI()
 
     stack_ = new QStackedWidget(this);
     stack_->setObjectName(QStringLiteral("bottomPanelStack"));
+    stack_->setMinimumHeight(140);
 
     terminal_panel_ = new TerminalPanel(this);
     stack_->addWidget(terminal_panel_);
@@ -75,7 +82,7 @@ void BottomPanel::setupUI()
     output_layout->setContentsMargins(8, 8, 8, 8);
     auto *output_text = new QPlainTextEdit(output_panel_);
     output_text->setReadOnly(true);
-    output_text->setPlaceholderText(QStringLiteral("构建输出、日志和诊断信息将显示在此处..."));
+    output_text->setPlaceholderText(LOC("bottom.output.placeholder"));
     output_text->setObjectName(QStringLiteral("outputLog"));
     output_layout->addWidget(output_text);
     stack_->addWidget(output_panel_);
@@ -83,7 +90,7 @@ void BottomPanel::setupUI()
     problems_panel_ = new QWidget(this);
     auto *problems_layout = new QVBoxLayout(problems_panel_);
     problems_layout->setContentsMargins(8, 8, 8, 8);
-    auto *problems_label = new QLabel(QStringLiteral("未检测到问题"), problems_panel_);
+    auto *problems_label = new QLabel(LOC("bottom.problems.empty"), problems_panel_);
     problems_label->setAlignment(Qt::AlignCenter);
     problems_label->setObjectName(QStringLiteral("problemsPlaceholder"));
     problems_layout->addWidget(problems_label);
@@ -151,7 +158,7 @@ void BottomPanel::applyStyles()
     auto &ts = NezhaIDE::Services::ThemeService::instance();
     setStyleSheet(ts.qss(QStringLiteral("style.panel_container")));
     stack_->findChild<QPlainTextEdit *>(QStringLiteral("outputLog"))->setStyleSheet(
-        ts.qss(QStringLiteral("style.editor")));
+        ts.qss(QStringLiteral("style.output_log")));
 }
 
 } // namespace NezhaIDE::Views

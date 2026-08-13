@@ -1,5 +1,7 @@
 #include "theme_service.h"
+#include "src/services/design_tokens.h"
 #include "src/configuration.h"
+#include <algorithm>
 #include "src/utilities/logger.h"
 #include <QApplication>
 #include <QCoreApplication>
@@ -15,86 +17,86 @@ namespace NezhaIDE::Services {
 
 static const QHash<QString, QString> kFallbackColors = {
     {"bg.primary",         "#FFFFFF"},
-    {"bg.secondary",       "#F5F6F7"},
-    {"bg.tertiary",        "#FAFBFC"},
-    {"border",             "#E5E6EB"},
-    {"accent",             "#3370FF"},
-    {"accent.hover",       "#245BDB"},
-    {"accent.pressed",     "#1A4AB3"},
-    {"accent.subtle",      "#E8F0FE"},
+    {"bg.secondary",       "#F2F2F7"},
+    {"bg.tertiary",        "#FAFAFA"},
+    {"border",             "#E5E5E5"},
+    {"accent",             "#007AFF"},
+    {"accent.hover",       "#0071E3"},
+    {"accent.pressed",     "#005BB8"},
+    {"accent.subtle",      "rgba(0,122,255,0.10)"},
     {"button.text",        "#FFFFFF"},
     {"text.primary",       "#1F2329"},
     {"text.secondary",     "#646A73"},
-    {"text.tertiary",      "#8F959E"},
-    {"overlay.hover",      "rgba(31,35,41,0.06)"},
-    {"overlay.hover.subtle","rgba(31,35,41,0.03)"},
-    {"overlay.selection",  "rgba(51,112,255,0.10)"},
-    {"git.modified",       "#FF8800"},
-    {"git.added",          "#00B42A"},
-    {"git.deleted",        "#F53F3F"},
-    {"git.untracked",      "#86909C"},
+    {"text.tertiary",      "#999999"},
+    {"overlay.hover",      "rgba(0,0,0,0.04)"},
+    {"overlay.hover.subtle","rgba(0,0,0,0.02)"},
+    {"overlay.selection",  "rgba(0,122,255,0.12)"},
+    {"git.modified",       "#E67E22"},
+    {"git.added",          "#27AE60"},
+    {"git.deleted",        "#E74C3C"},
+    {"git.untracked",      "#999999"},
     {"syntax.editor.background", "#FFFFFF"},
-    {"syntax.editor.foreground", "#1F2329"},
-    {"syntax.keyword",     "#D92C7B"},
-    {"syntax.type",        "#00A47C"},
-    {"syntax.function",    "#3370FF"},
-    {"syntax.string",      "#00A870"},
-    {"syntax.comment",     "#86909C"},
-    {"syntax.number",      "#D9720A"},
-    {"syntax.operator",    "#1F2329"},
-    {"syntax.preprocessor","#7B3BED"},
+    {"syntax.editor.foreground", "#1A1A1A"},
+    {"syntax.keyword",     "#CF1F8B"},
+    {"syntax.type",        "#0E7A7A"},
+    {"syntax.function",    "#2563EB"},
+    {"syntax.string",      "#1A8C3A"},
+    {"syntax.comment",     "#6B7280"},
+    {"syntax.number",      "#C06014"},
+    {"syntax.operator",    "#1A1A1A"},
+    {"syntax.preprocessor","#7C3AED"},
     {"panel.bg",           "#FFFFFF"},
-    {"panel.header",       "#F5F6F7"},
-    {"panel.border",       "#E5E6EB"},
-    {"badge.bg",           "#3370FF"},
+    {"panel.header",       "#F2F2F7"},
+    {"panel.border",       "#E5E5E5"},
+    {"badge.bg",           "#007AFF"},
     {"badge.text",         "#FFFFFF"},
     {"scrollbar.bg",       "transparent"},
     {"scrollbar.handle",   "rgba(0,0,0,0.18)"},
     {"scrollbar.handle.hover","rgba(0,0,0,0.32)"},
-    {"input.bg",           "#F5F6F7"},
-    {"input.border",       "#E5E6EB"},
+    {"input.bg",           "#FAFAFA"},
+    {"input.border",       "#E5E5E5"},
 };
 
 static const QHash<QString, QString> kFallbackColorsDark = {
-    {"bg.primary",         "#1A1A2E"},
-    {"bg.secondary",       "#16163A"},
-    {"bg.tertiary",        "#1E1E3A"},
-    {"border",             "#2D2D4A"},
-    {"accent",             "#3370FF"},
-    {"accent.hover",       "#4C84FF"},
-    {"accent.pressed",     "#245BDB"},
-    {"accent.subtle",      "rgba(51,112,255,0.18)"},
+    {"bg.primary",         "#0D1117"},
+    {"bg.secondary",       "#161B22"},
+    {"bg.tertiary",        "#1C2128"},
+    {"border",             "#30363D"},
+    {"accent",             "#0A84FF"},
+    {"accent.hover",       "#3395FF"},
+    {"accent.pressed",     "#0071E3"},
+    {"accent.subtle",      "rgba(10,132,255,0.18)"},
     {"button.text",        "#FFFFFF"},
-    {"text.primary",       "#E8EAED"},
-    {"text.secondary",     "#9AA0A6"},
-    {"text.tertiary",      "#6B7280"},
-    {"overlay.hover",      "rgba(255,255,255,0.06)"},
+    {"text.primary",       "#E6EDF3"},
+    {"text.secondary",     "#8B949E"},
+    {"text.tertiary",      "#6E7681"},
+    {"overlay.hover",      "rgba(255,255,255,0.08)"},
     {"overlay.hover.subtle","rgba(255,255,255,0.03)"},
-    {"overlay.selection",  "rgba(51,112,255,0.20)"},
-    {"git.modified",       "#FF8800"},
-    {"git.added",          "#00B42A"},
-    {"git.deleted",        "#F53F3F"},
-    {"git.untracked",      "#6B7280"},
-    {"syntax.editor.background", "#1A1A2E"},
-    {"syntax.editor.foreground", "#E8EAED"},
-    {"syntax.keyword",     "#FF6B9D"},
-    {"syntax.type",        "#4EC9B0"},
-    {"syntax.function",    "#6C9FFF"},
-    {"syntax.string",      "#98C379"},
-    {"syntax.comment",     "#6B7280"},
-    {"syntax.number",      "#FFB86C"},
-    {"syntax.operator",    "#E8EAED"},
-    {"syntax.preprocessor","#C084FC"},
-    {"panel.bg",           "#16163A"},
-    {"panel.header",       "#1A1A2E"},
-    {"panel.border",       "#2D2D4A"},
-    {"badge.bg",           "#3370FF"},
+    {"overlay.selection",  "rgba(10,132,255,0.22)"},
+    {"git.modified",       "#F0883E"},
+    {"git.added",          "#3FB950"},
+    {"git.deleted",        "#F85149"},
+    {"git.untracked",      "#6E7681"},
+    {"syntax.editor.background", "#0D1117"},
+    {"syntax.editor.foreground", "#E6EDF3"},
+    {"syntax.keyword",     "#FF7B72"},
+    {"syntax.type",        "#FFA657"},
+    {"syntax.function",    "#D2A8FF"},
+    {"syntax.string",      "#A5D6FF"},
+    {"syntax.comment",     "#8B949E"},
+    {"syntax.number",      "#79C0FF"},
+    {"syntax.operator",    "#E6EDF3"},
+    {"syntax.preprocessor","#F0883E"},
+    {"panel.bg",           "#0D1117"},
+    {"panel.header",       "#161B22"},
+    {"panel.border",       "#30363D"},
+    {"badge.bg",           "#0A84FF"},
     {"badge.text",         "#FFFFFF"},
     {"scrollbar.bg",       "transparent"},
     {"scrollbar.handle",   "rgba(255,255,255,0.14)"},
     {"scrollbar.handle.hover","rgba(255,255,255,0.28)"},
-    {"input.bg",           "#1E1E3A"},
-    {"input.border",       "#2D2D4A"},
+    {"input.bg",           "#161B22"},
+    {"input.border",       "#30363D"},
 };
 
 static const QHash<QString, QString> kStyleTemplates = {
@@ -104,19 +106,23 @@ static const QHash<QString, QString> kStyleTemplates = {
     {"style.activity_bar_btn",
      "QPushButton#activityBarBtn { background: transparent;"
      "border: none; border-left: 2px solid transparent;"
-     "border-radius: 0; padding: 0; }"
+     "border-radius: 0; padding: 0; outline: none; }"
      "QPushButton#activityBarBtn:hover { background: $overlay.hover; }"
+     "QPushButton#activityBarBtn:pressed { background: $overlay.selection; }"
+     "QPushButton#activityBarBtn:focus { outline: none; }"
      "QPushButton#activityBarBtn[active=\"true\"]"
      " { border-left: 2px solid $accent; }"},
 
     {"style.toolbar",
-     "QToolBar { border: none; padding: 4px 6px; spacing: 2px;"
+     "QToolBar { border: none; padding: %space-s% %space-m%; spacing: %space-xs%;"
      "background: transparent; }"
-     "QToolBar QToolButton { border: none; border-radius: 6px; padding: 4px 8px;"
-     "color: $text.secondary; font-size: 12px; }"
+     "QToolBar QToolButton { border: none; border-radius: %radius%;"
+     "padding: %space-s% %space-m%;"
+     "color: $text.secondary; font-size: %font-sm%; }"
      "QToolBar QToolButton:hover { background: $overlay.hover; color: $text.primary; }"
      "QToolBar QToolButton:pressed { background: $overlay.selection; }"
-     "QToolBar::separator { width: 1px; margin: 4px 6px; background: transparent; }"},
+     "QToolBar::separator { width: 1px; margin: %space-s% %space-m%;"
+     "background: transparent; }"},
 
     {"style.tree_view",
      "QTreeView { border: none; background: $bg.secondary; outline: none;"
@@ -129,12 +135,6 @@ static const QHash<QString, QString> kStyleTemplates = {
      "QTreeView::branch:has-siblings:adjoins-item { border-image: none; }"
      "QTreeView::branch:!has-children:!has-siblings:adjoins-item { border-image: none; }"},
 
-    {"style.list_widget",
-     "QListWidget { border: none; background: transparent; font-size: 13px; }"
-     "QListWidget::item { padding: 5px 14px; min-height: 26px; }"
-     "QListWidget::item:hover { background: $overlay.hover; }"
-     "QListWidget::item:selected { background: $overlay.selection; color: $text.primary; }"},
-
     {"style.splitter",
      "QSplitter::handle { background: transparent; }"
      "QSplitter::handle:hover { background: $border; }"},
@@ -142,15 +142,15 @@ static const QHash<QString, QString> kStyleTemplates = {
     {"style.tab_widget",
      "QTabWidget::pane { border: none; background: $bg.primary; }"
      "QTabWidget::tab-bar { alignment: left; left: 0; }"
-     "QTabBar { background: transparent; padding: 4px 4px 0 4px; }"
+     "QTabBar { background: transparent; padding: %space-s% %space-s% 0 %space-s%; }"
      "QTabBar::tab { background: transparent; color: $text.secondary;"
-     "padding: 6px 14px; margin: 0 2px;"
-     "border: none; border-radius: 6px;"
-     "font-size: 12px; height: 24px; }"
+     "padding: %space-s% %space-l%; margin: 0 %space-xs%;"
+     "border: none; border-radius: %radius%;"
+     "font-size: %font-sm%; height: 28px; }"
      "QTabBar::tab:hover { background: $overlay.hover; color: $text.primary; }"
      "QTabBar::tab:selected { background: $overlay.selection; color: $text.primary; }"
      "QTabBar::close-button { subcontrol-position: right;"
-     "border-radius: 8px; padding: 0; margin: 0 0 0 4px; }"
+     "border-radius: %radius-sm%; padding: 0; margin: 0 0 0 %space-s%; }"
      "QTabBar::close-button:hover { background: $overlay.hover; }"},
 
     {"style.panel",
@@ -161,12 +161,13 @@ static const QHash<QString, QString> kStyleTemplates = {
 
     {"style.header",
      "QWidget { background: $bg.secondary; }"
-     "QLabel#sidebarTitle { font-size: 11px; font-weight: bold;"
+     "QLabel#sidebarTitle { font-size: %font-sm%; font-weight: bold;"
      " background: transparent;"
      " color: $text.secondary; }"
-     "QPushButton#sidebarHeaderBtn { border: none; border-radius: 5px;"
+     "QPushButton#sidebarHeaderBtn { border: none; border-radius: %radius-sm%;"
      " background: transparent; }"
-     "QPushButton#sidebarHeaderBtn:hover { background: $overlay.hover; }"},
+     "QPushButton#sidebarHeaderBtn:hover { background: $overlay.hover; }"
+     "QPushButton#sidebarHeaderBtn:pressed { background: $overlay.selection; }"},
 
     {"style.main_window",
      "QMainWindow { background: $bg.primary; }"},
@@ -174,55 +175,34 @@ static const QHash<QString, QString> kStyleTemplates = {
     {"style.explorer_root",
      "QWidget#ExplorerPanel { background: $bg.secondary; }"},
 
-    {"style.tab_active",
-     "QPushButton { background: transparent; color: $text.primary;"
-     "border: none; border-bottom: 2px solid $accent;"
-     "padding: 8px 12px; font-size: 11px; font-weight: bold;"
-     " }"},
-
-    {"style.tab_inactive",
-     "QPushButton { background: transparent; color: $text.tertiary;"
-     "border: none; border-bottom: 2px solid transparent;"
-     "padding: 8px 12px; font-size: 11px;"
-     " }"
-     "QPushButton:hover { color: $text.secondary; }"},
-
     {"style.menu",
-     "QMenu { border: none; border-radius: 8px; padding: 4px;"
+     "QMenu { border: none; border-radius: %radius-lg%; padding: %space-s%;"
      "background: $bg.primary; }"
-     "QMenu::item { padding: 6px 32px 6px 12px; border-radius: 4px;"
-     "font-size: 13px; }"
+     "QMenu::item { padding: %space-s% 32px %space-s% %space-l%;"
+     "border-radius: %radius-sm%; font-size: %font-ui%; }"
      "QMenu::item:selected { background: $accent; color: $button.text; }"
-     "QMenu::separator { height: 1px; background: $border; margin: 4px 8px; }"},
+     "QMenu::item:disabled { color: $text.tertiary; }"
+     "QMenu::separator { height: 1px; background: $border;"
+     "margin: %space-s% %space-m%; }"},
 
     {"style.menubar",
      "QMenuBar { background: transparent;"
-     "padding: 2px 0; font-size: 13px; }"
-     "QMenuBar::item { padding: 4px 10; border-radius: 6px; }"
+     "padding: %space-xs% 0; font-size: %font-ui%; }"
+     "QMenuBar::item { padding: %space-s% %space-m%; border-radius: %radius%; }"
      "QMenuBar::item:selected { background: $overlay.hover; }"},
 
     {"style.statusbar",
      "QStatusBar { background: $bg.secondary; color: $text.tertiary;"
-     "border: none; font-size: 11px; padding: 0px 8px; min-height: 26px; }"
-     "QStatusBar::item { border: none; }"
-     "QStatusBar QLabel { color: $text.tertiary; padding: 0px 8px; border-radius: 3px; }"
+     "border: none; font-size: %font-sm%; padding: 0 %space-m%;"
+     "min-height: 26px; }"
+     "QStatusBar::item { border: none; margin: 0 %space-xs%; }"
+     "QStatusBar QLabel { color: $text.tertiary; padding: 0 %space-m%;"
+     "border-radius: %radius-sm%; }"
      "QStatusBar QLabel:hover { background: $overlay.hover; color: $text.primary; }"
-     "QStatusBar QLabel#statusCursor { color: $text.secondary; font-family: Menlo; }"
+     "QStatusBar QLabel#statusCursor { color: $text.secondary; font-family: %font-mono%; }"
      "QStatusBar QLabel#statusLang { color: $text.secondary; }"
      "QStatusBar QLabel#statusEncoding { color: $text.secondary; }"
      "QStatusBar QLabel#statusBranch { font-weight: bold; }"},
-
-    {"style.branch_label",
-     "QLabel { padding: 6px 12px; font-size: 12px; font-weight: bold;"
-     "color: $text.primary; background: transparent; }"},
-
-    {"style.commit_frame",
-     "QWidget { background: transparent; padding: 8px; }"},
-
-    {"style.commit_input",
-     "QTextEdit { border: 1px solid $border; border-radius: 8px; padding: 8px;"
-     "font-size: 13px; background: $bg.tertiary; }"
-     "QTextEdit:focus { border-color: $accent; background: $bg.primary; }"},
 
     {"style.primary_button",
      "QPushButton { background: $accent; color: $button.text; border: none; border-radius: 7px;"
@@ -230,17 +210,13 @@ static const QHash<QString, QString> kStyleTemplates = {
      "QPushButton:hover { background: $accent.hover; }"
      "QPushButton:pressed { background: $accent.pressed; }"},
 
-    {"style.status_label",
-     "QLabel { padding: 4px 12px; font-size: 11px; color: $text.tertiary;"
-     "background: transparent; }"},
-
     {"style.editor",
      "QPlainTextEdit { background: $syntax.editor.background; color: $syntax.editor.foreground;"
      "border: none; selection-background-color: $overlay.selection;"
-     "font-family: Menlo; font-size: 13px;"
+     "font-family: %font-mono%; font-size: 13px;"
      "padding: 8px; }"
      "QWidget#lineNumberArea { background: $bg.secondary; color: $text.tertiary;"
-     "font-family: Menlo; font-size: 12px; }"},
+     "font-family: %font-mono%; font-size: 12px; }"},
 
     {"style.http_panel",
      "QWidget#httpClientRoot { background: $bg.secondary; }"
@@ -270,7 +246,7 @@ static const QHash<QString, QString> kStyleTemplates = {
 
     {"style.http_body_editor",
      "QPlainTextEdit { border: 1px solid $border; border-radius: 8px; background: $bg.primary;"
-     "color: $text.primary; font-family: Menlo; font-size: 13px;"
+     "color: $text.primary; font-family: %font-mono%; font-size: 13px;"
      "selection-background-color: $overlay.selection; padding: 8px; }"
      "QPlainTextEdit:focus { border-color: $accent; }"},
 
@@ -297,19 +273,13 @@ static const QHash<QString, QString> kStyleTemplates = {
 
     {"style.http_response_body",
      "QPlainTextEdit { border: 1px solid $border; border-radius: 8px; background: $bg.primary;"
-     "color: $text.primary; font-family: Menlo; font-size: 12px;"
+     "color: $text.primary; font-family: %font-mono%; font-size: 12px;"
      "selection-background-color: $overlay.selection; padding: 8px; }"},
 
     {"style.git_diff",
      "QPlainTextEdit { background: $bg.tertiary; border: none; border-radius: 8px;"
-     "color: $text.primary; font-family: Menlo; font-size: 12px;"
+     "color: $text.primary; font-family: %font-mono%; font-size: 12px;"
      "selection-background-color: $overlay.selection; padding: 10; }"},
-
-    {"style.dock_widget",
-     "QDockWidget { background: $bg.secondary; }"
-     "QDockWidget::title { background: $bg.secondary; color: $text.secondary;"
-     "border: none; border-bottom: 1px solid $border; padding: 5px 12px;"
-     "font-size: 12px; font-weight: bold; }"},
 
     {"style.http_meta_label",
      "QLabel { font-size: 12px; color: $text.secondary; padding: 2px 0; }"},
@@ -414,69 +384,50 @@ static const QHash<QString, QString> kStyleTemplates = {
      "font-size: 11px; font-weight: bold; }"
      "QTableCornerButton::section { background: $bg.secondary; border: none; }"},
 
-    {"style.welcome_root",
-     "QWidget#welcomeRoot { background: transparent; }"
-     "QLabel#welcomeTitle { font-size: 26px; font-weight: bold;"
-     " color: $text.primary; background: transparent; }"
-     "QLabel#welcomeVersion { font-size: 13px; color: $text.tertiary;"
-     " background: transparent; }"
-     "QLabel#welcomeStartLabel { font-size: 11px; font-weight: bold;"
-     ""
-     " color: $text.secondary; background: transparent; }"
-     "QWidget#welcomeActionRow { background: transparent;"
-     " border-radius: 6px; }"
-     "QWidget#welcomeActionRow:hover { background: $overlay.hover; }"
-     "QLabel#welcomeActionLabel { font-size: 13px; color: $text.primary;"
-     " background: transparent; }"
-     "QLabel#welcomeActionKey { font-size: 11px; color: $text.tertiary;"
-     " background: transparent; padding: 1px 6px;"
-     " border: 1px solid $border; border-radius: 3px; }"},
-
     {"style.panel_container",
      "QWidget#bottomPanelRoot { background: $panel.bg; border-top: 1px solid $panel.border; }"
      "QWidget#bottomPanelHeader { background: $panel.header; border-bottom: 1px solid $panel.border; }"
      "QWidget#bottomPanelTabBar { background: transparent; }"
      "QPushButton#panelTabBtn { background: transparent; color: $text.secondary;"
-     "padding: 4px 14px; border: none; border-bottom: 2px solid transparent;"
-     "font-size: 11px; font-weight: bold;  }"
+     "padding: %space-s% %space-l%; border: none; border-bottom: 2px solid transparent;"
+     "font-size: %font-sm%; font-weight: bold; }"
      "QPushButton#panelTabBtn:checked { color: $text.primary; border-bottom: 2px solid $accent; }"
-     "QPushButton#panelTabBtn:hover { color: $text.primary; }"
-     "QPushButton#panelToolBtn { border: none; border-radius: 4px;"
-     "background: transparent; padding: 2px 6px; color: $text.secondary; font-size: 14px; }"
+     "QPushButton#panelTabBtn:hover { color: $text.primary; background: $overlay.hover; }"
+     "QPushButton#panelToolBtn { border: none; border-radius: %radius-sm%;"
+     "background: transparent; padding: %space-xs% %space-s%;"
+     "color: $text.secondary; font-size: 14px; }"
      "QPushButton#panelToolBtn:hover { background: $overlay.hover; color: $text.primary; }"
      "QWidget#bottomPanelStack { background: $panel.bg; }"},
 
     {"style.scrollbar",
-     "QScrollBar:vertical { background: transparent; width: 8px; margin: 0; }"
-     "QScrollBar::handle:vertical { background: $scrollbar.handle; border-radius: 4px; min-height: 30; }"
+     "QScrollBar:vertical { background: $scrollbar.bg; width: 8px; margin: 0; }"
+     "QScrollBar::handle:vertical { background: $scrollbar.handle; border-radius: %radius-sm%; min-height: 30px; }"
      "QScrollBar::handle:vertical:hover { background: $scrollbar.handle.hover; }"
      "QScrollBar::add-line:vertical { height: 0; }"
      "QScrollBar::sub-line:vertical { height: 0; }"
      "QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical { background: none; }"
-     "QScrollBar:horizontal { background: transparent; height: 8px; margin: 0; }"
-     "QScrollBar::handle:horizontal { background: $scrollbar.handle; border-radius: 4px; min-width: 30; }"
+     "QScrollBar:horizontal { background: $scrollbar.bg; height: 8px; margin: 0; }"
+     "QScrollBar::handle:horizontal { background: $scrollbar.handle; border-radius: %radius-sm%; min-width: 30px; }"
      "QScrollBar::handle:horizontal:hover { background: $scrollbar.handle.hover; }"
      "QScrollBar::add-line:horizontal { width: 0; }"
      "QScrollBar::sub-line:horizontal { width: 0; }"
      "QScrollBar::add-page:horizontal, QScrollBar::sub-page:horizontal { background: none; }"},
 
     {"style.badge",
-     "QLabel#activityBadge { background: $badge.bg; color: $badge.text; border-radius: 8px; font-size: 10; font-weight: bold; padding: 0px 5px; }"},
-
-    {"style.breadcrumb",
-     "QWidget#breadcrumbBar { background: $panel.header;"
-     "border-bottom: 1px solid $panel.border; min-height: 26px; }"
-     "QLabel#breadcrumbItem { font-size: 12px; color: $text.secondary;"
-     "padding: 2px 4px; background: transparent; border-radius: 3px; }"
-     "QLabel#breadcrumbItem:hover { background: $overlay.hover; color: $text.primary; }"
-     "QLabel#breadcrumbSep { color: $text.tertiary; font-size: 11px;"
-     "padding: 0 2px; background: transparent; }"},
+     "QLabel#activityBadge { background: $badge.bg; color: $badge.text;"
+     "border-radius: %radius-pill%; font-size: %font-tiny%; font-weight: bold;"
+     "padding: 0 %space-s%; }"},
 
     {"style.input",
-     "QLineEdit { border: 1px solid $input.border; border-radius: 6px;"
-     "padding: 0 10; background: $input.bg; color: $text.primary;"
-     "font-size: 13px; }"
-     "QLineEdit:focus { border-color: $accent; background: $bg.primary; }"},
+     "QLineEdit, QSpinBox, QDoubleSpinBox { border: 1px solid $input.border;"
+     "border-radius: %radius%; padding: 0 %space-m%;"
+     "background: $input.bg; color: $text.primary; font-size: %font-ui%;"
+     "selection-background-color: $overlay.selection; }"
+     "QLineEdit:focus, QSpinBox:focus, QDoubleSpinBox:focus {"
+     "border-color: $accent; background: $bg.primary; }"
+     "QLineEdit:disabled, QSpinBox:disabled, QDoubleSpinBox:disabled {"
+     "color: $text.tertiary; }"
+     "QLineEdit:read-only { background: $bg.tertiary; }"},
 
     {"style.git_panel",
      "QWidget#gitPanelRoot { background: $bg.secondary; }"
@@ -504,7 +455,7 @@ static const QHash<QString, QString> kStyleTemplates = {
      "QTabBar::tab:selected { color: $text.primary; border-bottom: 2px solid $accent; }"
      "QTabBar::tab:hover { color: $text.primary; }"
      "QPlainTextEdit#gitDiffView { background: $bg.tertiary; border: none;"
-     "color: $text.primary; font-family: Menlo; font-size: 12px;"
+     "color: $text.primary; font-family: %font-mono%; font-size: 12px;"
      "selection-background-color: $overlay.selection; padding: 10px; }"
      "QTextEdit#gitCommitMsg { border: 1px solid $border; border-radius: 8px; padding: 8px;"
      "font-size: 13px; background: $bg.tertiary; color: $text.primary; }"
@@ -526,16 +477,123 @@ static const QHash<QString, QString> kStyleTemplates = {
      "QLabel#welcomeModernSubtitle { font-size: 14px; color: $text.secondary;"
      "background: transparent; }"
      "QWidget#welcomeCard { background: $bg.secondary;"
-     "border: 1px solid $border; border-radius: 10; }"
+     "border: 1px solid $border; border-radius: %radius-lg%; }"
      "QWidget#welcomeCard:hover { border-color: $accent;"
      "background: $bg.tertiary; }"
-     "QLabel#welcomeCardTitle { font-size: 13px; font-weight: bold;"
+     "QLabel#welcomeCardIcon { font-size: %font-xl%; background: transparent; }"
+     "QLabel#welcomeCardTitle { font-size: %font-ui%; font-weight: bold;"
      "color: $text.primary; background: transparent; }"
-     "QLabel#welcomeCardDesc { font-size: 12px; color: $text.secondary;"
+     "QLabel#welcomeCardDesc { font-size: %font-sm%; color: $text.secondary;"
      "background: transparent; }"
-     "QLabel#welcomeCardShortcut { font-size: 11px; color: $text.tertiary;"
-     "background: transparent; padding: 1px 6px;"
-     "border: 1px solid $border; border-radius: 3px; }"},
+     "QLabel#welcomeCardShortcut { font-size: %font-sm%; color: $text.tertiary;"
+     "background: transparent; padding: 1px %space-s%;"
+     "border: 1px solid $border; border-radius: %radius-sm%; }"},
+
+    // ---- 全局底座模板（applyGlobalPalette() 拼进 app stylesheet，为裸奔控件兜底）----
+
+    {"style.combo",
+     "QComboBox { border: 1px solid $input.border; border-radius: %radius%;"
+     "padding: 0 %space-m%; background: $input.bg; color: $text.primary;"
+     "font-size: %font-ui%; min-width: 96px; }"
+     "QComboBox:hover { border-color: $text.tertiary; }"
+     "QComboBox:focus { border-color: $accent; background: $bg.primary; }"
+     "QComboBox:disabled { color: $text.tertiary; }"
+     "QComboBox::drop-down { border: none; width: 22px; }"
+     "QComboBox::down-arrow { image: url(:/vectors/chevron_down.svg);"
+     "width: 12px; height: 12px; }"
+     "QComboBox QAbstractItemView { background: $bg.primary; color: $text.primary;"
+     "selection-background-color: $overlay.selection; border: 1px solid $border;"
+     "outline: none; padding: %space-s%; }"},
+
+    {"style.button",
+     "QPushButton { background: transparent; color: $text.primary;"
+     "border: 1px solid transparent; border-radius: %radius%;"
+     "padding: %space-s% %space-l%; font-size: %font-ui%; }"
+     "QPushButton:hover { background: $overlay.hover; }"
+     "QPushButton:pressed { background: $overlay.selection; }"
+     "QPushButton:disabled { color: $text.tertiary; }"
+     "QPushButton:default { background: $accent; color: $button.text;"
+     "border-color: $accent; }"
+     "QPushButton:default:hover { background: $accent.hover; border-color: $accent.hover; }"
+     "QPushButton:default:pressed { background: $accent.pressed; border-color: $accent.pressed; }"
+     "QPushButton:default:disabled { background: $overlay.hover; color: $text.tertiary;"
+     "border-color: transparent; }"},
+
+    {"style.groupbox",
+     "QGroupBox { border: 1px solid $border; border-radius: %radius%;"
+     "margin-top: %space-l%; background: transparent;"
+     "padding: %space-m%; }"
+     "QGroupBox::title { subcontrol-origin: margin; left: %space-m%;"
+     "top: -%space-xs%; padding: 0 %space-s%;"
+     "color: $text.secondary; font-size: %font-sm%; font-weight: bold;"
+     "background: transparent; }"},
+
+    {"style.checkbox",
+     "QCheckBox, QRadioButton { color: $text.primary; font-size: %font-ui%;"
+     "spacing: %space-s%; background: transparent; }"
+     "QCheckBox:disabled, QRadioButton:disabled { color: $text.tertiary; }"},
+
+    {"style.dialog",
+     "QDialog { background: $bg.primary; }"
+     "QDialog QLabel, QMessageBox QLabel { background: transparent;"
+     "color: $text.primary; font-size: %font-ui%; }"},
+
+    {"style.tooltip",
+     "QToolTip { background: $bg.tertiary; color: $text.primary;"
+     "border: 1px solid $border; border-radius: %radius%;"
+     "padding: %space-s% %space-m%; font-size: %font-sm%; }"},
+
+    {"style.editor_base",
+     "QPlainTextEdit, QTextEdit { background: $bg.primary; color: $text.primary;"
+     "selection-background-color: $overlay.selection;"
+     "border: 1px solid $border; border-radius: %radius%; }"},
+
+    // ---- 面板级模板（P4 归口：原内联 QSS 全部移入此处）----
+
+    {"style.http_method_btn",
+     "QPushButton#httpMethodButton { border: none; border-radius: %radius%;"
+     "padding: 5px %space-l%; font-size: %font-sm%; font-weight: bold;"
+     "color: $button.text; background: $text.tertiary; }"
+     "QPushButton#httpMethodButton[method=\"GET\"] { background: $git.added; }"
+     "QPushButton#httpMethodButton[method=\"POST\"] { background: $accent; }"
+     "QPushButton#httpMethodButton[method=\"PUT\"],"
+     "QPushButton#httpMethodButton[method=\"PATCH\"] { background: $git.modified; }"
+     "QPushButton#httpMethodButton[method=\"DELETE\"] { background: $git.deleted; }"},
+
+    {"style.http_status_pill",
+     "QLabel#httpStatusPill { border-radius: %radius-pill%;"
+     "padding: %space-s% %space-l%; font-size: %font-ui%; font-weight: bold;"
+     "background: $text.secondary; color: $button.text; }"
+     "QLabel#httpStatusPill[state=\"ok\"] { background: $git.added; }"
+     "QLabel#httpStatusPill[state=\"redirect\"] { background: $accent; }"
+     "QLabel#httpStatusPill[state=\"client_err\"] { background: $git.modified; }"
+     "QLabel#httpStatusPill[state=\"server_err\"],"
+     "QLabel#httpStatusPill[state=\"error\"] { background: $git.deleted; }"},
+
+    {"style.terminal_panel",
+     "QWidget#terminalPanelRoot { background: $bg.primary; }"},
+
+    {"style.hex_view",
+     "QAbstractScrollArea#hexView { background: $bg.primary; }"},
+
+    {"style.hex_gobar",
+     "QWidget#hexGoBar { background: $panel.header;"
+     "border-top: 1px solid $panel.border; min-height: 32px; }"
+     "QLineEdit#hexGoEdit { border: 1px solid $input.border;"
+     "border-radius: %radius%; padding: 0 %space-m%;"
+     "background: $input.bg; color: $text.primary; font-size: %font-sm%; }"
+     "QLineEdit#hexGoEdit:focus { border-color: $accent; background: $bg.primary; }"
+     "QPushButton#hexGoButton { background: transparent; color: $text.secondary;"
+     "border: 1px solid $input.border; border-radius: %radius%;"
+     "padding: %space-xs% %space-m%; font-size: %font-sm%; }"
+     "QPushButton#hexGoButton:hover { border-color: $accent; color: $accent; }"
+     "QLabel#hexPosLabel { color: $text.secondary; font-size: %font-sm%;"
+     "background: transparent; }"},
+
+    {"style.output_log",
+     "QPlainTextEdit { background: $bg.primary; color: $text.primary;"
+     "border: none; selection-background-color: $overlay.selection;"
+     "font-family: %font-mono%; font-size: %font-ui%; padding: %space-m%; }"},
 };
 
 ThemeService &ThemeService::instance()
@@ -703,10 +761,20 @@ void ThemeService::rebuildStyles()
 {
     styles_.clear();
 
+    // key 按长度降序替换：避免 $accent 前缀吞噬 $accent.hover（留下 ".hover" 残渣）
+    QStringList colorKeys;
+    for (auto ci = colors_.cbegin(); ci != colors_.cend(); ++ci) colorKeys << ci.key();
+    std::sort(colorKeys.begin(), colorKeys.end(),
+              [](const QString &a, const QString &b) { return a.size() > b.size(); });
+
     for (auto it = kStyleTemplates.cbegin(); it != kStyleTemplates.cend(); ++it) {
         QString qss = it.value();
-        for (auto ci = colors_.cbegin(); ci != colors_.cend(); ++ci) {
-            qss.replace(QStringLiteral("$") + ci.key(), ci.value());
+        for (const auto &key : colorKeys) {
+            qss.replace(QStringLiteral("$") + key, colors_.value(key));
+        }
+        // 几何 token 二次替换（圆角/间距/字号/字体栈，与主题无关）
+        for (auto ti = Tokens::qssTokenTable().cbegin(); ti != Tokens::qssTokenTable().cend(); ++ti) {
+            qss.replace(QStringLiteral("%") + ti.key() + QStringLiteral("%"), ti.value());
         }
         styles_[it.key()] = qss;
     }
@@ -755,16 +823,20 @@ void ThemeService::applyGlobalPalette()
 
     app->setPalette(p);
 
-    const auto menuQss = styles_.value(QStringLiteral("style.menu"));
+    // 全局底座 QSS：为未按面板分发样式的原生控件（对话框/消息框/输入框/
+    // 滚动条/按钮等）兜底。组件级 setStyleSheet 优先级更高，可局部覆盖。
+    static const char *kGlobalTemplateKeys[] = {
+        "style.menu", "style.menubar", "style.tooltip",
+        "style.scrollbar", "style.input", "style.combo",
+        "style.button", "style.groupbox", "style.checkbox",
+        "style.dialog", "style.editor_base",
+    };
 
     QString globalQss;
-    if (!menuQss.isEmpty()) globalQss += menuQss + QStringLiteral("\n");
-
-    globalQss += QStringLiteral(
-        "QToolTip {"
-        "  background: %1; color: %2; border: 1px solid %3;"
-        "  border-radius: 4px; padding: 4px 8px; font-size: 12px; }"
-    ).arg(bgTertiary.name(), textPrimary.name(), border.name());
+    for (const auto *key : kGlobalTemplateKeys) {
+        const auto qss = styles_.value(QLatin1String(key));
+        if (!qss.isEmpty()) globalQss += qss + QStringLiteral("\n");
+    }
 
     app->setStyleSheet(globalQss);
 }

@@ -387,7 +387,7 @@ void EditorTabHost::ensureWelcomeTab()
         cl->setSpacing(6);
 
         auto *iconLabel = new QLabel(icon);
-        iconLabel->setStyleSheet(QStringLiteral("font-size: 24px; background: transparent;"));
+        iconLabel->setObjectName(QStringLiteral("welcomeCardIcon"));
         cl->addWidget(iconLabel);
 
         auto *cardTitle = new QLabel(titleText);

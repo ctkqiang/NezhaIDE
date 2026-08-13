@@ -167,12 +167,12 @@ void MainWindow::setupStatusBar()
 
     sb->addPermanentWidget(new QLabel(QStringLiteral(""), this));
 
-    cur_pos_label_ = new QLabel(QStringLiteral("  Ln 1, Col 1  "), this);
+    cur_pos_label_ = new QLabel(QStringLiteral("  %1  ").arg(LOC("status.position").arg(1).arg(1)), this);
     cur_pos_label_->setObjectName(QStringLiteral("statusCursor"));
     cur_pos_label_->setCursor(Qt::PointingHandCursor);
     sb->addPermanentWidget(cur_pos_label_);
 
-    lang_label_ = new QLabel(QStringLiteral("  Plain Text  "), this);
+    lang_label_ = new QLabel(QStringLiteral("  %1  ").arg(LOC("status.lang.plain")), this);
     lang_label_->setObjectName(QStringLiteral("statusLang"));
     lang_label_->setCursor(Qt::PointingHandCursor);
     sb->addPermanentWidget(lang_label_);
@@ -320,44 +320,62 @@ void MainWindow::setupLayout()
     connect(editor_host_, &NezhaIDE::Editor::EditorTabHost::editActionsChanged,
             this, &MainWindow::updateEditActions);
 
-    // 连接编辑器光标变化以更新状态栏
+    // 连接编辑器光标变化以更新状态栏（连接去重，避免切 tab 累积）
     connect(editor_host_, &QTabWidget::currentChanged, this, [this](int) {
-        if (auto *ed = editor_host_->currentEditor()) {
-            connect(ed, &QPlainTextEdit::cursorPositionChanged, this, [this, ed] {
-                auto cursor = ed->textCursor();
-                cur_pos_label_->setText(
-                    QStringLiteral("  Ln %1, Col %2  ")
-                        .arg(cursor.blockNumber() + 1)
-                        .arg(cursor.columnNumber() + 1));
-                // 根据文件后缀更新语言模式
-                const auto suffix = QFileInfo(ed->filePath()).suffix().toLower();
-                QString lang = suffix.isEmpty() ? QStringLiteral("Plain Text") : suffix.toUpper();
-                // 已知语言映射
-                static const QHash<QString, QString> langMap = {
-                    {QStringLiteral("cpp"), QStringLiteral("C++")},
-                    {QStringLiteral("h"), QStringLiteral("C++")},
-                    {QStringLiteral("cc"), QStringLiteral("C++")},
-                    {QStringLiteral("c"), QStringLiteral("C")},
-                    {QStringLiteral("py"), QStringLiteral("Python")},
-                    {QStringLiteral("js"), QStringLiteral("JavaScript")},
-                    {QStringLiteral("ts"), QStringLiteral("TypeScript")},
-                    {QStringLiteral("json"), QStringLiteral("JSON")},
-                    {QStringLiteral("xml"), QStringLiteral("XML")},
-                    {QStringLiteral("html"), QStringLiteral("HTML")},
-                    {QStringLiteral("css"), QStringLiteral("CSS")},
-                    {QStringLiteral("sql"), QStringLiteral("SQL")},
-                    {QStringLiteral("md"), QStringLiteral("Markdown")},
-                    {QStringLiteral("yaml"), QStringLiteral("YAML")},
-                    {QStringLiteral("yml"), QStringLiteral("YAML")},
-                    {QStringLiteral("sh"), QStringLiteral("Shell")},
-                    {QStringLiteral("cmake"), QStringLiteral("CMake")},
-                    {QStringLiteral("txt"), QStringLiteral("Plain Text")},
-                };
-                if (langMap.contains(suffix)) lang = langMap[suffix];
-                lang_label_->setText(QStringLiteral("  %1  ").arg(lang));
-            });
+        auto *ed = editor_host_->currentEditor();
+        updateStatusFromEditor(ed);
+        if (!ed) return;
+
+        if (cursor_conns_.contains(ed)) {
+            disconnect(cursor_conns_.take(ed));
         }
+        cursor_conns_[ed] = connect(
+            ed, &QPlainTextEdit::cursorPositionChanged, this,
+            [this, ed] { updateStatusFromEditor(ed); });
     });
+}
+
+void MainWindow::updateStatusFromEditor(NezhaIDE::Editor::CodeEditor *editor)
+{
+    if (!editor) {
+        cur_pos_label_->setText(QStringLiteral("  %1  ")
+            .arg(LOC("status.position").arg(1).arg(1)));
+        lang_label_->setText(QStringLiteral("  %1  ").arg(LOC("status.lang.plain")));
+        return;
+    }
+
+    const auto cursor = editor->textCursor();
+    cur_pos_label_->setText(QStringLiteral("  %1  ")
+        .arg(LOC("status.position")
+                 .arg(cursor.blockNumber() + 1)
+                 .arg(cursor.columnNumber() + 1)));
+
+    // 根据文件后缀更新语言模式
+    const auto suffix = QFileInfo(editor->filePath()).suffix().toLower();
+    QString lang = suffix.isEmpty() ? LOC("status.lang.plain") : suffix.toUpper();
+    // 已知语言映射
+    static const QHash<QString, QString> langMap = {
+        {QStringLiteral("cpp"), QStringLiteral("C++")},
+        {QStringLiteral("h"), QStringLiteral("C++")},
+        {QStringLiteral("cc"), QStringLiteral("C++")},
+        {QStringLiteral("c"), QStringLiteral("C")},
+        {QStringLiteral("py"), QStringLiteral("Python")},
+        {QStringLiteral("js"), QStringLiteral("JavaScript")},
+        {QStringLiteral("ts"), QStringLiteral("TypeScript")},
+        {QStringLiteral("json"), QStringLiteral("JSON")},
+        {QStringLiteral("xml"), QStringLiteral("XML")},
+        {QStringLiteral("html"), QStringLiteral("HTML")},
+        {QStringLiteral("css"), QStringLiteral("CSS")},
+        {QStringLiteral("sql"), QStringLiteral("SQL")},
+        {QStringLiteral("md"), QStringLiteral("Markdown")},
+        {QStringLiteral("yaml"), QStringLiteral("YAML")},
+        {QStringLiteral("yml"), QStringLiteral("YAML")},
+        {QStringLiteral("sh"), QStringLiteral("Shell")},
+        {QStringLiteral("cmake"), QStringLiteral("CMake")},
+        {QStringLiteral("txt"), QStringLiteral("Plain Text")},
+    };
+    if (langMap.contains(suffix)) lang = langMap[suffix];
+    lang_label_->setText(QStringLiteral("  %1  ").arg(lang));
 }
 
 void MainWindow::applyStyles()

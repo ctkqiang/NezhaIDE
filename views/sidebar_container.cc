@@ -1,6 +1,7 @@
 #include "sidebar_container.h"
 #include "explorer_panel.h"
 #include "views/git_panel/git_panel.h"
+#include "src/services/design_tokens.h"
 #include "src/services/localization_service.h"
 #include "src/services/theme_service.h"
 #include "src/utilities/logger.h"
@@ -42,7 +43,7 @@ SidebarContainer::~SidebarContainer() = default;
 void SidebarContainer::setupHeader()
 {
     header_ = new QWidget(this);
-    header_->setFixedHeight(36);
+    header_->setFixedHeight(NezhaIDE::Services::Tokens::kSidebarHeaderH);
     header_->setObjectName(QStringLiteral("sidebarHeader"));
 
     auto *layout = new QHBoxLayout(header_);
@@ -57,7 +58,8 @@ void SidebarContainer::setupHeader()
     auto makeHeaderBtn = [](const QString &iconName, const QString &tooltip, QWidget *parent) -> QPushButton * {
         auto *btn = new QPushButton(parent);
         btn->setObjectName(QStringLiteral("sidebarHeaderBtn"));
-        btn->setFixedSize(26, 26);
+        const auto s = NezhaIDE::Services::Tokens::kIconBtnSize;
+        btn->setFixedSize(s, s);
         btn->setIconSize({14, 14});
         btn->setIcon(QIcon(QStringLiteral(":/vectors/%1.svg").arg(iconName)));
         btn->setFlat(true);
@@ -70,8 +72,7 @@ void SidebarContainer::setupHeader()
     connect(btn_new, &QPushButton::clicked, explorer_panel_, &ExplorerPanel::onNewFile);
     layout->addWidget(btn_new);
 
-    auto *btn_folder = makeHeaderBtn(QStringLiteral("plus"), LOC("explorer.new_folder"), header_);
-    btn_folder->setToolTip(LOC("explorer.new_folder"));
+    auto *btn_folder = makeHeaderBtn(QStringLiteral("folder_new"), LOC("explorer.new_folder"), header_);
     connect(btn_folder, &QPushButton::clicked, explorer_panel_, &ExplorerPanel::onNewFolder);
     layout->addWidget(btn_folder);
 

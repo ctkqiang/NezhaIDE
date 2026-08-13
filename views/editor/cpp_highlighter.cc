@@ -47,7 +47,9 @@ CppHighlighter::CppHighlighter(QTextDocument *document, QObject *parent)
 
 void CppHighlighter::setTokenColors(const QHash<QString, QColor> &tokens)
 {
-    const QColor fallback = tokens.value(QStringLiteral("syntax.editor.foreground"), QColor("#E6EDF3"));
+    const QColor fallback = tokens.value(
+        QStringLiteral("syntax.editor.foreground"),
+        NezhaIDE::Services::ThemeService::instance().qcolor(QStringLiteral("syntax.editor.foreground")));
     auto setFmt = [&](QTextCharFormat &fmt, const QString &key) {
         fmt.setForeground(tokens.value(key, fallback));
     };

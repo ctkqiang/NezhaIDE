@@ -84,7 +84,8 @@ GitPanel::GitPanel(QWidget *parent)
     diff_view_ = new QPlainTextEdit(splitter_);
     diff_view_->setObjectName(QStringLiteral("gitDiffView"));
     diff_view_->setReadOnly(true);
-    QFont diffFont(QStringLiteral("Menlo"), 12);
+    QFont diffFont = QFontDatabase::systemFont(QFontDatabase::FixedFont);
+    diffFont.setPointSize(12);
     diff_view_->setFont(diffFont);
     diff_view_->setPlaceholderText(LOC("git.diff_hint"));
 

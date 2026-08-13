@@ -18,6 +18,17 @@
     <color key="git.added">#27AE60</color>
     <color key="git.deleted">#E74C3C</color>
     <color key="git.untracked">#999999</color>
+    <color key="panel.bg">#FFFFFF</color>
+    <color key="panel.header">#F2F2F7</color>
+    <color key="panel.border">#E5E5E5</color>
+    <color key="badge.bg">#007AFF</color>
+    <color key="badge.text">#FFFFFF</color>
+    <color key="scrollbar.bg">transparent</color>
+    <color key="scrollbar.handle">rgba(0,0,0,0.18)</color>
+    <color key="scrollbar.handle.hover">rgba(0,0,0,0.32)</color>
+    <color key="input.bg">#FAFAFA</color>
+    <color key="input.border">#E5E5E5</color>
+    <color key="accent.subtle">rgba(0,122,255,0.10)</color>
     <syntax>
         <token name="editor.background">#FFFFFF</token>
         <token name="editor.foreground">#1A1A1A</token>

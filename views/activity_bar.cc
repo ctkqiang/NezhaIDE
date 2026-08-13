@@ -1,5 +1,6 @@
 #include "activity_bar.h"
 #include "preferences_dialog.h"
+#include "src/services/design_tokens.h"
 #include "src/services/localization_service.h"
 #include "src/services/theme_service.h"
 #include <QIcon>
@@ -11,7 +12,7 @@ namespace NezhaIDE::Views {
 ActivityBar::ActivityBar(QWidget *parent)
     : QWidget(parent)
 {
-    setFixedWidth(48);
+    setFixedWidth(NezhaIDE::Services::Tokens::kActivityBarWidth);
     setObjectName(QStringLiteral("activityBar"));
 
     auto *layout = new QVBoxLayout(this);
@@ -25,10 +26,10 @@ ActivityBar::ActivityBar(QWidget *parent)
         LOC("activity.git") + QStringLiteral("  \\u2318\\u21E7G"),
         ActivityBarItem::Git);
     btn_http_ = addButton(QStringLiteral("http"),
-        QStringLiteral("HTTP Client  \\u2318\\u21E7H"),
+        LOC("activity.http_client") + QStringLiteral("  \\u2318\\u21E7H"),
         ActivityBarItem::HttpClient);
     btn_hydra_ = addButton(QStringLiteral("hydra"),
-        QStringLiteral("Hydra  \\u2318\\u21E7Y"),
+        LOC("activity.hydra") + QStringLiteral("  \\u2318\\u21E7Y"),
         ActivityBarItem::Hydra);
     btn_terminal_ = addButton(QStringLiteral("terminal"),
         LOC("activity.terminal") + QStringLiteral("  \\u2318`"),
@@ -54,11 +55,13 @@ ActivityBar::ActivityButton ActivityBar::addButton(
 {
     ActivityButton ab;
 
+    const auto s = NezhaIDE::Services::Tokens::kActivityBtnSize;
+
     auto *container = new QWidget(this);
-    container->setFixedSize(48, 48);
+    container->setFixedSize(s, s);
 
     ab.button = new QPushButton(container);
-    ab.button->setFixedSize(48, 48);
+    ab.button->setFixedSize(s, s);
     ab.button->setIconSize({24, 24});
     ab.button->setIcon(QIcon(QStringLiteral(":/vectors/%1.svg").arg(iconPath)));
     ab.button->setToolTip(tooltip);
